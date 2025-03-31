@@ -1,5 +1,3 @@
-> **Note:** This is a template. Please make necessary changes and modify the template as per your needs. For reference please use the following resources.
-
 # Repository Coding Standards
 
 The purpose of the Coding Standards is to create a baseline for collaboration and review within various aspects of our open source project and community, from core code to themes to plugins.
@@ -10,13 +8,3 @@ Following the standards means anyone will be able to understand a section of cod
 
 If you are planning to contribute, you need to familiarize yourself with these standards, as any code you submit will need to comply with them.
 
-## Language-specific Standards
-* Language 1
-* Language 2
-
-## Tool-specific Settings
-* Tool 1 settings
-* Tool 2 settings
-
-For reference please check the following repos:
-* https://github.com/sbb-design-systems/sbb-angular/blob/main/CODING_STANDARDS.md
