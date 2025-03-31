@@ -1,8 +1,7 @@
-# Open Source Repo Template
+# Umelgo
 
-> **Note:** This is a repository template. This README serves both as an example for your new repository, and also contains information on how to use the repository template.
-
-This repository is a template for creating new open-source repositories. It contains all the necessary files and documents to ensure that your open-source project is well-organized and follows best practices.
+Umlego is an extension of the open-source project MATSim. It integrates the SwissRailRapto module
+within MATSim to compute demand assignment based on Origin-Destination (OD) matrices.
 
 #### Table Of Contents
 
@@ -14,39 +13,18 @@ This repository is a template for creating new open-source repositories. It cont
 - [Coding Standards](#coding-standards)
 - [License](#License)
 
-<a id="Introduction"></a>
-
 ## Introduction
 
-When creating an open-source project, it's important to establish a clear structure and set of guidelines to ensure that the project is maintainable and sustainable. This repository provides a basic template that can be used as a starting point for new projects.
+Umlego is software that allows for the computation of demand assignment. Given a public transport
+timetable and time-dependent origin-destination matrices, it calculates the assigned demand for each
+route found in the timetable.
 
-The template includes the following features:
+The basic algorithm has been extended to allow for the computation of the Supply Effect. When
+improving the service, it is expected to increase demand. This effect is calculated based on skim
+matrices (Travel Time, Number of Changes, and Adjustment Time).
 
-- A basic file structure for organizing code, documentation, and related files
-- A CONTRIBUTING.md file with guidelines for contributing to the project
-- A CODE_OF_CONDUCT.md file with guidelines for community behavior
-- A LICENSE.md file with information about the open-source license that applies to the project
-
-<a id="Getting-Started"></a>
-
-## Getting-Started
-
-Instructions for getting started with the repository, for e.g.:
-
-- Installation instructions
-- Usage instructions
-
-> To use this template please follow the steps as below:
->
-> - If creating via Self Service Portal (WIP)
-> - If Creating via GitHub Interface
->   - Click the "Use this template" button above, select "Create a new repository"
->   - Give your repository a name, and optionally a description. The owner will always be "SchweizerischeBundesbahnen".
->   - Set the visibility of your repository to "Public".
->   - Do not select "Include all branches".
->   - Click the "Create repository from template" button and you're done!
-
-<a id="Documentation"></a>
+Each effect is governed by estimated elasticity based on count data. These values are not included
+in this repository.
 
 ## Documentation
 
@@ -60,30 +38,31 @@ Links to all relevant documentation files, including:
 
 ## License
 
-> Choose a license that meets the organization's legal requirements and supports the sharing and modification of the code.
-> Please follow the internal Open Source guidelines while chosing the License.
-> This repository includes two [suggested license texts](./suggested_licenses) (Apache 2.0 and EPL 2.0). Rename the license you prefer to [LICENSE.md](LICENSE.md) and remove the other one.
-
-This project is licensed under [INSERT LICENSE].
+This project is licensed under the GPL (General Public License) .
 
 <a id="Contributing"></a>
 
 ## Contributing
 
-Open-source projects thrive on collaboration and contributions from the community. To encourage others to contribute to your project, you should provide clear guidelines on how to get involved.
+Open-source projects thrive on collaboration and contributions from the community. To encourage
+others to contribute to your project, you should provide clear guidelines on how to get involved.
 
-This repository includes a [CONTRIBUTING.md](CONTRIBUTING.md) file that outlines how to contribute to the project, including how to submit bug reports, feature requests, and pull requests.
+This repository includes a [CONTRIBUTING.md](CONTRIBUTING.md) file that outlines how to contribute
+to the project, including how to submit bug reports, feature requests, and pull requests.
 
 <a id="coding-standards"></a>
 
 ## Coding Standards
 
-To maintain a high level of code quality and consistency across your project, you should establish coding standards that all contributors should follow.
+To maintain a high level of code quality and consistency across your project, you should establish
+coding standards that all contributors should follow.
 
-This repository includes a [CODING_STANDARDS.md](CODING_STANDARDS.md) file that outlines the coding standards that you should follow when contributing to the project.
+This repository includes a [CODING_STANDARDS.md](CODING_STANDARDS.md) file that outlines the coding
+standards that you should follow when contributing to the project.
 
 <a id="code-of-conduct"></a>
 
 ## Code of Conduct
 
-To ensure that your project is a welcoming and inclusive environment for all contributors, you should establish a good [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+To ensure that your project is a welcoming and inclusive environment for all contributors, you
+should establish a good [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
