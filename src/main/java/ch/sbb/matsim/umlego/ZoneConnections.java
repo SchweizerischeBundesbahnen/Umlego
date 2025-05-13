@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.matsim.api.core.v01.Id;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.MinimalTransferTimes;
@@ -85,7 +84,7 @@ public final class ZoneConnections {
             csvReader.skip(1);
             return csvReader.readAll();
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new RuntimeException(e);
         } catch (CsvException e) {
             throw new RuntimeIOException(e);
         }

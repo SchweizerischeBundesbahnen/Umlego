@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.eclipse.jetty.io.RuntimeIOException;
 
 public class ZonesLookupParser {
 
@@ -41,7 +40,7 @@ public class ZonesLookupParser {
                 zonalLookup.put(name, id);
             }
         } catch (IOException | CsvException e) {
-            throw new RuntimeIOException(e);
+            throw new RuntimeException(e);
         }
         return zonalLookup;
     }
