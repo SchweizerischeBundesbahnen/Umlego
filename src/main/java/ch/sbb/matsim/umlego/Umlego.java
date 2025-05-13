@@ -65,13 +65,13 @@ public class Umlego {
         this.stopsPerZone = stopsPerZone;
     }
 
-    public void run(UmlegoParameters params, int threadCount, String outputFolder, LocalDate targetDate) throws ZoneNotFoundException {
+    public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
         // TODO ?: Why null values and not just delete the param on the run method?
-        run(null, null, params, threadCount, outputFolder, targetDate);
+        run(null, null, params, threadCount, outputFolder);
     }
 
     public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount,
-        String outputFolder, LocalDate targetDate) throws ZoneNotFoundException {
+        String outputFolder) throws ZoneNotFoundException {
         List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
             : new ArrayList<>(originZones);
         originZoneIds.sort(String::compareTo);
@@ -141,7 +141,7 @@ public class Umlego {
         // start writer threads
 
         UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds, destinationZoneIds,
-            params.writer, targetDate);
+            params.writer);
         new Thread(writerManager).start();
 
         // submit work items into queues

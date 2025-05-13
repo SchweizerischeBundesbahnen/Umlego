@@ -91,7 +91,7 @@ public class UmlegoITTest {
         var listener = new UmlegoITListener(LAUSANNE, GENEVE);
         params.writer().listeners().add(listener);
 
-        umlego.run(params, 1, "", null, null);
+        umlego.run(params, 1, "");
 
         for (var route : listener.routes) {
             var d = route.demand.getOrDefault(GENEVE, 0.);

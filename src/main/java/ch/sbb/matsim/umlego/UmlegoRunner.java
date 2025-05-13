@@ -47,7 +47,6 @@ public class UmlegoRunner {
     private final DemandMatrices demand;
     private final UmlegoParameters params;
     private final int threads;
-    private final LocalDate targetDate;
 
     /**
      * Main method to start Umlego.
@@ -110,7 +109,6 @@ public class UmlegoRunner {
         this.demand = DemandManager.prepareDemand(zonesFile, demandMatricesPath, factorMatrix);
         this.params = createUmlegoParameters(scenario.getTransitSchedule(), writers);
         this.threads = threads;
-        this.targetDate = null;
     }
 
     public UmlegoRunner(
@@ -132,14 +130,13 @@ public class UmlegoRunner {
         this.demand = DemandManager.prepareDemand(zonesFile, factorMatrix);
         this.params = createUmlegoParameters(scenario.getTransitSchedule(), writers);
         this.threads = threads;
-        this.targetDate = targetDate;
     }
 
     public void run() throws ZoneNotFoundException {
         long startTime = System.currentTimeMillis();
 
         // Run Umlego simulation
-        new Umlego(demand, scenario, stopsPerZone).run(params, threads, outputFolder, targetDate);
+        new Umlego(demand, scenario, stopsPerZone).run(params, threads, outputFolder);
 
         long endTime = System.currentTimeMillis();
         LOG.info("Total time: {} seconds", (endTime - startTime) / 1000.0);

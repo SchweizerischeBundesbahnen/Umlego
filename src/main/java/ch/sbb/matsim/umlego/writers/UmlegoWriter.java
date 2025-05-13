@@ -11,7 +11,6 @@ import ch.sbb.matsim.umlego.writers.types.skim.Skim;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,19 +31,17 @@ public class UmlegoWriter implements Runnable {
     private final List<String> originZoneIds;
     private final List<String> destinationZoneIds;
     private final WriterParameters params;
-    private final LocalDate targetDate;
     private final CompletableFuture<UnroutableDemand> futureUnroutableDemand = new CompletableFuture<>();
     private final CompletableFuture<Skim> futureSkim = new CompletableFuture<>();
     private final CompletableFuture<Map<String, Double>> futureGlobalStats = new CompletableFuture<>();
 
     public UmlegoWriter(BlockingQueue<Future<WorkResult>> queue, String outputFolder, List<String> originZoneIds,
-        List<String> destinationZoneIds, WriterParameters params, LocalDate targetDate) {
+        List<String> destinationZoneIds, WriterParameters params) {
         this.queue = queue;
         this.outputFolder = outputFolder;
         this.originZoneIds = originZoneIds;
         this.destinationZoneIds = destinationZoneIds;
         this.params = params;
-        this.targetDate = targetDate;
     }
 
     @Override
