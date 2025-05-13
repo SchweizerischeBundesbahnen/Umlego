@@ -5,7 +5,6 @@ import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.io.RuntimeIOException;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +49,7 @@ public class CsvDemandFolderMatrixParser extends AbstractCsvMatrixParser impleme
             }
             return csvEntriesToDemandMatrices(csvEntriesMap);
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new RuntimeException(e);
         }
     }
 

@@ -120,7 +120,6 @@ public class UmlegoRunner {
         String networkFile,
         Set<UmlegoWriterType> writers,
         int threads,
-        LocalDate targetDate,
         String... factorMatrix) throws IOException, ZoneNotFoundException {
         UmlegoLogger.setOutputFolder(outputFolder);
         ensureDir(outputFolder);

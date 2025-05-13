@@ -4,7 +4,6 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-import org.eclipse.jetty.io.RuntimeIOException;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -48,7 +47,7 @@ public class CsvMultiMatrixDemandParser extends AbstractCsvMatrixParser implemen
             }
             return demandMatrices;
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new RuntimeException(e);
         }
     }
 
