@@ -86,7 +86,7 @@ public final class ZoneConnections {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (CsvException e) {
-            throw new RuntimeIOException(e);
+            throw new RuntimeException(e);
         }
     }
 
