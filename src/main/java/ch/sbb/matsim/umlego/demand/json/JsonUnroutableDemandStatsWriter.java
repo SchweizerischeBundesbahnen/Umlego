@@ -1,10 +1,10 @@
 package ch.sbb.matsim.umlego.demand.json;
 
-import ch.sbb.matsim.umlego.config.hadoop.FileSystemUtil;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandStats;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandZone;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.writers.UnroutableDemandStatsWriter;
+import java.io.FileWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -28,8 +28,8 @@ public class JsonUnroutableDemandStatsWriter implements UnroutableDemandStatsWri
     @Override
     public void write(UnroutableDemandStats stats) {
         LOG.info("Writing unroutable demand metadata to JSON");
-        
-        try (BufferedWriter writer = FileSystemUtil.getBufferedWriter(getOutputFilePath())) {
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(getOutputFilePath()))) {
             JSONObject json = new JSONObject();
             UnroutableDemandZone largestZone = stats.largestUnroutableDemandZone();
             

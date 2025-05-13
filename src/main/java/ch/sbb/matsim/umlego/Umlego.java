@@ -1,9 +1,5 @@
 package ch.sbb.matsim.umlego;
 
-import static ch.sbb.matsim.umlego.config.UmlegoConfig.isRunningLocally;
-import static ch.sbb.matsim.umlego.config.snowflake.SnowflakeConfig.closeConnection;
-import static ch.sbb.matsim.umlego.config.snowflake.SnowflakeConfig.connect;
-
 import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
@@ -16,20 +12,16 @@ import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-import ch.sbb.matsim.umlego.demand.UnroutableDemandStats;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
-import ch.sbb.matsim.umlego.demand.json.JsonUnroutableDemandStatsWriter;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.writers.UmlegoListenerInterface;
 import ch.sbb.matsim.umlego.writers.UmlegoWriter;
-import ch.sbb.matsim.umlego.writers.jdbc.JdbcUnroutableDemandStatsWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,19 +65,19 @@ public class Umlego {
         this.stopsPerZone = stopsPerZone;
     }
 
-    public void run(UmlegoParameters params, int threadCount, String outputFolder, String runId, LocalDate targetDate) throws ZoneNotFoundException {
+    public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
         // TODO ?: Why null values and not just delete the param on the run method?
-        run(null, null, params, threadCount, outputFolder, runId, targetDate);
+        run(null, null, params, threadCount, outputFolder);
     }
 
     public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount,
-            String outputFolder, String runId, LocalDate targetDate) throws ZoneNotFoundException {
+        String outputFolder) throws ZoneNotFoundException {
         List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-                : new ArrayList<>(originZones);
+            : new ArrayList<>(originZones);
         originZoneIds.sort(String::compareTo);
         List<String> destinationZoneIds =
-                destinationZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-                        : new ArrayList<>(destinationZones);
+            destinationZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
+                : new ArrayList<>(destinationZones);
         destinationZoneIds.sort(String::compareTo);
 
         // detect relevant stops
@@ -93,7 +85,7 @@ public class Umlego {
         IntSet destinationStopIndices = new IntOpenHashSet();
         for (String zoneId : destinationZoneIds) {
             List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, emptyList).stream()
-                    .map(ConnectedStop::stopFacility).toList();
+                .map(ConnectedStop::stopFacility).toList();
             for (TransitStopFacility stop : stops) {
                 destinationStopIndices.add(stop.getId().index());
             }
@@ -122,7 +114,7 @@ public class Umlego {
         // make sure SwissRailRaptor does not add any more transfers than what is specified in minimal transfer times:
         raptorConfig.setBeelineWalkConnectionDistance(10.0);
         SwissRailRaptorData raptorData = SwissRailRaptorData.create(this.scenario.getTransitSchedule(),
-                this.scenario.getTransitVehicles(), raptorConfig, this.scenario.getNetwork(), null);
+            this.scenario.getTransitVehicles(), raptorConfig, this.scenario.getNetwork(), null);
 
         // prepare queues with work items
 		/* Writing might actually be slower than the computation, resulting in more and more
@@ -141,15 +133,15 @@ public class Umlego {
         for (int i = 0; i < threads.length; i++) {
             SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
             threads[i] = new Thread(
-                    new UmlegoWorker(workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
-                            this.stopsPerZone, stopLookupPerDestination));
+                new UmlegoWorker(workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
+                    this.stopsPerZone, stopLookupPerDestination));
             threads[i].start();
         }
 
         // start writer threads
 
         UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds, destinationZoneIds,
-                params.writer, runId, targetDate);
+            params.writer);
         new Thread(writerManager).start();
 
         // submit work items into queues
@@ -174,92 +166,75 @@ public class Umlego {
         }
 
         UnroutableDemand unroutableDemand = writerManager.getUnroutableDemand();
-        UnroutableDemandWriter demandWriter = UnroutableDemandWriterFactory.createWriter(outputFolder, runId,
-                targetDate);
+        UnroutableDemandWriter demandWriter = UnroutableDemandWriterFactory.createWriter(outputFolder);
         demandWriter.write(unroutableDemand);
-
-        //UnroutableDemandStats unroutableDemandStats = new UnroutableDemandStats(unroutableDemand, this.demand);
-        //writeUnroutableDemandMetadata(unroutableDemandStats, runId, targetDate, outputFolder);
-    }
-
-    public void writeUnroutableDemandMetadata(UnroutableDemandStats stats, String runId, LocalDate targetDate,
-            String outputFolder) throws ZoneNotFoundException {
-        LOG.info("Writing unroutable demand stats JSON");
-        new JsonUnroutableDemandStatsWriter(outputFolder).write(stats);
-
-        if (!isRunningLocally()) {
-            LOG.info("Writing unroutable demand stats to database");
-            Connection connection = connect();
-            new JdbcUnroutableDemandStatsWriter(connection, runId, targetDate).write(stats);
-            closeConnection(connection);
-        }
     }
 
     public record SearchImpedanceParameters(
-            double betaInVehicleTime,
-            double betaAccessTime,
-            double betaEgressTime,
-            double betaWalkTime,
-            double betaTransferWaitTime,
-            double betaTransferCount
+        double betaInVehicleTime,
+        double betaAccessTime,
+        double betaEgressTime,
+        double betaWalkTime,
+        double betaTransferWaitTime,
+        double betaTransferCount
     ) {
 
     }
 
     public record PreselectionParameters(
-            double betaMinImpedance,
-            double constImpedance
+        double betaMinImpedance,
+        double constImpedance
     ) {
 
     }
 
     public record PerceivedJourneyTimeParameters(
-            double betaInVehicleTime,
-            double betaAccessTime,
-            double betaEgressTime,
-            double betaWalkTime,
-            double betaTransferWaitTime,
-            double transferFix,
-            double transferTraveltimeFactor,
-            double secondsPerAdditionalStop
+        double betaInVehicleTime,
+        double betaAccessTime,
+        double betaEgressTime,
+        double betaWalkTime,
+        double betaTransferWaitTime,
+        double transferFix,
+        double transferTraveltimeFactor,
+        double secondsPerAdditionalStop
     ) {
 
     }
 
     public record RouteImpedanceParameters(
-            double betaPerceivedJourneyTime,
-            double betaDeltaTEarly,
-            double betaDeltaTLate
+        double betaPerceivedJourneyTime,
+        double betaDeltaTEarly,
+        double betaDeltaTLate
     ) {
 
     }
 
     public record RouteSelectionParameters(
-            boolean limitSelectionToTimewindow,
-            double beforeTimewindow,
-            double afterTimewindow,
-            RouteUtilityCalculator utilityCalculator
+        boolean limitSelectionToTimewindow,
+        double beforeTimewindow,
+        double afterTimewindow,
+        RouteUtilityCalculator utilityCalculator
     ) {
 
     }
 
     public record WriterParameters(
-            double minimalDemandForWriting,
-            Set<UmlegoWriterType> writerTypes,
-            TransitSchedule schedule,
-            List<UmlegoListenerInterface> listeners
+        double minimalDemandForWriting,
+        Set<UmlegoWriterType> writerTypes,
+        TransitSchedule schedule,
+        List<UmlegoListenerInterface> listeners
     ) {
 
     }
 
     public record UmlegoParameters(
-            int maxTransfers,
-            SearchImpedanceParameters search,
-            PreselectionParameters preselection,
-            PerceivedJourneyTimeParameters pjt,
-            RouteImpedanceParameters impedance,
-            RouteSelectionParameters routeSelection,
-            WriterParameters writer
+        int maxTransfers,
+        SearchImpedanceParameters search,
+        PreselectionParameters preselection,
+        PerceivedJourneyTimeParameters pjt,
+        RouteImpedanceParameters impedance,
+        RouteSelectionParameters routeSelection,
+        WriterParameters writer
     ) {
 
     }
@@ -333,10 +308,10 @@ public class Umlego {
             }
             FoundRoute that = (FoundRoute) o;
             boolean isEqual = Double.compare(depTime, that.depTime) == 0
-                    && Double.compare(arrTime, that.arrTime) == 0
-                    && transfers == that.transfers
-                    && Objects.equals(originStop.getId(), that.originStop.getId())
-                    && Objects.equals(destinationStop.getId(), that.destinationStop.getId());
+                && Double.compare(arrTime, that.arrTime) == 0
+                && transfers == that.transfers
+                && Objects.equals(originStop.getId(), that.originStop.getId())
+                && Objects.equals(destinationStop.getId(), that.destinationStop.getId());
             if (isEqual) {
                 // also check route parts
                 for (int i = 0; i < routeParts.size(); i++) {
@@ -344,12 +319,12 @@ public class Umlego {
                     RaptorRoute.RoutePart routePartThat = that.routeParts.get(i);
 
                     boolean partIsEqual =
-                            ((routePartThis.line == null && routePartThat.line == null) || (routePartThis.line != null
-                                    && routePartThat.line != null && Objects.equals(routePartThis.line.getId(),
-                                    routePartThat.line.getId())))
-                                    && ((routePartThis.route == null && routePartThat.route == null) || (
-                                    routePartThis.route != null && routePartThat.route != null && Objects.equals(
-                                            routePartThis.route.getId(), routePartThat.route.getId())));
+                        ((routePartThis.line == null && routePartThat.line == null) || (routePartThis.line != null
+                            && routePartThat.line != null && Objects.equals(routePartThis.line.getId(),
+                            routePartThat.line.getId())))
+                            && ((routePartThis.route == null && routePartThat.route == null) || (
+                            routePartThis.route != null && routePartThat.route != null && Objects.equals(
+                                routePartThis.route.getId(), routePartThat.route.getId())));
                     if (!partIsEqual) {
                         return false;
                     }

@@ -15,7 +15,6 @@ import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.readers.DemandManager;
-import ch.sbb.matsim.umlego.util.RunId;
 import com.google.common.collect.Table;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,9 +47,6 @@ public class UmlegoRunner {
     private final DemandMatrices demand;
     private final UmlegoParameters params;
     private final int threads;
-    private final String runId;
-    private final String saisonBaseId;
-    private final LocalDate targetDate;
 
     /**
      * Main method to start Umlego.
@@ -113,13 +109,9 @@ public class UmlegoRunner {
         this.demand = DemandManager.prepareDemand(zonesFile, demandMatricesPath, factorMatrix);
         this.params = createUmlegoParameters(scenario.getTransitSchedule(), writers);
         this.threads = threads;
-        this.runId = null;
-        this.saisonBaseId = null;
-        this.targetDate = null;
     }
 
     public UmlegoRunner(
-        RunId runId,
         String outputFolder,
         String zonesFile,
         String zoneConnectionsFile,
@@ -128,8 +120,6 @@ public class UmlegoRunner {
         String networkFile,
         Set<UmlegoWriterType> writers,
         int threads,
-        String saisonBaseId,
-        String saison,
         LocalDate targetDate,
         String... factorMatrix) throws IOException, ZoneNotFoundException {
         UmlegoLogger.setOutputFolder(outputFolder);
@@ -137,19 +127,16 @@ public class UmlegoRunner {
         this.outputFolder = outputFolder;
         this.scenario = loadScenario(scheduleFile, vehiclesFile, networkFile);
         this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
-        this.demand = DemandManager.prepareDemand(zonesFile, saisonBaseId, saison, factorMatrix);
+        this.demand = DemandManager.prepareDemand(zonesFile, factorMatrix);
         this.params = createUmlegoParameters(scenario.getTransitSchedule(), writers);
         this.threads = threads;
-        this.runId = runId.getValue();
-        this.saisonBaseId = saisonBaseId;
-        this.targetDate = targetDate;
     }
 
     public void run() throws ZoneNotFoundException {
         long startTime = System.currentTimeMillis();
 
         // Run Umlego simulation
-        new Umlego(demand, scenario, stopsPerZone).run(params, threads, outputFolder, runId, targetDate);
+        new Umlego(demand, scenario, stopsPerZone).run(params, threads, outputFolder);
 
         long endTime = System.currentTimeMillis();
         LOG.info("Total time: {} seconds", (endTime - startTime) / 1000.0);

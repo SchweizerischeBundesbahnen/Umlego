@@ -20,8 +20,10 @@
 package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.config.hadoop.FileSystemUtil;
 import com.opencsv.CSVWriter;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import org.matsim.core.utils.misc.Time;
 
 public class UmlegoCsvWriter implements UmlegoWriterInterface {
@@ -45,9 +47,9 @@ public class UmlegoCsvWriter implements UmlegoWriterInterface {
     private final boolean writeDetails;
     private final CSVWriter writer;
 
-    public UmlegoCsvWriter(String filename, boolean writeDetails) {
+    public UmlegoCsvWriter(String filename, boolean writeDetails) throws IOException {
         this.writeDetails = writeDetails;
-        this.writer = new CSVWriter(FileSystemUtil.getBufferedWriter(filename), ',', '"', '\\', "\n");
+        this.writer = new CSVWriter( new BufferedWriter(new FileWriter(filename)) , ',', '"', '\\', "\n");
         this.writer.writeNext(HEADER_ROW);
     }
 

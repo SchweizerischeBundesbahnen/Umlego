@@ -20,7 +20,6 @@
 package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.config.hadoop.FileSystemUtil;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
 import ch.sbb.matsim.umlego.writers.types.skim.SkimCalculator;
 import ch.sbb.matsim.umlego.writers.types.skim.SkimDemand;
@@ -31,6 +30,8 @@ import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedAdaptationTime;
 import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedJourneyTime;
 import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedTransfers;
 import com.opencsv.CSVWriter;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,8 +50,7 @@ public class UmlegoSkimWriter implements UmlegoWriterInterface {
     String filename;
 
     /**
-     * Writes skim matrices to a CSV file. For each origin and destination zone
-     * the following Skims are calculated:
+     * Writes skim matrices to a CSV file. For each origin and destination zone the following Skims are calculated:
      * <ul>
      *     <li>Demand</li>
      *     <li>Journey time</li>
@@ -59,7 +59,7 @@ public class UmlegoSkimWriter implements UmlegoWriterInterface {
      *     <li>Weighted transfers</li>
      *     <li>Weighted adaptation time</li>
      * </ul>
-     *
+     * <p>
      * The file is written when the {@link #close()} method is called.
      *
      * @param filename the name of the file to write the skim matrices to
@@ -104,7 +104,8 @@ public class UmlegoSkimWriter implements UmlegoWriterInterface {
     @Override
     public void close() throws Exception {
         LOG.info("Writing skim matrices...");
-        var writer = new CSVWriter(FileSystemUtil.getBufferedWriter(filename), ',', '"', '\\', "\n");
+
+        var writer = new CSVWriter(new BufferedWriter(new FileWriter(filename)), ',', '"', '\\', "\n");
 
         writer.writeNext(createHeaderRow());
 
