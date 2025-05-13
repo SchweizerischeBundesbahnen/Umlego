@@ -4,7 +4,6 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,11 +17,11 @@ public final class DemandManager {
 
     private static final Logger LOG = LogManager.getLogger(DemandManager.class);
 
-    private DemandManager() {}
+    private DemandManager() {
+    }
 
     /**
-     * Static method to prepare demand matrices by loading the base demand matrices
-     * and applying correction factors based on provided files.
+     * Static method to prepare demand matrices by loading the base demand matrices and applying correction factors based on provided files.
      *
      * @param zonesFile the path to the zones file used for lookup
      * @param demandMatricesPath the path to the base demand matrices
@@ -33,23 +32,20 @@ public final class DemandManager {
      */
     public static DemandMatrices prepareDemand(String zonesFile, String demandMatricesPath, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, demandMatricesPath, null, null, factorMatriceFilenames);
+        return demandManager.execute(zonesFile, demandMatricesPath, factorMatriceFilenames);
     }
 
     /**
      * Same as above, but with params:
      *
-     * @param simbaRunId the identifier for the specified Simba-Run
-     * @param saison the season identifier used for matrix parsing
      */
-    public static DemandMatrices prepareDemand(String zonesFile, String simbaRunId, String saison, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    public static DemandMatrices prepareDemand(String zonesFile, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, null, simbaRunId, saison, factorMatriceFilenames);
+        return demandManager.execute(zonesFile, null, factorMatriceFilenames);
     }
 
     /**
-     * Helper method to prepare demand matrices by loading base matrices
-     * and applying correction factors based on provided file paths.
+     * Helper method to prepare demand matrices by loading base matrices and applying correction factors based on provided file paths.
      *
      * @param zonesFile the path to the zones file used for lookup
      * @param demandMatricesPath the path to the base demand matrices
@@ -58,9 +54,9 @@ public final class DemandManager {
      * @throws IOException if an I/O error occurs during loading or applying correction factors
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
-    private DemandMatrices execute(String zonesFile, String demandMatricesPath, String simbaRunId, String saison, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    private DemandMatrices execute(String zonesFile, String demandMatricesPath, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         ZonesLookup zonesLookup = loadZoneLookupFile(zonesFile);
-        DemandMatrices demandMatrices = loadDemandMatrices(demandMatricesPath, simbaRunId, saison, zonesLookup);
+        DemandMatrices demandMatrices = loadDemandMatrices(demandMatricesPath, zonesLookup);
         loadAndApplyCorrectionFactors(demandMatrices, factorMatriceFilenames);
         return demandMatrices;
     }
@@ -70,14 +66,13 @@ public final class DemandManager {
         return new ZonesLookup(zonesFile);
     }
 
-    private DemandMatrices loadDemandMatrices(String baseMatricesPath, String simbaRunId, String saison, ZonesLookup zonesLookup) throws IOException, ZoneNotFoundException {
-        DemandMatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, simbaRunId, saison, zonesLookup);
+    private DemandMatrices loadDemandMatrices(String baseMatricesPath, ZonesLookup zonesLookup) throws IOException, ZoneNotFoundException {
+        DemandMatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zonesLookup);
         return parser.parse();
     }
 
     /**
-     * Applies correction factors to the demand matrices by parsing each factor matrix file
-     * and multiplying the demand matrices with the parsed factors.
+     * Applies correction factors to the demand matrices by parsing each factor matrix file and multiplying the demand matrices with the parsed factors.
      *
      * @param demandMatrices the demand matrices to which correction factors are applied
      * @param factorMatriceFilenames paths to the correction factor matrix files

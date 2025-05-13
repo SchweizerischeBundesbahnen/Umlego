@@ -21,12 +21,13 @@ package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.config.hadoop.FileSystemUtil;
 import ch.sbb.matsim.umlego.writers.types.volume.Journey;
 import ch.sbb.matsim.umlego.writers.types.volume.JourneyItem;
 import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
 import com.opencsv.CSVWriter;
 import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -180,8 +181,7 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
     @Override
     public void close() throws Exception {
         LOG.info("Writing BLP matrices...");
-
-        BufferedWriter bufferedWriter = FileSystemUtil.getBufferedWriter(filename);
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
         CSVWriter writer = new CSVWriter(bufferedWriter, ',', '"', '\\', "\n");
         writer.writeNext(HEADER_ROW);
 

@@ -1,24 +1,17 @@
 package ch.sbb.matsim.umlego.matrix;
 
-import ch.sbb.matsim.umlego.config.hadoop.FileSystemUtil;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.eclipse.jetty.io.RuntimeIOException;
-
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.eclipse.jetty.io.RuntimeIOException;
 
 public class ZonesLookupParser {
 
@@ -37,9 +30,8 @@ public class ZonesLookupParser {
 
     public Map<String, Integer> parseZones() {
         Map<String, Integer> zonalLookup = new HashMap<>();
-        try (FileSystem fs = FileSystemUtil.getFileSystem();
-             BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-             CSVReader csvReader = buildCSVReader(bufferedReader)) {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+            CSVReader csvReader = buildCSVReader(bufferedReader)) {
 
             csvReader.skip(1);
             List<String[]> lines = csvReader.readAll();

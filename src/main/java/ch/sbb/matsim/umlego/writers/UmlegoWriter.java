@@ -1,7 +1,5 @@
 package ch.sbb.matsim.umlego.writers;
 
-import static ch.sbb.matsim.umlego.config.UmlegoConfig.isRunningLocally;
-import static ch.sbb.matsim.umlego.config.snowflake.SnowflakeConfig.connect;
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
@@ -9,9 +7,6 @@ import ch.sbb.matsim.umlego.Umlego.WriterParameters;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-import ch.sbb.matsim.umlego.writers.jdbc.JdbcGlobalStatsWriter;
-import ch.sbb.matsim.umlego.writers.jdbc.JdbcSkimWriter;
-import ch.sbb.matsim.umlego.writers.jdbc.JdbcVolumeCarpetWriter;
 import ch.sbb.matsim.umlego.writers.types.skim.Skim;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,7 +19,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,20 +32,18 @@ public class UmlegoWriter implements Runnable {
     private final List<String> originZoneIds;
     private final List<String> destinationZoneIds;
     private final WriterParameters params;
-    private final String runId;
     private final LocalDate targetDate;
     private final CompletableFuture<UnroutableDemand> futureUnroutableDemand = new CompletableFuture<>();
     private final CompletableFuture<Skim> futureSkim = new CompletableFuture<>();
     private final CompletableFuture<Map<String, Double>> futureGlobalStats = new CompletableFuture<>();
 
     public UmlegoWriter(BlockingQueue<Future<WorkResult>> queue, String outputFolder, List<String> originZoneIds,
-        List<String> destinationZoneIds, WriterParameters params, String runId, LocalDate targetDate) {
+        List<String> destinationZoneIds, WriterParameters params, LocalDate targetDate) {
         this.queue = queue;
         this.outputFolder = outputFolder;
         this.originZoneIds = originZoneIds;
         this.destinationZoneIds = destinationZoneIds;
         this.params = params;
-        this.runId = runId;
         this.targetDate = targetDate;
     }
 
@@ -66,52 +58,22 @@ public class UmlegoWriter implements Runnable {
         ensureDir(outputFolder);
 
         return switch (type) {
-            case BLP -> createBlpWriter(runId);
-            case SKIM -> createSkimWriter(runId);
-            case STATS_JDBC -> createGlobalStatsJdbcWriter(runId);
-            case STATS_FILE -> createGlobalStatsFileWriter();
+            case BLP -> createBlpWriter();
+            case SKIM -> createSkimWriter();
             case CSV -> new UmlegoCsvWriter(Paths.get(this.outputFolder, "connections.csv.gz").toString(), true);
             case PutSurvey -> new PutSurveyWriter(Paths.get(this.outputFolder, "visum.net.gz").toString());
         };
     }
 
-    private UmlegoWriterInterface createBlpWriter(String runId) {
-        if (runId != null) {
-            return new JdbcVolumeCarpetWriter(connect(), runId, targetDate, params.schedule());
-        } else {
-            return new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(),
-                params.schedule());
-        }
+    private UmlegoWriterInterface createBlpWriter() {
+        return new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(),
+            params.schedule());
     }
 
-    private UmlegoWriterInterface createSkimWriter(String runId) {
-        if (!isRunningLocally()) {
-            return new JdbcSkimWriter(connect(), runId, targetDate);
-        } else {
-            return new UmlegoSkimWriter(Paths.get(this.outputFolder, "skims.csv.gz").toString());
-        }
+    private UmlegoWriterInterface createSkimWriter() {
+        return new UmlegoSkimWriter(Paths.get(this.outputFolder, "skims.csv.gz").toString());
     }
 
-    private UmlegoWriterInterface createGlobalStatsJdbcWriter(String runId) {
-        return new JdbcGlobalStatsWriter(connect(), runId, targetDate);
-    }
-
-    private UmlegoWriterInterface createGlobalStatsFileWriter() {
-        return new GlobalStatsWriter(Paths.get(this.outputFolder, "stats.json").toString());
-    }
-
-    private UmlegoWriterInterface createWriter(Supplier<UmlegoWriterInterface> dbWriterSupplier,
-        Supplier<UmlegoWriterInterface> fileWriterSupplier) {
-        try {
-            if (!isRunningLocally()) {
-                return dbWriterSupplier.get();
-            } else {
-                return fileWriterSupplier.get();
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to create writer", e);
-        }
-    }
 
     private UmlegoWriters getWriters() throws IOException {
         var writers = params.writerTypes().stream().map(type -> {
@@ -230,15 +192,6 @@ public class UmlegoWriter implements Runnable {
             this.writers.forEach(w -> {
                 try {
                     w.close();
-                    if (w instanceof JdbcSkimWriter) {
-                        Skim skim = ((JdbcSkimWriter) w).getSkims();
-                        LOG.info("Completed futureSkim: " + skim);
-                        futureSkim.complete(skim);
-                    } else if (w instanceof JdbcGlobalStatsWriter) {
-                        Map<String, Double> globalStats = ((JdbcGlobalStatsWriter) w).getGlobalStats();
-                        LOG.info("Completed futureGlobalStats: " + globalStats);
-                        futureGlobalStats.complete(globalStats);
-                    }
                 } catch (Exception exception) {
                     throw new RuntimeException(exception);
                 }

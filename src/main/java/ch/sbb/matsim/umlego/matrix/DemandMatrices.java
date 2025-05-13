@@ -1,6 +1,5 @@
 package ch.sbb.matsim.umlego.matrix;
 
-import ch.sbb.matsim.umlego.readers.jdbc.TimesliceRepository;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -128,19 +127,6 @@ public class DemandMatrices {
      */
     public List<String> getMatrixNames() {
         return this.matrices.values().stream().map(AbstractMatrix::getName).toList();
-    }
-
-    public void addMatrix(int index, List<TimesliceRepository.TimesliceJdbcEntry> entries, double defaultValue) throws ZoneNotFoundException {
-        DemandMatrix matrix = getMatrices().get(index);
-        if (matrix == null) {
-            double[][] data = MatrixUtil.convertToDataArrayJdbc(getLookup(), entries, true, defaultValue);
-            int startTimeMin = MatrixUtil.matrixIndexToMinutes(index);
-            DemandMatrix demandMatrix = new DemandMatrix(startTimeMin, startTimeMin + MatrixUtil.TIME_SLICE_MIN, data);
-            getMatrices().put(index, demandMatrix);
-        } else {
-            matrix.reset(defaultValue);
-            matrix.setData(entries, getLookup(), true);
-        }
     }
 
     public double getOriginSum(String zoneId) throws ZoneNotFoundException {

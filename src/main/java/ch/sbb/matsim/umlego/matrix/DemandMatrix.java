@@ -1,14 +1,9 @@
 package ch.sbb.matsim.umlego.matrix;
 
-import ch.sbb.matsim.umlego.readers.jdbc.TimesliceRepository;
+import static ch.sbb.matsim.umlego.matrix.MatrixUtil.minutesToMatrixName;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.minutesToMatrixName;
 
 public class DemandMatrix extends AbstractMatrix {
 
@@ -16,7 +11,6 @@ public class DemandMatrix extends AbstractMatrix {
 
     private int startTimeInclusiveMin;
     private int endTimeExclusiveMin;
-
 
     /**
      * Constructs a DemandMatrix object for the specified start and end times.
@@ -46,35 +40,4 @@ public class DemandMatrix extends AbstractMatrix {
         return endTimeExclusiveMin;
     }
 
-
-    public void setData(List<TimesliceRepository.TimesliceJdbcEntry> entries, ZonesLookup zonesLookup, boolean ignoreExcessZones) throws ZoneNotFoundException {
-        Set<String> invalidZoneIds = new HashSet<>();
-        for (TimesliceRepository.TimesliceJdbcEntry entry : entries) {
-            int fromIndex = zonesLookup.getIndex(entry.from(), invalidZoneIds, ignoreExcessZones);;
-            int toIndex = -1;
-            try {
-                fromIndex = zonesLookup.getIndex(entry.from());
-            } catch (ZoneNotFoundException e) {
-                if (!ignoreExcessZones) {
-                    throw e;
-                }
-                invalidZoneIds.add(entry.from());
-            }
-            try {
-                toIndex = zonesLookup.getIndex(entry.to());
-            } catch (ZoneNotFoundException e) {
-                if (!ignoreExcessZones) {
-                    throw e;
-                }
-                invalidZoneIds.add(entry.to());
-            }
-            if (fromIndex >= 0 && toIndex >= 0) {
-                getData()[fromIndex][toIndex] = entry.value();
-            }
-        }
-
-        if (!invalidZoneIds.isEmpty()) {
-            LOG.warn("The following Zone IDs weren't expected and are ignored: {}", invalidZoneIds);
-        }
-    }
 }
