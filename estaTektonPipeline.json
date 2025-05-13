@@ -1,0 +1,91 @@
+{
+  "$schema": "https://clew-resources.sbb-cloud.net/tekton-schema.json",
+  "productName": "umlego",
+  "mvn": {
+    "parentPom": "pom.xml",
+    "deployableArtifactsPom": "pom.xml",
+    "artifactoryMavenRepo": "simba.mvn"
+  },
+  "builder": {
+    "java": "21"
+  },
+  "docker": {
+    "artifactoryDockerRepo": "simba.docker",
+    "dockerFile": "docker/umlego/Dockerfile"
+  },
+  "pipelines": [
+    {
+      "name": "continuous",
+      "triggerType": [
+        "GITEVENT"
+      ],
+      "branchNamePatterns": [
+        "^feature.*",
+        "^bugfix.*"
+      ],
+      "build": {
+        "buildDockerImage": true,
+        "deployDockerImage": true,
+        "additionalDockerImageTags": [
+          "OTC_SNAPSHOT"
+        ],
+        "sonarScan": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "name": "continuous-release",
+      "triggerType": [
+        "GITEVENT"
+      ],
+      "branchNamePrefixes": [
+        "master"
+      ],
+      "tagging": {
+        "versionIncrementPosition": "patch"
+      }
+    },
+    {
+      "name": "integrationBuild",
+      "enabled": true,
+      "triggerType": [
+        "USER"
+      ],
+      "branchNamePatterns": [
+        "^master.*"
+      ],
+      "build": {
+        "buildDockerImage": true
+      }
+    },
+    {
+      "name": "release",
+      "triggerType": [
+        "GITEVENT", "USER"
+      ],
+      "versionTagEventPatterns": [
+        "^(\\d+\\.)?(\\d+\\.)?(0)$"
+      ],
+      "build": {
+        "buildDockerImage": true,
+        "deployDockerImage": true,
+        "additionalDockerImageTags": [
+          "OTC_INTE", "OTC_PROD"
+        ],
+        "sonarScan": {
+          "enabled": true
+        }
+      }
+    }
+  ],
+  "notifications": [
+    {
+      "type": "EMAIL",
+      "enabled": true,
+      "recipients": [
+        "$actor"
+      ]
+    }
+  ]
+}

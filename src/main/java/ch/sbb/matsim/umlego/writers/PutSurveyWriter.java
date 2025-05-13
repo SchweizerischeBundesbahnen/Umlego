@@ -1,0 +1,147 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2024 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
+
+package ch.sbb.matsim.umlego.writers;
+
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
+import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import org.matsim.core.utils.misc.Time;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class PutSurveyWriter implements UmlegoWriterInterface {
+
+    private static final String COL_PATH_ID = "$OEVTEILWEG:DATENSATZNR";
+    private static final String COL_LEG_ID = "TWEGIND";
+    private static final String COL_FROM_STOP = "VONHSTNR";
+    private static final String COL_TO_STOP = "NACHHSTNR";
+    private static final String COL_VSYSCODE = "VSYSCODE";
+    private static final String COL_LINNAME = "LINNAME";
+    private static final String COL_LINROUTENAME = "LINROUTENAME";
+    private static final String COL_RICHTUNGSCODE = "RICHTUNGSCODE";
+    private static final String COL_FZPROFILNAME = "FZPNAME";
+    private static final String COL_TEILWEG_KENNUNG = "TEILWEG-KENNUNG";
+    private static final String COL_EINHSTNR = "EINHSTNR";
+    private static final String COL_EINHSTABFAHRTSTAG = "EINHSTABFAHRTSTAG";
+    private static final String COL_EINHSTABFAHRTSZEIT = "EINHSTABFAHRTSZEIT";
+    private static final String COL_PFAHRT = "PFAHRT";
+    private static final String COL_QBEZIRK = "QBEZIRK";
+    private static final String COL_ZBEZIRK = "ZBEZIRK";
+    private static final String[] COLUMNS = new String[]{COL_PATH_ID, COL_LEG_ID, COL_FROM_STOP, COL_TO_STOP, COL_VSYSCODE, COL_LINNAME, COL_LINROUTENAME, COL_RICHTUNGSCODE, COL_FZPROFILNAME,
+        COL_TEILWEG_KENNUNG, COL_EINHSTNR, COL_EINHSTABFAHRTSTAG, COL_EINHSTABFAHRTSZEIT, COL_PFAHRT, COL_QBEZIRK, COL_ZBEZIRK};
+
+    private static final String HEADER = "$VISION\n* VisumInst\n* 10.11.06\n*\n*\n* Tabelle: Versionsblock\n$VERSION:VERSNR;FILETYPE;LANGUAGE;UNIT\n4.00;Att;DEU;KM\n*\n*\n* Tabelle: ÖV-Teilwege\n";
+
+    public static final String STOP_NO = "02_Stop_No";
+    public static final String TSYS_CODE = "09_TSysCode";
+    public static final String DIRECTION_CODE = "04_DirectionCode";
+    public static final String TRANSITLINE = "02_TransitLine";
+    public static final String LINEROUTENAME = "03_LineRouteName";
+    public static final String FZPNAME = "05_Name";
+    private final VisumTabularFileWriter writer;
+    private final AtomicInteger teilwegNr = new AtomicInteger();
+
+    /**
+     * The PutSurveyWriter writes the routes in a format that be later imported into Visum.
+     * TODO: combine with UmlegoCsvWriter.
+     *
+     * @param filename the name of the file to write the CSV data to
+     * @throws IOException if an I/O error occurs during file creation
+     */
+    public PutSurveyWriter(String filename) throws IOException {
+        this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
+    }
+
+    @Override
+    public void writeRoute(String fromZone, String toZone, FoundRoute route) {
+        String pathId = String.valueOf(this.teilwegNr.incrementAndGet());
+        int legId = 0;
+        String teilweg_kennung = "E"; // first teilweg should have E, all later ones N
+
+        double demand = route.demand.get(toZone);
+
+        for (RaptorRoute.RoutePart routePart : route.routeParts) {
+            if (routePart.line != null) {
+                legId++;
+                writeRow(routePart, legId, pathId, teilweg_kennung, fromZone, toZone, demand);
+                teilweg_kennung = "N";
+                while (routePart.chainedPart != null) {
+                    legId++;
+                    routePart = routePart.chainedPart;
+                    writeRow(routePart, legId, pathId, teilweg_kennung, fromZone, toZone, demand);
+                }
+            }
+        }
+
+    }
+
+    private void writeRow(RoutePart routePart, int legId, String pathId, String teilweg_kennung, String fromZone, String toZone, double demand) {
+        TransitRoute transitRoute = routePart.route;
+        String fromStop = String.valueOf(routePart.fromStop.getAttributes().getAttribute(STOP_NO));
+        String toStop = String.valueOf(routePart.toStop.getAttributes().getAttribute(STOP_NO));
+        String vsyscode = String.valueOf(transitRoute.getAttributes().getAttribute(TSYS_CODE));
+        String linname = String.valueOf(transitRoute.getAttributes().getAttribute(TRANSITLINE));
+        String linroutename = String.valueOf(transitRoute.getAttributes().getAttribute(LINEROUTENAME));
+        String richtungscode = String.valueOf(transitRoute.getAttributes().getAttribute(DIRECTION_CODE));
+
+        String fzprofilname = String.valueOf(transitRoute.getAttributes().getAttribute(FZPNAME));
+
+        // always use day = 1
+        String einhstabfahrtstag = "1";
+        //				String einhstabfahrtstag = getDayIndex(routePart.vehicleDepTime);
+        String einhstabfahrtszeit = getTime(routePart.vehicleDepTime);
+
+        writer.set(COL_PATH_ID, pathId);
+        writer.set(COL_LEG_ID, Integer.toString(legId));
+        writer.set(COL_FROM_STOP, fromStop);
+        writer.set(COL_TO_STOP, toStop);
+        writer.set(COL_VSYSCODE, vsyscode);
+        writer.set(COL_LINNAME, linname);
+        writer.set(COL_LINROUTENAME, linroutename);
+        writer.set(COL_RICHTUNGSCODE, richtungscode);
+        writer.set(COL_FZPROFILNAME, fzprofilname);
+        writer.set(COL_TEILWEG_KENNUNG, teilweg_kennung);
+        writer.set(COL_EINHSTNR, fromStop);
+        writer.set(COL_EINHSTABFAHRTSTAG, einhstabfahrtstag);
+        writer.set(COL_EINHSTABFAHRTSZEIT, einhstabfahrtszeit);
+        writer.set(COL_PFAHRT, Double.toString(demand));
+        writer.set(COL_QBEZIRK, fromZone);
+        writer.set(COL_ZBEZIRK, toZone);
+        writer.writeRow();
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.writer.close();
+    }
+
+    public static String getDayIndex(double time) {
+        int day = (int) Math.ceil(time / (24 * 60 * 60.0));
+        assert day > 0;
+        return Integer.toString(day);
+    }
+
+    public static String getTime(double time) {
+        double sec = time % (24 * 60 * 60);
+        return Time.writeTime(sec);
+    }
+}
