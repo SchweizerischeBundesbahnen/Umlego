@@ -305,16 +305,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <distributionManagement>
-        <repository>
-            <id>mvn</id>
-            <url>https://bin.sbb.ch/artifactory/simba.mvn/</url>
-        </repository>
-        <snapshotRepository>
-            <id>mvn</id>
-            <url>https://bin.sbb.ch/artifactory/simba.mvn/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
 </project>
