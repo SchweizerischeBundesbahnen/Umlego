@@ -80,7 +80,7 @@ jobs:
             /home/runner/work
           key: ${{ needs.build.outputs.cache_key }}
       - name: 📦 Deploy artifacts to GitHub Packages
-        run: mvn --batch-mode -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true deploy -P deploy-github-packages
+        run: mvn --batch-mode -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true deploy
       - name: 📦 Upload assets to GitHub Release
         env:
           RELEASE_VERSION: ${{ needs.build.outputs.project_version }}
