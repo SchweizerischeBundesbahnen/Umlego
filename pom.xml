@@ -11,6 +11,14 @@
     <name>${project.artifactId}</name>
     <description>MATSim for SIMBA MOBi</description>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Umlego Maven Packages</name>
+            <url>https://maven.pkg.github.com/SchweizerischeBundesbahnen/Umlego</url>
+        </repository>
+    </distributionManagement>
+
     <repositories>
 
         <repository>
