@@ -13,7 +13,7 @@ permissions:
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main" ]
 
@@ -36,3 +36,37 @@ jobs:
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+
+
+  # Deploy releases and snapshots for main branch to GitHub Packages
+  deploy-github-packages:
+    needs: build
+    runs-on: ubuntu-latest
+    #if: ${{ github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: 🧱 Set up JDK and Maven
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00  # v4.7.1
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: 💾 Restore cache using cache key
+        id: restore-cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
+        with:
+          path: |
+            /home/runner/.m2
+            /home/runner/work
+          key: ${{ needs.build.outputs.cache_key }}
+      - name: 📦 Deploy artifacts to GitHub Packages
+        run: mvn --batch-mode -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true deploy -P deploy-github-packages
+      - name: 📦 Upload assets to GitHub Release
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.project_version }}
+        if: ${{ !endsWith(env.RELEASE_VERSION, '-SNAPSHOT') }}
+        run: |-
+          gh release upload "v${RELEASE_VERSION}" "target/*-${RELEASE_VERSION}.jar" --clobber
