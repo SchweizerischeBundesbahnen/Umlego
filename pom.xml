@@ -6,10 +6,18 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ch.sbb.simba</groupId>
     <artifactId>umlego</artifactId>
-    <version>1.7.2</version>
+    <version>1.7.3-SNAPSHOT</version>
 
     <name>${project.artifactId}</name>
-    <description>MATSim for SIMBA MOBi</description>
+    <description>Macroscopic Demand Assignment for Public Transport.</description>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Umlego Maven Packages</name>
+            <url>https://maven.pkg.github.com/SchweizerischeBundesbahnen/Umlego</url>
+        </repository>
+    </distributionManagement>
 
     <repositories>
 
