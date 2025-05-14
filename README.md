@@ -1,4 +1,4 @@
-# Umelgo
+# Umlego
 
 Umlego is an extension of the open-source project MATSim. It integrates the SwissRailRapto module
 within MATSim to compute demand assignment based on Origin-Destination (OD) matrices.
