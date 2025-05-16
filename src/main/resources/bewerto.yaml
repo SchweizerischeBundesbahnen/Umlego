@@ -1,0 +1,18 @@
+
+# Bewerto configuration file, needs to be filled with actual values
+bewerto:
+
+  demandFile: ""
+  zoneNamesFile: ""
+  zoneConnectionsFile: ""
+  outputDir: ""
+
+  threads: -1
+
+  ref:
+    name: "ref"
+    scheduleFile: ""
+    vehiclesFile: ""
+    networkFile: ""
+
+  variants: []

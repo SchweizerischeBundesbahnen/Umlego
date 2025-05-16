@@ -34,7 +34,7 @@ public class UmlegoITTest {
         PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
         RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
         RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, RouteUtilityCalculators.boxcox(1.536, 0.5));
-        WriterParameters writer = new WriterParameters(1e-5, Set.of(), null, new ArrayList<>());
+        WriterParameters writer = new WriterParameters(1e-5, Set.of(), null);
         return new UmlegoParameters(5, search, preselection, pjt, impedance, routeSelection, writer);
 
     }
@@ -89,7 +89,8 @@ public class UmlegoITTest {
         var params = createUmlegoParameters();
 
         var listener = new UmlegoITListener(LAUSANNE, GENEVE);
-        params.writer().listeners().add(listener);
+
+        umlego.addListener(listener);
 
         umlego.run(params, 1, "");
 

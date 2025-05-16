@@ -1,14 +1,13 @@
 package ch.sbb.matsim.umlego.it;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.writers.UmlegoListenerInterface;
+import ch.sbb.matsim.umlego.UmlegoListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-public class UmlegoITListener implements UmlegoListenerInterface {
+public class UmlegoITListener implements UmlegoListener {
 
     public String fromZone;
     public String toZone;
@@ -19,8 +18,6 @@ public class UmlegoITListener implements UmlegoListenerInterface {
         this.toZone = toZone;
         this.routes = new ArrayList<FoundRoute>();
     }
-
-    private static final Logger LOG = LogManager.getLogger(UmlegoITListener.class);
 
     @Override
     public void processRoute(String origZone, String destZone, FoundRoute route) {

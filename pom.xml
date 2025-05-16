@@ -108,6 +108,37 @@
             <version>2.17.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>omx</groupId>
+            <artifactId>omx</artifactId>
+            <version>2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.9</version>
+        </dependency>
+
+        <!-- Command line parsing library -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.7.7</version>
+        </dependency>
+
+        <!-- Config library -->
+        <dependency>
+            <groupId>com.github.gestalt-config</groupId>
+            <artifactId>gestalt-core</artifactId>
+            <version>0.35.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.gestalt-config</groupId>
+            <artifactId>gestalt-yaml</artifactId>
+            <version>0.35.7</version>
+        </dependency>
+
 
         <!-- Include the JUnit testing library -->
         <dependency>
@@ -134,19 +165,6 @@
             <version>3.25.3</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>omx</groupId>
-            <artifactId>omx</artifactId>
-            <version>2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>5.9</version>
-        </dependency>
-
 
         <!-- Mockito JUnit Jupiter Integration -->
         <dependency>

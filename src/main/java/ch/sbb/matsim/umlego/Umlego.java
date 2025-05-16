@@ -16,20 +16,13 @@ import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.writers.UmlegoListenerInterface;
 import ch.sbb.matsim.umlego.writers.UmlegoWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -53,6 +46,11 @@ public class Umlego {
     private final Map<String, List<ConnectedStop>> stopsPerZone;
 
     /**
+     * List of listeners to be notified about found routes.
+     */
+    private final List<UmlegoListener> listeners = new LinkedList<>();
+
+    /**
      * Constructor.
      *
      * @param demand demand matrices
@@ -63,6 +61,36 @@ public class Umlego {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
+    }
+
+    /**
+     * Adds a listener to be notified about found routes.
+     *
+     * @param listener the listener to be added
+     */
+    public void addListener(UmlegoListener listener) {
+        if (this.listeners.contains(listener)) {
+            throw new IllegalArgumentException("Listener " + listener.getClass().getName() + " already registered.");
+        }
+
+        this.listeners.add(listener);
+    }
+
+    /**
+     * Retrieves the listener of the specified type from the collection of registered listeners.
+     *
+     * @param <T>   the type of the listener to retrieve, which must extend {@code UmlegoListener}
+     * @param type  the {@code Class} object representing the type of listener to search for
+     * @return an instance of the listener of the specified type
+     * @throws IllegalArgumentException if no listener of the specified type is found
+     */
+    public <T extends UmlegoListener> T getListener(Class<T> type) {
+        for (UmlegoListener listener : this.listeners) {
+            if (type.isInstance(listener)) {
+                return type.cast(listener);
+            }
+        }
+        throw new IllegalArgumentException("No listener of type " + type.getName() + " found.");
     }
 
     public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
@@ -139,9 +167,8 @@ public class Umlego {
         }
 
         // start writer threads
-
-        UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds, destinationZoneIds,
-            params.writer);
+        UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds,
+                destinationZoneIds, listeners, params.writer);
         new Thread(writerManager).start();
 
         // submit work items into queues
@@ -221,10 +248,8 @@ public class Umlego {
     public record WriterParameters(
         double minimalDemandForWriting,
         Set<UmlegoWriterType> writerTypes,
-        TransitSchedule schedule,
-        List<UmlegoListenerInterface> listeners
+        TransitSchedule schedule
     ) {
-
     }
 
     public record UmlegoParameters(

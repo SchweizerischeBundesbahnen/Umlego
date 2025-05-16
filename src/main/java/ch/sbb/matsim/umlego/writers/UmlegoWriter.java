@@ -4,10 +4,11 @@ import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
 import ch.sbb.matsim.umlego.Umlego.WriterParameters;
+import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-import ch.sbb.matsim.umlego.writers.types.skim.Skim;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Paths;
@@ -30,23 +31,30 @@ public class UmlegoWriter implements Runnable {
     private final String outputFolder;
     private final List<String> originZoneIds;
     private final List<String> destinationZoneIds;
+    private final List<UmlegoListener> listeners;
     private final WriterParameters params;
     private final CompletableFuture<UnroutableDemand> futureUnroutableDemand = new CompletableFuture<>();
-    private final CompletableFuture<Skim> futureSkim = new CompletableFuture<>();
-    private final CompletableFuture<Map<String, Double>> futureGlobalStats = new CompletableFuture<>();
 
-    public UmlegoWriter(BlockingQueue<Future<WorkResult>> queue, String outputFolder, List<String> originZoneIds,
-        List<String> destinationZoneIds, WriterParameters params) {
+    public UmlegoWriter(BlockingQueue<Future<WorkResult>> queue,
+                        String outputFolder, List<String> originZoneIds,
+                        List<String> destinationZoneIds,
+                        List<UmlegoListener> listeners,
+                        WriterParameters params) {
         this.queue = queue;
         this.outputFolder = outputFolder;
         this.originZoneIds = originZoneIds;
         this.destinationZoneIds = destinationZoneIds;
+        this.listeners = listeners;
         this.params = params;
     }
 
     @Override
     public void run() {
         UnroutableDemand unroutableDemand = writeRoutes();
+
+        // close all listeners
+        listeners.forEach(UmlegoListener::finish);
+
         this.futureUnroutableDemand.complete(unroutableDemand);
     }
 
@@ -120,7 +128,7 @@ public class UmlegoWriter implements Runnable {
                     }
 
                     for (FoundRoute route : routesToDestination) {
-                        for (var listener : params.listeners()) {
+                        for (var listener : listeners) {
                             listener.processRoute(origZone, destZone, route);
                         }
 
@@ -152,25 +160,7 @@ public class UmlegoWriter implements Runnable {
         }
     }
 
-    public Skim getSkim() {
-        try {
-            LOG.info("Retrieving global stats information from JdbcSkimWriter");
-            return futureSkim.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Failed to retrieve final skim", e);
-        }
-    }
-
-    public Map<String, Double> getGlobalStats() {
-        try {
-            LOG.info("Retrieving global stats information from JdbcGlobalStatsWriter");
-            return this.futureGlobalStats.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Failed to retrieve final global statistics", e);
-        }
-    }
-
-    public class UmlegoWriters implements AutoCloseable {
+    public static class UmlegoWriters implements AutoCloseable {
 
         Set<UmlegoWriterInterface> writers;
 
@@ -193,12 +183,6 @@ public class UmlegoWriter implements Runnable {
                     throw new RuntimeException(exception);
                 }
             });
-            if (!futureSkim.isDone()) {
-                futureSkim.completeExceptionally(new RuntimeException("Skim not completed"));
-            }
-            if (!futureGlobalStats.isDone()) {
-                futureGlobalStats.completeExceptionally(new RuntimeException("GlobalStats not completed"));
-            }
         }
     }
 }
