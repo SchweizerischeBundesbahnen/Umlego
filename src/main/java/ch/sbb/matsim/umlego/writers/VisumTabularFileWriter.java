@@ -29,7 +29,7 @@ class VisumTabularFileWriter implements AutoCloseable {
 	private final Counter counter;
 
 	VisumTabularFileWriter(final String header, final String[] columns, final String filename) throws IOException {
-		this(header, columns, new BufferedWriter(new FileWriter(filename)), DEFAULT_SEPARATOR);
+		this(header, columns, UmlegoWriter.newBufferedWriter(filename), DEFAULT_SEPARATOR);
 	}
 
 	private VisumTabularFileWriter(final String header, final String[] columns, final BufferedWriter writer, final String separator) throws IOException {

@@ -131,6 +131,9 @@ public class Umlego {
             stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
         }
 
+        // Default listeners which are always added
+        addListener(new UmlegoSkimCalculator());
+
         // prepare SwissRailRaptor
         // TODO: these parameters could be added to a central location.
         RaptorParameters raptorParams = RaptorUtils.createParameters(scenario.getConfig());

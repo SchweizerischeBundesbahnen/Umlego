@@ -49,7 +49,7 @@ public class UmlegoCsvWriter implements UmlegoWriterInterface {
 
     public UmlegoCsvWriter(String filename, boolean writeDetails) throws IOException {
         this.writeDetails = writeDetails;
-        this.writer = new CSVWriter( new BufferedWriter(new FileWriter(filename)) , ',', '"', '\\', "\n");
+        this.writer = new CSVWriter(UmlegoWriter.newBufferedWriter(filename), ',', '"', '\\', "\n");
         this.writer.writeNext(HEADER_ROW);
     }
 

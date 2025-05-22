@@ -3,23 +3,28 @@ package ch.sbb.matsim.umlego.writers;
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -52,6 +57,18 @@ public class UmlegoWriter implements Runnable {
         this.params = params;
     }
 
+    /**
+     * Creates a BufferedWriter for the given filename. Supports .gz compressed output.
+     */
+    public static BufferedWriter newBufferedWriter(String filename) throws IOException {
+
+        Path path = Paths.get(filename);
+        if (filename.endsWith(".gz"))
+            return new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(path))));
+
+        return Files.newBufferedWriter(path);
+    }
+
     @Override
     public void run() {
         UnroutableDemand unroutableDemand = writeRoutes();
@@ -79,7 +96,12 @@ public class UmlegoWriter implements Runnable {
     }
 
     private UmlegoWriterInterface createSkimWriter() {
-        return new UmlegoSkimWriter(Paths.get(this.outputFolder, "skims.csv.gz").toString());
+        Optional<UmlegoSkimCalculator> calc = this.listeners.stream()
+                .filter(s -> s instanceof UmlegoSkimCalculator)
+                .map(UmlegoSkimCalculator.class::cast)
+                .findFirst();
+
+        return new UmlegoSkimWriter(calc.orElseThrow(), Paths.get(this.outputFolder, "skims.csv.gz").toString());
     }
 
 

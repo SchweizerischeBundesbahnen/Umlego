@@ -53,11 +53,13 @@ umlego:
   writer:
     minimalDemandForWriting: "0.00001"
     writerTypes:
+      - CSV
       - PutSurvey
       - SKIM
 
 
-# Bewerto configuration part, needs to be filled with actual values
+
+# Bewerto configuration, needs to be filled with actual values
 bewerto:
 
   demandFile: ""
