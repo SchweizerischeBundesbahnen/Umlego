@@ -3,12 +3,14 @@ package ch.sbb.matsim.umlego.writers;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
+import ch.sbb.matsim.umlego.writers.types.skim.SkimCalculator;
 import com.opencsv.CSVWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Writes skim matrices to a CSV file.
@@ -35,7 +37,7 @@ public final class UmlegoSkimWriter implements UmlegoWriterInterface {
         headers.add("ORIGIN");
         headers.add("DESTINATION");
 
-        for (var skimType : this.skims.getCalculators()) {
+        for (SkimCalculator skimType : this.skims.getCalculators()) {
             headers.add(skimType.getSkimType().toString());
         }
         return headers.toArray(new String[0]);
@@ -50,15 +52,20 @@ public final class UmlegoSkimWriter implements UmlegoWriterInterface {
 
             writer.writeNext(createHeaderRow());
 
+            String[] row = new String[this.skims.getCalculators().size() + 2];
+
             for (ODPair odPair : skims.getSkims().keySet()) {
-                var row = new ArrayList<String>();
-                row.add(odPair.fromZone());
-                row.add(odPair.toZone());
-                var matrices = this.skims.getSkims().get(odPair);
-                for (var skimType : this.skims.getCalculators()) {
-                    row.add(String.format("%.5f", matrices.getDouble(skimType.getSkimType())));
+
+                row[0] = odPair.fromZone();
+                row[1] = odPair.toZone();
+
+                double[] matrices = this.skims.getSkims().get(odPair);
+
+                for (int i = 0; i < matrices.length; i++) {
+                    row[i + 2] = String.format(Locale.US, "%.5f", matrices[i]);
                 }
-                writer.writeNext(row.toArray(String[]::new));
+
+                writer.writeNext(row);
             }
         }
         LOG.info("Done with skim matrices.");

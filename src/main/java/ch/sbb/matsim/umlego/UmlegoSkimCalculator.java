@@ -20,25 +20,16 @@
 package ch.sbb.matsim.umlego;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimCalculator;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimDemand;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimJourneyTime;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimNumberOfRoutes;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimType;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedAdaptationTime;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedJourneyTime;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimWeightedTransfers;
+import ch.sbb.matsim.umlego.writers.types.skim.*;
 
-import java.util.*;
-
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class UmlegoSkimCalculator implements UmlegoListener {
 
-    private final Set<SkimCalculator> calculators;
-    private final Map<ODPair, Object2DoubleMap<SkimType>> skims;
+    private final List<SkimCalculator> calculators;
+    private final Map<ODPair, double[]> skims;
 
     /**
      * Calculate skim matrices. For each origin and destination zone the following Skims are calculated:
@@ -54,34 +45,43 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
      */
     public UmlegoSkimCalculator() {
         this.skims = new HashMap<>();
-        this.calculators = new LinkedHashSet<>();
-
-        this.calculators.add(new SkimDemand());
-        this.calculators.add(new SkimJourneyTime());
-        this.calculators.add(new SkimNumberOfRoutes());
-        this.calculators.add(new SkimWeightedJourneyTime());
-        this.calculators.add(new SkimWeightedTransfers());
-        this.calculators.add(new SkimWeightedAdaptationTime());
+        this.calculators = List.of(
+                new SkimDemand(),
+                new SkimJourneyTime(),
+                new SkimNumberOfRoutes(),
+                new SkimWeightedJourneyTime(),
+                new SkimWeightedTransfers(),
+                new SkimWeightedAdaptationTime()
+        );
     }
 
-    public Set<SkimCalculator> getCalculators() {
+    /**
+     * Retrieves the set of skim calculators used for calculating various skim metrics.
+     */
+    public List<SkimCalculator> getCalculators() {
         return calculators;
     }
 
-    public Map<ODPair, Object2DoubleMap<SkimType>> getSkims() {
+    /**
+     * Retrieves the skim matrices for origin-destination zone pairs. Each origin-destination pair is associated with an array of doubles
+     * that represent various calculated skim metrics such as demand, journey time, number of routes, weighted journey time, weighted
+     * transfers, and weighted adaptation time.
+     */
+    public Map<ODPair, double[]> getSkims() {
         return skims;
     }
 
     @Override
     public void processRoute(String origZone, String destZone, FoundRoute route) {
-        var key = new ODPair(origZone, destZone);
+        ODPair key = new ODPair(origZone, destZone);
 
-        var matrices = this.skims.getOrDefault(key, new Object2DoubleOpenHashMap<>());
-        for (SkimCalculator calculator : this.calculators) {
-            double value = matrices.getOrDefault(calculator.getSkimType(), 0.0);
-            value = calculator.aggregateRoute(value, destZone, route);
-            matrices.put(calculator.getSkimType(), value);
+        double[] matrices = this.skims.computeIfAbsent(key, (k) -> new double[this.calculators.size()]);
+
+        for (int i = 0; i < this.calculators.size(); i++) {
+            SkimCalculator calculator = this.calculators.get(i);
+            matrices[i] = calculator.aggregateRoute(matrices[i], destZone, route);
         }
+
         this.skims.put(key, matrices);
     }
 }

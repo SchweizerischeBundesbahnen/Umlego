@@ -21,10 +21,10 @@ package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
 import com.opencsv.CSVWriter;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import org.matsim.core.utils.misc.Time;
+
+import java.io.IOException;
+import java.util.Locale;
 
 public class UmlegoCsvWriter implements UmlegoWriterInterface {
 
@@ -66,8 +66,8 @@ public class UmlegoCsvWriter implements UmlegoWriterInterface {
             Time.writeTime(route.arrTime),
             Time.writeTime(route.travelTimeWithoutAccess),
             Integer.toString(route.transfers),
-            String.format("%.2f", route.distance / 1000.0),
-            String.format("%.5f", route.demand.getDouble(destZone)),
+            String.format(Locale.US,"%.2f", route.distance / 1000.0),
+            String.format(Locale.US,"%.5f", route.demand.getDouble(destZone)),
             this.writeDetails ? route.getRouteAsString() : ""
         });
     }

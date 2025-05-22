@@ -175,8 +175,14 @@ public class Umlego {
                 destinationZoneIds, listeners, scenario.getTransitSchedule(), params.writer());
         new Thread(writerManager).start();
 
+        SplittableRandom rnd = new SplittableRandom(0);
         // submit work items into queues
         for (String originZoneId : originZoneIds) {
+
+            // Downsample for testing
+            if (rnd.nextDouble() < 0.95)
+                continue;
+
             try {
                 CompletableFuture<UmlegoWorker.WorkResult> future = new CompletableFuture<>();
                 UmlegoWorker.WorkItem workItem = new UmlegoWorker.WorkItem(originZoneId, future);

@@ -121,6 +121,20 @@ public class UmlegoRunner {
     }
 
     /**
+     * Constructor to re-use UmlegoRunner on a different scenario.
+     */
+    public UmlegoRunner(String outputFolder, String zoneConnectionsFile, ScenarioParameters scenarioParameters, UmlegoRunner other) {
+        UmlegoLogger.setOutputFolder(outputFolder);
+        ensureDir(outputFolder);
+
+        this.outputFolder = outputFolder;
+        this.scenario = loadScenario(scenarioParameters);
+        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());;
+        this.demand = other.demand;
+        this.params = other.params;
+    }
+
+    /**
      * Run Umlego and return the created Umlego object.
      */
     public Umlego run() throws ZoneNotFoundException {

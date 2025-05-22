@@ -3,7 +3,10 @@ package ch.sbb.matsim.bewerto;
 import ch.sbb.matsim.bewerto.config.BewertoParameters;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoRunner;
+import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.config.ScenarioParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,6 +47,28 @@ public final class Bewerto {
         Umlego baseCase = runner.run();
 
         LOG.info("Base case completed. Starting variants...");
+
+        for (ScenarioParameters variant : bewertoParameters.getVariants()) {
+            processVariant(runner, baseCase, variant);
+        }
+    }
+
+    private void processVariant(UmlegoRunner runner, Umlego baseCase, ScenarioParameters variant) throws ZoneNotFoundException {
+
+        File outputDir = new File(bewertoParameters.getOutputDir());
+
+        UmlegoRunner variantRunner = new UmlegoRunner(
+                new File(outputDir, variant.getName()).getAbsolutePath(),
+                bewertoParameters.getZoneConnectionsFile(), variant, runner
+        );
+
+        Umlego result = variantRunner.run();
+
+        LOG.info("Variant {} completed.", variant.getName());
+
+        UmlegoSkimCalculator baseSkim = baseCase.getListener(UmlegoSkimCalculator.class);
+        UmlegoSkimCalculator variantSkim = result.getListener(UmlegoSkimCalculator.class);
+
 
 
     }
