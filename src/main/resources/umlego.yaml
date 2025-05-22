@@ -1,0 +1,74 @@
+
+umlego:
+  # Maximum number of transfers allowed in route finding
+  maxTransfers: 5
+
+  # Number of threads to use (-1 for all available)
+  threads: -1
+
+  # Search impedance parameters used for finding routes
+  search:
+    betaInVehicleTime: 1.0
+    betaAccessTime: 1.0
+    betaEgressTime: 1.0
+    betaWalkTime: 1.0
+    betaTransferWaitTime: 1.0
+    betaTransferCount: 10.0
+  
+  # Preselection parameters for filtering routes
+  preselection:
+    betaMinImpedance: 2.0
+    constImpedance: 60.0
+  
+  # Perceived journey time parameters for user experience modeling
+  pjt:
+    betaInVehicleTime: 1.0
+    betaAccessTime: 2.94
+    betaEgressTime: 2.94
+    betaWalkTime: 2.25
+    betaTransferWaitTime: 1.13
+    transferFix: 17.236
+    transferTraveltimeFactor: 0.033
+    secondsPerAdditionalStop: 58.0
+  
+  # Route impedance parameters for calculating route costs
+  impedance:
+    betaPerceivedJourneyTime: 1.0
+    betaDeltaTEarly: 1.85
+    betaDeltaTLate: 1.85
+  
+  # Route selection parameters for choosing between alternatives
+  routeSelection:
+    limitSelectionToTimewindow: false
+    beforeTimewindow: 3600.0
+    afterTimewindow: 3600.0
+
+    utilityCalculator:
+      type: "boxcox"
+      params:
+        beta: 1.536
+        tau: 0.5
+  
+  # Writer parameters for output configuration
+  writer:
+    minimalDemandForWriting: "0.00001"
+    writerTypes:
+      - PutSurvey
+      - SKIM
+
+
+# Bewerto configuration part, needs to be filled with actual values
+bewerto:
+
+  demandFile: ""
+  zoneNamesFile: ""
+  zoneConnectionsFile: ""
+  outputDir: "output-bewerto"
+
+  ref:
+    name: "ref"
+    scheduleFile: ""
+    vehiclesFile: ""
+    networkFile: ""
+
+  variants: [ ]

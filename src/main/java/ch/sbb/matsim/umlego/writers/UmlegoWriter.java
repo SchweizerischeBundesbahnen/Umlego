@@ -3,7 +3,7 @@ package ch.sbb.matsim.umlego.writers;
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import ch.sbb.matsim.umlego.Umlego.WriterParameters;
+import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
@@ -22,6 +22,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 public class UmlegoWriter implements Runnable {
 
@@ -32,6 +33,7 @@ public class UmlegoWriter implements Runnable {
     private final List<String> originZoneIds;
     private final List<String> destinationZoneIds;
     private final List<UmlegoListener> listeners;
+    private final TransitSchedule schedule;
     private final WriterParameters params;
     private final CompletableFuture<UnroutableDemand> futureUnroutableDemand = new CompletableFuture<>();
 
@@ -39,12 +41,14 @@ public class UmlegoWriter implements Runnable {
                         String outputFolder, List<String> originZoneIds,
                         List<String> destinationZoneIds,
                         List<UmlegoListener> listeners,
+                        TransitSchedule schedule,
                         WriterParameters params) {
         this.queue = queue;
         this.outputFolder = outputFolder;
         this.originZoneIds = originZoneIds;
         this.destinationZoneIds = destinationZoneIds;
         this.listeners = listeners;
+        this.schedule = schedule;
         this.params = params;
     }
 
@@ -71,8 +75,7 @@ public class UmlegoWriter implements Runnable {
     }
 
     private UmlegoWriterInterface createBlpWriter() {
-        return new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(),
-            params.schedule());
+        return new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(), schedule);
     }
 
     private UmlegoWriterInterface createSkimWriter() {

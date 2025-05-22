@@ -1,6 +1,8 @@
 package ch.sbb.matsim.bewerto;
 
 import ch.sbb.matsim.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.umlego.UmlegoRunner;
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.builder.GestaltBuilder;
 import org.github.gestalt.config.source.ClassPathConfigSourceBuilder;
@@ -35,18 +37,12 @@ public final class BewertoRunner implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        Gestalt config = new GestaltBuilder()
-                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/bewerto.yaml").build())
-                .addSource(FileConfigSourceBuilder.builder().setPath(configPath).build())
-                .addSource(SystemPropertiesConfigSourceBuilder.builder().build())
-                .addModuleConfig(YamlModuleConfigBuilder.builder().build())
-                .build();
+        Gestalt config = UmlegoRunner.loadConfig(configPath);
 
-        config.loadConfigs();
+        BewertoParameters bewertoParameters = config.getConfig("bewerto", BewertoParameters.class);
+        UmlegoParameters umlegoParameters = config.getConfig("umlego", UmlegoParameters.class);
 
-        BewertoParameters params = config.getConfig("bewerto", BewertoParameters.class);
-
-        Bewerto bewerto = new Bewerto(params);
+        Bewerto bewerto = new Bewerto(bewertoParameters, umlegoParameters);
         bewerto.run();
 
         return 0;

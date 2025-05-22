@@ -1,5 +1,7 @@
 package ch.sbb.matsim.bewerto.config;
 
+import ch.sbb.matsim.umlego.config.ScenarioParameters;
+
 import java.util.List;
 
 /**
@@ -21,26 +23,27 @@ public final class BewertoParameters {
      * Path to zone connections csv.
      */
     private String zoneConnectionsFile;
-
     /**
      * The directory path for the output files.
      */
     private String outputDir;
-
-    /**
-     * Number of threads to use for processing.
-     */
-    private int threads = -1;
-
     /**
      * Reference scenario parameters.
      */
     private ScenarioParameters ref;
-
     /**
      * List of variant scenario parameters.
      */
     private List<ScenarioParameters> variants;
+
+    public String getOutputDir() {
+        return outputDir;
+    }
+
+    public BewertoParameters setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
+        return this;
+    }
 
     public String getDemandFile() {
         return demandFile;
@@ -69,15 +72,6 @@ public final class BewertoParameters {
         return this;
     }
 
-    public int getThreads() {
-        return threads;
-    }
-
-    public BewertoParameters setThreads(int threads) {
-        this.threads = threads;
-        return this;
-    }
-
     public ScenarioParameters getRef() {
         return ref;
     }
@@ -102,7 +96,6 @@ public final class BewertoParameters {
                 "demandFile='" + demandFile + '\'' +
                 ", zoneNamesFile='" + zoneNamesFile + '\'' +
                 ", zoneConnectionsFile='" + zoneConnectionsFile + '\'' +
-                ", threads=" + threads +
                 ", ref=" + ref +
                 ", variants=" + variants +
                 '}';

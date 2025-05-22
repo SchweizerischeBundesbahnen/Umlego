@@ -1,30 +1,18 @@
 package ch.sbb.matsim.umlego.it;
 
-import ch.sbb.matsim.umlego.RouteUtilityCalculators;
 import ch.sbb.matsim.umlego.Umlego;
-import ch.sbb.matsim.umlego.Umlego.PerceivedJourneyTimeParameters;
-import ch.sbb.matsim.umlego.Umlego.PreselectionParameters;
-import ch.sbb.matsim.umlego.Umlego.RouteImpedanceParameters;
-import ch.sbb.matsim.umlego.Umlego.RouteSelectionParameters;
-import ch.sbb.matsim.umlego.Umlego.SearchImpedanceParameters;
-import ch.sbb.matsim.umlego.Umlego.UmlegoParameters;
-import ch.sbb.matsim.umlego.Umlego.WriterParameters;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
+import ch.sbb.matsim.umlego.config.*;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
-import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+
+import java.util.*;
 
 public class UmlegoITTest {
 
@@ -33,9 +21,9 @@ public class UmlegoITTest {
         PreselectionParameters preselection = new PreselectionParameters(2.0, 60.0);
         PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
         RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
-        RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, RouteUtilityCalculators.boxcox(1.536, 0.5));
-        WriterParameters writer = new WriterParameters(1e-5, Set.of(), null);
-        return new UmlegoParameters(5, search, preselection, pjt, impedance, routeSelection, writer);
+        RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
+        WriterParameters writer = new WriterParameters(1e-5, Set.of());
+        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, writer);
 
     }
 
@@ -44,7 +32,7 @@ public class UmlegoITTest {
     }
 
     @Test
-    void testRun() throws ZoneNotFoundException {
+    void testRun() throws Exception {
         double[][] m = {{10, 10}, {10, 10}};
         var matrix = new DemandMatrix(23 * 60 + 50, 24 * 60, m);
 

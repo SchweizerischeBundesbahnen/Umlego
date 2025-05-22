@@ -1,7 +1,7 @@
-package ch.sbb.matsim.bewerto.config;
+package ch.sbb.matsim.umlego.config;
 
 /**
- * The {@code ScenarioParameters} class represents the configuration parameters for a scenario in the Bewerto application.
+ * The {@code ScenarioParameters} class represents the configuration parameters for a scenario in the application.
  */
 public final class ScenarioParameters {
 
@@ -11,22 +11,31 @@ public final class ScenarioParameters {
     private String name;
 
     /**
-     * Path to the MATSIm schedule xml file.
+     * Path to the MATSim schedule xml file.
      */
     private String scheduleFile;
 
     /**
-     * Path to the MATSIm vehicles xml file.
+     * Path to the MATSim vehicles xml file.
      */
     private String vehiclesFile;
 
     /**
-     * Path to the MATSIm network xml file.
+     * Path to the MATSim network xml file.
      */
     private String networkFile;
 
     public String getName() {
         return name;
+    }
+
+    public ScenarioParameters() {
+    }
+
+    public ScenarioParameters(String scheduleFile, String vehiclesFile, String networkFile) {
+        this.scheduleFile = scheduleFile;
+        this.vehiclesFile = vehiclesFile;
+        this.networkFile = networkFile;
     }
 
     public ScenarioParameters setName(String name) {

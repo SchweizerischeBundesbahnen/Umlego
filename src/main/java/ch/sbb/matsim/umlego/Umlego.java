@@ -10,6 +10,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkItem;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
@@ -168,7 +169,7 @@ public class Umlego {
 
         // start writer threads
         UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds,
-                destinationZoneIds, listeners, params.writer);
+                destinationZoneIds, listeners, scenario.getTransitSchedule(), params.writer());
         new Thread(writerManager).start();
 
         // submit work items into queues
@@ -195,73 +196,6 @@ public class Umlego {
         UnroutableDemand unroutableDemand = writerManager.getUnroutableDemand();
         UnroutableDemandWriter demandWriter = UnroutableDemandWriterFactory.createWriter(outputFolder);
         demandWriter.write(unroutableDemand);
-    }
-
-    public record SearchImpedanceParameters(
-        double betaInVehicleTime,
-        double betaAccessTime,
-        double betaEgressTime,
-        double betaWalkTime,
-        double betaTransferWaitTime,
-        double betaTransferCount
-    ) {
-
-    }
-
-    public record PreselectionParameters(
-        double betaMinImpedance,
-        double constImpedance
-    ) {
-
-    }
-
-    public record PerceivedJourneyTimeParameters(
-        double betaInVehicleTime,
-        double betaAccessTime,
-        double betaEgressTime,
-        double betaWalkTime,
-        double betaTransferWaitTime,
-        double transferFix,
-        double transferTraveltimeFactor,
-        double secondsPerAdditionalStop
-    ) {
-
-    }
-
-    public record RouteImpedanceParameters(
-        double betaPerceivedJourneyTime,
-        double betaDeltaTEarly,
-        double betaDeltaTLate
-    ) {
-
-    }
-
-    public record RouteSelectionParameters(
-        boolean limitSelectionToTimewindow,
-        double beforeTimewindow,
-        double afterTimewindow,
-        RouteUtilityCalculator utilityCalculator
-    ) {
-
-    }
-
-    public record WriterParameters(
-        double minimalDemandForWriting,
-        Set<UmlegoWriterType> writerTypes,
-        TransitSchedule schedule
-    ) {
-    }
-
-    public record UmlegoParameters(
-        int maxTransfers,
-        SearchImpedanceParameters search,
-        PreselectionParameters preselection,
-        PerceivedJourneyTimeParameters pjt,
-        RouteImpedanceParameters impedance,
-        RouteSelectionParameters routeSelection,
-        WriterParameters writer
-    ) {
-
     }
 
     public static class FoundRoute {

@@ -3,6 +3,14 @@ package ch.sbb.matsim.umlego.it;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import jakarta.annotation.Nullable;
+import org.github.gestalt.config.Gestalt;
+import org.github.gestalt.config.builder.GestaltBuilder;
+import org.github.gestalt.config.exceptions.GestaltException;
+import org.github.gestalt.config.source.*;
+import org.github.gestalt.config.yaml.YamlModuleConfigBuilder;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -43,6 +51,18 @@ import org.matsim.vehicles.Vehicles;
         this.schedule = this.scenario.getTransitSchedule();
         this.builder = this.schedule.getFactory();
         this.transitVehicles = this.scenario.getTransitVehicles();
+    }
+
+    public static UmlegoParameters loadTestConfig() throws GestaltException {
+        Gestalt config = new GestaltBuilder()
+                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build())
+                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/test.yaml").build())
+                .addModuleConfig(YamlModuleConfigBuilder.builder().build())
+                .build();
+
+        config.loadConfigs();
+
+        return config.getConfig("umlego", UmlegoParameters.class);
     }
 
     protected TransitStopFacility buildStop(String name, double x, double y) {

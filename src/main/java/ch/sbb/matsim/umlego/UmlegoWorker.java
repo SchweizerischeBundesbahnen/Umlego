@@ -1,6 +1,8 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.Umlego.UmlegoParameters;
+import ch.sbb.matsim.umlego.config.PerceivedJourneyTimeParameters;
+import ch.sbb.matsim.umlego.config.SearchImpedanceParameters;
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandPart;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
@@ -31,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 public class UmlegoWorker implements Runnable {
 
 	private final BlockingQueue<WorkItem> workerQueue;
-	private final Umlego.UmlegoParameters params;
+	private final UmlegoParameters params;
 	private final DemandMatrices demand;
 	private final List<String> demandMatrixNames;
 	private final SwissRailRaptor raptor;
@@ -39,6 +41,7 @@ public class UmlegoWorker implements Runnable {
 	private final List<String> destinationZoneIds;
 	private final Map<String, List<ConnectedStop>> stopsPerZone;
 	private final Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination;
+	private final RouteUtilityCalculator utilityCalculator;
 
 	public UmlegoWorker(BlockingQueue<WorkItem> workerQueue,
 											UmlegoParameters params,
@@ -57,6 +60,7 @@ public class UmlegoWorker implements Runnable {
 		this.destinationZoneIds = destinationZoneIds;
 		this.stopsPerZone = stopsPerZone;
 		this.stopLookupPerDestination = stopLookupPerDestination;
+		this.utilityCalculator = params.routeSelection().utilityCalculator().createUtilityCalculator();
 	}
 
 	@Override
@@ -336,7 +340,7 @@ public class UmlegoWorker implements Runnable {
 		}
 		double totalTravelTime = expectedTotalTime + accessTime + egressTime;
 
-		Umlego.PerceivedJourneyTimeParameters pjtParams = this.params.pjt();
+		PerceivedJourneyTimeParameters pjtParams = this.params.pjt();
 		route.perceivedJourneyTimeMin = pjtParams.betaInVehicleTime() * (inVehicleTime / 60.0)
 				+ pjtParams.betaAccessTime() * (accessTime / 60.0)
 				+ pjtParams.betaEgressTime() * (egressTime / 60.0)
@@ -345,7 +349,7 @@ public class UmlegoWorker implements Runnable {
 				+ transferCount * (pjtParams.transferFix() + pjtParams.transferTraveltimeFactor() * (totalTravelTime / 60.0))
 				+ (pjtParams.secondsPerAdditionalStop() / 60.0) * additionalStopCount;
 
-		Umlego.SearchImpedanceParameters searchParams = this.params.search();
+		SearchImpedanceParameters searchParams = this.params.search();
 		route.searchImpedance =
 				searchParams.betaInVehicleTime() * (inVehicleTime / 60.0)
 						+ searchParams.betaAccessTime() * (accessTime / 60.0)
@@ -450,7 +454,7 @@ public class UmlegoWorker implements Runnable {
 		double betaPJT = this.params.impedance().betaPerceivedJourneyTime();
 		double betaDeltaTEarly = this.params.impedance().betaDeltaTEarly();
 		double betaDeltaTLate = this.params.impedance().betaDeltaTLate();
-		RouteUtilityCalculator utilityCalculator = this.params.routeSelection().utilityCalculator();
+
 		for (int sample = 0; sample < samples; sample++) {
 			double time = startTime + sample * stepSize;
 			double utilitiesSum = 0;
