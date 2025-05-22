@@ -134,6 +134,10 @@ public class UmlegoRunner {
         this.params = other.params;
     }
 
+    public DemandMatrices getDemand() {
+        return demand;
+    }
+
     /**
      * Run Umlego and return the created Umlego object.
      */

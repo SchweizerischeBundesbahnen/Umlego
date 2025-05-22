@@ -6,6 +6,7 @@ import ch.sbb.matsim.umlego.UmlegoRunner;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.config.ScenarioParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,7 +70,24 @@ public final class Bewerto {
         UmlegoSkimCalculator baseSkim = baseCase.getListener(UmlegoSkimCalculator.class);
         UmlegoSkimCalculator variantSkim = result.getListener(UmlegoSkimCalculator.class);
 
+        DemandMatrices updatedDemand = calculateInducedDemand(runner.getDemand(), baseSkim, variantSkim);
 
-
+        // TODO: use the updated demand
     }
+
+    /**
+     * Calculates the induced demand matrices based on the base and variant skims.
+     */
+    private DemandMatrices calculateInducedDemand(DemandMatrices demand, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
+
+        DemandFactorCalculator calculator = new DemandFactorCalculator(baseSkim, variantSkim);
+
+        DemandMatrices updatedDemand = new DemandMatrices(demand);
+
+        // Applies the demand factor calculator to the demand matrices
+        updatedDemand.multiplyMatrixValues((fromZone, toZone, timeMin) -> calculator.calculateFactor(fromZone, toZone));
+
+        return updatedDemand;
+    }
+
 }

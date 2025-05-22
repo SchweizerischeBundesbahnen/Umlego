@@ -179,7 +179,7 @@ public class Umlego {
         // submit work items into queues
         for (String originZoneId : originZoneIds) {
 
-            // Downsample for testing
+            // TODO: remove Downsample for testing
             if (rnd.nextDouble() < 0.95)
                 continue;
 

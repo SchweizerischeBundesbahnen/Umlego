@@ -45,6 +45,8 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
      */
     public UmlegoSkimCalculator() {
         this.skims = new HashMap<>();
+
+        // Don't change something here without checking the DemandFactorCalculator, it depends on the indices of the calculators
         this.calculators = List.of(
                 new SkimDemand(),
                 new SkimJourneyTime(),

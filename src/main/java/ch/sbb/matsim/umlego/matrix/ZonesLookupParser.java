@@ -5,6 +5,9 @@ import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -27,8 +30,10 @@ public class ZonesLookupParser {
         return new CSVReaderBuilder(bufferedReader).withCSVParser(csvParser).build();
     }
 
-    public Map<String, Integer> parseZones() {
-        Map<String, Integer> zonalLookup = new HashMap<>();
+    public Object2IntMap<String> parseZones() {
+        Object2IntMap<String> zonalLookup = new Object2IntOpenHashMap<>();
+        zonalLookup.defaultReturnValue(-1);
+
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
             CSVReader csvReader = buildCSVReader(bufferedReader)) {
 

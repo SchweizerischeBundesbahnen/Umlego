@@ -11,6 +11,7 @@ import java.util.Set;
 public class ZonesLookup {
 
     private final Map<String, Integer> zonalLookup;
+    private final String[] idLookup;
 
     /**
      * Constructs a ZonesLookup object by parsing a CSV file containing zone information. Assumes semicolon as separator.
@@ -25,15 +26,20 @@ public class ZonesLookup {
      * Constructs a ZonesLookup object by parsing a CSV file containing zone information.
      *
      * @param zonesCsvFileName the path to the CSV file containing zone information
-     * @param separator the separator used in the CSV file
+     * @param separator        the separator used in the CSV file
      */
     private ZonesLookup(String zonesCsvFileName, String separator) {
-        ZonesLookupParser parser = new ZonesLookupParser(zonesCsvFileName, separator);
-        this.zonalLookup = parser.parseZones();
+        this(new ZonesLookupParser(zonesCsvFileName, separator).parseZones());
     }
 
     public ZonesLookup(Map<String, Integer> zonalLookup) {
         this.zonalLookup = zonalLookup;
+
+        int length = zonalLookup.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        this.idLookup = new String[length + 1];
+        for (Map.Entry<String, Integer> entry : zonalLookup.entrySet()) {
+            this.idLookup[entry.getValue()] = entry.getKey();
+        }
     }
 
     /**
@@ -47,6 +53,20 @@ public class ZonesLookup {
             throw new ZoneNotFoundException(zone);
         }
         return result;
+    }
+
+    /**
+     * Retrieves the zone name corresponding to the specified index.
+     *
+     * @param index the index of the zone to retrieve
+     * @return the name of the zone corresponding to the given index
+     * @throws IllegalArgumentException if the index is negative or exceeds the bounds of the lookup array
+     */
+    public String getZone(int index) {
+        if (index < 0 || index >= idLookup.length) {
+            throw new IllegalArgumentException("Index out of bounds: " + index);
+        }
+        return idLookup[index];
     }
 
     public int getIndex(String zone, Set<String> invalidZoneIds, boolean ignoreExcessZones) throws ZoneNotFoundException {

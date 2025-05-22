@@ -4,8 +4,7 @@ package ch.sbb.matsim.umlego.matrix;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.matrixNameToMinutes;
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.minutesToMatrixIndex;
+import static ch.sbb.matsim.umlego.matrix.MatrixUtil.*;
 
 /**
  * Represents a collection of DemandMatrix objects with associated operations.
@@ -16,15 +15,9 @@ public class DemandMatrices {
     private ZonesLookup zonalLookup;
     private final Map<Integer, DemandMatrix> matrices;
 
-    private final static DemandMatrices INSTANCE = new DemandMatrices();
-
     public DemandMatrices(ZonesLookup zonesLookup) {
         this.zonalLookup = zonesLookup;
         this.matrices = new HashMap<>();
-    }
-
-    public static DemandMatrices getInstance() {
-        return INSTANCE;
     }
 
     public DemandMatrices() {
@@ -38,12 +31,27 @@ public class DemandMatrices {
         this.matrices = matrices.stream().collect(Collectors.toMap(m -> minutesToMatrixIndex(m.getStartTimeInclusiveMin()), m -> m));
     }
 
+    /**
+     * Copy constructor for the demand, creates copies of the matrices.
+     */
+    public DemandMatrices(DemandMatrices demand) {
+        this.zonalLookup = demand.zonalLookup;
+        this.matrices = new HashMap<>();
+        for (Map.Entry<Integer, DemandMatrix> entry : demand.matrices.entrySet()) {
+            this.matrices.put(entry.getKey(), new DemandMatrix(entry.getValue()));
+        }
+    }
+
     public void setZonesLookup(ZonesLookup zonalLookup) {
         this.zonalLookup = zonalLookup;
     }
 
     public Map<Integer, DemandMatrix> getMatrices() {
         return matrices;
+    }
+
+    public Collection<String> getZoneIds() {
+        return this.zonalLookup.getAllLookupValues();
     }
 
     /**
@@ -106,6 +114,28 @@ public class DemandMatrices {
 
     public double getMatrixValue(String fromZoneId, String toZoneId, String name) throws ZoneNotFoundException {
         return getMatrixValue(fromZoneId, toZoneId, matrixNameToMinutes(name));
+    }
+
+    public void multiplyMatrixValues(DemandMatrixMultiplier multiplier) {
+        for (Map.Entry<Integer, DemandMatrix> entry : this.matrices.entrySet()) {
+
+            int timeMin = matrixIndexToMinutes(entry.getKey());
+            DemandMatrix matrix = entry.getValue();
+
+            double[][] data = matrix.getData();
+
+            for (int i = 0; i < data.length; i++) {
+                String fromZone = zonalLookup.getZone(i);
+                for (int j = 0; j < data[i].length; j++) {
+                    String toZone = zonalLookup.getZone(j);
+
+                    double value = data[i][j];
+                    if (value > 0) {
+                        data[i][j] *= multiplier.getFactor(fromZone, toZone, timeMin);
+                    }
+                }
+            }
+        }
     }
 
     /**
