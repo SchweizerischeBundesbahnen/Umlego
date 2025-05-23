@@ -1,6 +1,8 @@
 package ch.sbb.matsim.umlego.matrix;
 
 
+import it.unimi.dsi.fastutil.longs.LongLongPair;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -131,8 +133,9 @@ public class DemandMatrices {
                     String toZone = zonalLookup.getZone(j);
 
                     double value = data[i][j];
-                    if (value > 0) {
-                        data[i][j] *= multiplier.getFactor(fromZone, toZone, timeMin);
+                    if (value != 0) {
+                        double f = multiplier.getFactor(fromZone, toZone, timeMin);
+                        data[i][j] = value * f;
                     }
                 }
             }
@@ -143,7 +146,7 @@ public class DemandMatrices {
      * @return the sum of all the values in all the matrices
      */
     public double getSum() {
-        return this.matrices.values().stream().mapToDouble(AbstractMatrix::getSum).sum();
+        return this.matrices.values().parallelStream().mapToDouble(AbstractMatrix::getSum).sum();
     }
 
     /**
@@ -151,6 +154,31 @@ public class DemandMatrices {
      */
     public double getAverage() {
         return this.getSum() / (this.matrices.size() * Math.pow(this.zonalLookup.getAllLookupValues().size(), 2));
+    }
+
+    /**
+     * Percentage of non-zero elements in all matrices.
+     */
+    public double getLoadFactor() {
+
+        Optional<LongLongPair> result = this.matrices.values().parallelStream().map(m -> {
+            double[][] data = m.getData();
+            long nonZeroCount = 0;
+            long total = 0;
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    if (data[i][j] != 0) {
+                        nonZeroCount++;
+                    }
+                }
+
+                total += data[i].length;
+            }
+            return LongLongPair.of(total, nonZeroCount);
+        }).reduce((a, b) -> LongLongPair.of(a.leftLong() + b.leftLong(), a.rightLong() + b.rightLong()));
+
+        return result.map(longLongPair -> longLongPair.rightLong() / (double) longLongPair.leftLong()).orElse(Double.NaN);
+
     }
 
     /**

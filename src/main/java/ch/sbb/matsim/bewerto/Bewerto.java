@@ -65,14 +65,20 @@ public final class Bewerto {
 
         Umlego result = variantRunner.run();
 
-        LOG.info("Variant {} completed.", variant.getName());
+        LOG.info("Variant {} completed. Updating demand...", variant.getName());
 
         UmlegoSkimCalculator baseSkim = baseCase.getListener(UmlegoSkimCalculator.class);
         UmlegoSkimCalculator variantSkim = result.getListener(UmlegoSkimCalculator.class);
 
         DemandMatrices updatedDemand = calculateInducedDemand(runner.getDemand(), baseSkim, variantSkim);
 
-        // TODO: use the updated demand
+        // Assign the demand again
+        UmlegoRunner inducedDemandRunner = new UmlegoRunner(
+                new File(outputDir, variant.getName() + "-induced").getAbsolutePath(),
+                updatedDemand, bewertoParameters.getZoneConnectionsFile(), variantRunner
+        );
+
+        inducedDemandRunner.run();
     }
 
     /**

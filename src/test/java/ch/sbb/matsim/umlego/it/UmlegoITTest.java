@@ -6,6 +6,7 @@ import ch.sbb.matsim.umlego.config.*;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -93,6 +94,81 @@ public class UmlegoITTest {
         //Assertions.assertEquals(4, listener.routes.size());
         //var routeNames = listener.routes.stream().map(r -> r.routeParts).toList();
         //Assertions.assertEquals(List.of(List.of("red2"), List.of("blue", "green")), routeNames);
+
+    }
+
+    /**
+     * Test similar to Bewerto's functionality, where a scenario is run first with a base demand
+     * and then with an updated demand (in this case halved).
+     * Verifies that when the demand is halved, the resulting routes have half the demand.
+     */
+    @Test
+    void testRunWithUpdatedDemand() throws Exception {
+        // Create the base demand matrix
+        double[][] baseMatrix = {{10, 10}, {10, 10}};
+        var baseDemandMatrix = new DemandMatrix(23 * 60 + 50, 24 * 60, baseMatrix);
+
+        // Setup the test scenario with stops and lines
+        var fixture = new UmlegoFixture();
+        var paris = fixture.buildStop("paris", 398565.13, 1356776.53);
+        var geneveSP = fixture.buildStop("geneve secteur france", 2499524.66, 1118330.97);
+        var geneve = fixture.buildStop("geneve", 2499812.38, 1118367.70);
+        var lausanne = fixture.buildStop("lausanne", 2532820.15, 1154661.65);
+        var morges = fixture.buildStop("morges", 2526657.37, 1150360.32);
+
+        fixture.buildLine("livio", List.of(lausanne, morges, geneve), List.of("00:00", "00:30", "01:00"), List.of("05:00"));
+        fixture.buildLine("tgv", List.of(geneveSP, paris), List.of("00:00", "05:30"), List.of("07:00"));
+
+        var scenario = fixture.scenario;
+
+        // Define zone names
+        String LAUSANNE = "Lausanne";
+        String GENEVE = "Geneve";
+
+        // Set up zone lookups
+        var zoneLookup = new HashMap<String, Integer>();
+        zoneLookup.put(GENEVE, 0);
+        zoneLookup.put(LAUSANNE, 1);
+
+        // Create base demand matrices
+        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), new ZonesLookup(zoneLookup));
+
+        // Setup zone connections
+        Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
+        stopsPerZone.put(GENEVE, List.of(new ConnectedStop(GENEVE, 0, geneve)));
+        stopsPerZone.put(LAUSANNE, List.of(new ConnectedStop(LAUSANNE, 0, lausanne)));
+
+        // Set transfer times
+        scenario.getTransitSchedule().getMinimalTransferTimes().set(geneve.getId(), geneveSP.getId(), 0 * 60);
+        scenario.getTransitSchedule().getMinimalTransferTimes().set(geneveSP.getId(), geneve.getId(), 0 * 60);
+        scenario.getTransitSchedule().getMinimalTransferTimes().set(morges.getId(), morges.getId(), 0 * 60);
+
+        // Run base case
+        var baseUmlego = new Umlego(baseDemand, scenario, stopsPerZone);
+        var params = createUmlegoParameters();
+        var baseListener = new UmlegoITListener(LAUSANNE, GENEVE);
+        baseUmlego.addListener(baseListener);
+        baseUmlego.run(params, 1, "");
+
+        double totalDemand = baseListener.routes.stream().flatMapToDouble(r -> r.demand.values().doubleStream()).sum();
+
+        // Create the halved demand matrix
+        double[][] halfMatrix = {{5, 5}, {5, 5}}; // Halved values
+        var halfDemandMatrix = new DemandMatrix(23 * 60 + 50, 24 * 60, halfMatrix);
+        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), new ZonesLookup(zoneLookup));
+
+        // Run with half demand
+        var halfUmlego = new Umlego(halfDemand, scenario, stopsPerZone);
+        var halfListener = new UmlegoITListener(LAUSANNE, GENEVE);
+        halfUmlego.addListener(halfListener);
+        halfUmlego.run(params, 1, "");
+
+        // Calculate total demand for the halved case
+        double halfDemandTotal = halfListener.routes.stream().flatMapToDouble(r -> r.demand.values().doubleStream()).sum();
+
+
+        // Verify that the total demand is halved
+        Assertions.assertEquals(totalDemand / 2, halfDemandTotal, 1e-5);
 
     }
 

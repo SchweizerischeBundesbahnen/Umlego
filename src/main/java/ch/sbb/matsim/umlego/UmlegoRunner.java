@@ -134,6 +134,21 @@ public class UmlegoRunner {
         this.params = other.params;
     }
 
+    /**
+     * Constructor to re-use UmlegoRunner on the same scenario with different demand.
+     */
+    public UmlegoRunner(String outputFolder, DemandMatrices updatedDemand, String zoneConnectionsFile, UmlegoRunner other) {
+        UmlegoLogger.setOutputFolder(outputFolder);
+        ensureDir(outputFolder);
+
+        this.outputFolder = outputFolder;
+        this.scenario = other.scenario;
+        // Connections cannot be re-used
+        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
+        this.demand = updatedDemand;
+        this.params = other.params;
+    }
+
     public DemandMatrices getDemand() {
         return demand;
     }
@@ -192,8 +207,6 @@ public class UmlegoRunner {
     /**
      * Here, we read the locally generated connection file filledConnections.csv (not the Anbindungs file on Azure).
      *
-     * @param zoneConnectionsFilename
-     * @param schedule
      * @return Map<String, List < ConnectedStop>>
      */
     private static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {

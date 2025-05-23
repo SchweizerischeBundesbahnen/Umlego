@@ -23,7 +23,7 @@ public final class DemandFactorCalculator {
     /**
      * Cache for calculated factors.
      */
-    private Object2DoubleMap<ODPair> factors = new Object2DoubleOpenHashMap<>();
+    private final Object2DoubleMap<ODPair> factors = new Object2DoubleOpenHashMap<>();
 
     public DemandFactorCalculator(UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
         this.baseSkim = baseSkim;
@@ -47,14 +47,13 @@ public final class DemandFactorCalculator {
             return 1;
         }
 
-        double[] baseValues = variantSkim.getSkims().getOrDefault(od, EMPTY);
+        double[] baseValues = baseSkim.getSkims().getOrDefault(od, EMPTY);
         if (baseValues == EMPTY) {
             return 1;
         }
 
         // TODO: Calculate all the elasticities here
-
-        return 1;
+        return 0.5;
     }
 
 }
