@@ -93,7 +93,8 @@ public class DemandMatrices {
             .sorted(Comparator.comparingInt(DemandMatrix::getStartTimeInclusiveMin))
             .toList()
             .equals(matrices);
-        assert isSorted;
+
+        assert isSorted : "Demand matrices are not sorted by start time";
     }
 
     private int compareStartTime(DemandMatrix m1, DemandMatrix m2) {
