@@ -13,7 +13,7 @@ public interface SkimCalculator {
     SkimType getSkimType();
 
     /**
-     * Indicates whether the skim calculator is weighted by demand, If true, it will be normalized by the total demand for the origin zone.
+     * Indicates whether the skim calculator is weighted by demand, If true, it will be normalized by the total demand for the od pair.
      */
     default boolean isNormalizedByDemand() {
         return false;
