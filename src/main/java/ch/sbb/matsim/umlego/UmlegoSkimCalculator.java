@@ -86,4 +86,16 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
 
         this.skims.put(key, matrices);
     }
+
+    @Override
+    public void finish() {
+        for (int i = 0; i < this.calculators.size(); i++) {
+            SkimCalculator calculator = this.calculators.get(i);
+            if (calculator.isNormalizedByDemand()) {
+                for (double[] entry : skims.values()) {
+                    entry[i] = entry[i] / entry[0]; // Demand is at index 0
+                }
+            }
+        }
+    }
 }
