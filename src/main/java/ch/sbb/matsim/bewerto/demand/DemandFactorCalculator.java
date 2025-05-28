@@ -25,7 +25,16 @@ public final class DemandFactorCalculator {
      */
     private final Object2DoubleMap<ODPair> factors = new Object2DoubleOpenHashMap<>();
 
-    public DemandFactorCalculator(UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
+    /**
+     * Constructs a {@code DemandFactorCalculator} used to calculate demand factors
+     * by comparing base and variant skim matrices for given origin-destination zones.
+     *
+     * @param file the file path containing demand elasticity parameters
+     * @param segment the specific demand segment to be applied
+     * @param baseSkim the base skim calculator containing metrics for the base scenario
+     * @param variantSkim the variant skim calculator containing metrics for the variant scenario
+     */
+    public DemandFactorCalculator(String file, String segment, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
         this.baseSkim = baseSkim;
         this.variantSkim = variantSkim;
     }

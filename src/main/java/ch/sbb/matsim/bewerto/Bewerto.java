@@ -1,6 +1,7 @@
 package ch.sbb.matsim.bewerto;
 
 import ch.sbb.matsim.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.bewerto.demand.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoRunner;
@@ -87,7 +88,8 @@ public final class Bewerto {
      */
     private DemandMatrices calculateInducedDemand(DemandMatrices demand, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
 
-        DemandFactorCalculator calculator = new DemandFactorCalculator(baseSkim, variantSkim);
+        ElasticitiesParameters elaParameters = bewertoParameters.getElasticities();
+        DemandFactorCalculator calculator = new DemandFactorCalculator(elaParameters.getFile(), elaParameters.getSegment(), baseSkim, variantSkim);
 
         DemandMatrices updatedDemand = new DemandMatrices(demand);
 

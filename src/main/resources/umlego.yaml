@@ -67,6 +67,10 @@ bewerto:
   zoneConnectionsFile: ""
   outputDir: "output-bewerto"
 
+  elasticities:
+    file: ""
+    segment: "Fr"
+
   ref:
     name: "ref"
     scheduleFile: ""

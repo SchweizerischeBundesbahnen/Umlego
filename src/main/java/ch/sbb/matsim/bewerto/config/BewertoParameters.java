@@ -28,6 +28,10 @@ public final class BewertoParameters {
      */
     private String outputDir;
     /**
+     * Elasticities parameters for demand modeling.
+     */
+    private ElasticitiesParameters elasticities;
+    /**
      * Reference scenario parameters.
      */
     private ScenarioParameters ref;
@@ -72,6 +76,15 @@ public final class BewertoParameters {
         return this;
     }
 
+    public ElasticitiesParameters getElasticities() {
+        return elasticities;
+    }
+
+    public BewertoParameters setElasticities(ElasticitiesParameters elasticities) {
+        this.elasticities = elasticities;
+        return this;
+    }
+
     public ScenarioParameters getRef() {
         return ref;
     }
@@ -96,6 +109,8 @@ public final class BewertoParameters {
                 "demandFile='" + demandFile + '\'' +
                 ", zoneNamesFile='" + zoneNamesFile + '\'' +
                 ", zoneConnectionsFile='" + zoneConnectionsFile + '\'' +
+                ", outputDir='" + outputDir + '\'' +
+                ", elasticities=" + elasticities +
                 ", ref=" + ref +
                 ", variants=" + variants +
                 '}';
