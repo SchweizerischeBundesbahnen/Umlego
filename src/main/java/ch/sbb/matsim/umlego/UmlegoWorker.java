@@ -209,7 +209,7 @@ public class UmlegoWorker implements Runnable {
 			return Integer.compare(o1.transfers, o2.transfers);
 		});
 
-		ArrayList<Integer> dominatedRouteIndices = new ArrayList<>(routes.size());
+		List<Integer> dominatedRouteIndices = new ArrayList<>(routes.size());
 		for (int route1Index = 0, n = routes.size(); route1Index < n; route1Index++) {
 			Umlego.FoundRoute route1 = routes.get(route1Index);
 			if (route1.transfers == 0) {

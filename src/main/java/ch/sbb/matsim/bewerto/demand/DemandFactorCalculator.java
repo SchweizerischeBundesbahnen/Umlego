@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.bewerto.demand;
 
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;

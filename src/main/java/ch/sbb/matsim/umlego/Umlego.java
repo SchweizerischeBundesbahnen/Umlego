@@ -11,13 +11,11 @@ import ch.sbb.matsim.umlego.UmlegoWorker.WorkItem;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
-import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.writers.UmlegoWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
@@ -32,7 +30,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.utils.misc.Time;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 /**
@@ -171,7 +168,7 @@ public class Umlego {
         }
 
         // start writer threads
-        UmlegoWriter writerManager = new UmlegoWriter(writerQueue, outputFolder, originZoneIds,
+        UmlegoResultWorker writerManager = new UmlegoResultWorker(writerQueue, outputFolder, originZoneIds,
                 destinationZoneIds, listeners, scenario.getTransitSchedule(), params.writer());
         new Thread(writerManager).start();
 

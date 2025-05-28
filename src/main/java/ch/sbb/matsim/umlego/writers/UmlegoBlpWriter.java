@@ -27,7 +27,6 @@ import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
 import com.opencsv.CSVWriter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +41,7 @@ import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-public class UmlegoBlpWriter implements UmlegoWriterInterface {
+public class UmlegoBlpWriter implements UmlegoWriter {
 
     private static final Logger LOG = LogManager.getLogger(UmlegoBlpWriter.class);
 

@@ -20,13 +20,14 @@
 package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoResultWorker;
 import com.opencsv.CSVWriter;
 import org.matsim.core.utils.misc.Time;
 
 import java.io.IOException;
 import java.util.Locale;
 
-public class UmlegoCsvWriter implements UmlegoWriterInterface {
+public class UmlegoCsvWriter implements UmlegoWriter {
 
     private static final String[] HEADER_ROW = new String[]{
         "ORIGZONENO",
@@ -49,7 +50,7 @@ public class UmlegoCsvWriter implements UmlegoWriterInterface {
 
     public UmlegoCsvWriter(String filename, boolean writeDetails) throws IOException {
         this.writeDetails = writeDetails;
-        this.writer = new CSVWriter(UmlegoWriter.newBufferedWriter(filename), ',', '"', '\\', "\n");
+        this.writer = new CSVWriter(UmlegoResultWorker.newBufferedWriter(filename), ',', '"', '\\', "\n");
         this.writer.writeNext(HEADER_ROW);
     }
 

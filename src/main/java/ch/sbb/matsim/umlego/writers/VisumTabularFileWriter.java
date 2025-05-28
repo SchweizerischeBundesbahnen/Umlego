@@ -4,7 +4,7 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import java.io.FileWriter;
+import ch.sbb.matsim.umlego.UmlegoResultWorker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.utils.misc.Counter;
@@ -29,7 +29,7 @@ class VisumTabularFileWriter implements AutoCloseable {
 	private final Counter counter;
 
 	VisumTabularFileWriter(final String header, final String[] columns, final String filename) throws IOException {
-		this(header, columns, UmlegoWriter.newBufferedWriter(filename), DEFAULT_SEPARATOR);
+		this(header, columns, UmlegoResultWorker.newBufferedWriter(filename), DEFAULT_SEPARATOR);
 	}
 
 	private VisumTabularFileWriter(final String header, final String[] columns, final BufferedWriter writer, final String separator) throws IOException {

@@ -28,7 +28,7 @@ import org.matsim.pt.transitSchedule.api.TransitRoute;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PutSurveyWriter implements UmlegoWriterInterface {
+public class PutSurveyWriter implements UmlegoWriter {
 
     private static final String COL_PATH_ID = "$OEVTEILWEG:DATENSATZNR";
     private static final String COL_LEG_ID = "TWEGIND";

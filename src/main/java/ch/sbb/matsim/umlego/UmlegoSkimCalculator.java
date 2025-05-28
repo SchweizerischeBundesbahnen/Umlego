@@ -88,14 +88,15 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
     }
 
     @Override
-    public void finish() {
+    public void processODPair(String origZone, String destZone) {
+        double[] entry = skims.get(new ODPair(origZone, destZone));
+
         for (int i = 0; i < this.calculators.size(); i++) {
             SkimCalculator calculator = this.calculators.get(i);
             if (calculator.isNormalizedByDemand()) {
-                for (double[] entry : skims.values()) {
-                    entry[i] = entry[i] / entry[0]; // Demand is at index 0
-                }
+                entry[i] = entry[i] / entry[0]; // Demand is at index 0
             }
         }
     }
+
 }

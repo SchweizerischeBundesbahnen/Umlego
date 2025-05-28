@@ -1,6 +1,7 @@
 package ch.sbb.matsim.bewerto;
 
 import ch.sbb.matsim.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.bewerto.demand.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoRunner;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
