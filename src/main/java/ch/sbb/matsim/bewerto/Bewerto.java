@@ -2,7 +2,7 @@ package ch.sbb.matsim.bewerto;
 
 import ch.sbb.matsim.bewerto.config.BewertoParameters;
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
-import ch.sbb.matsim.bewerto.demand.DemandFactorCalculator;
+import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoRunner;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
@@ -14,6 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * The {@code Bewerto} class serves the core functionality of the Bewerto application.
@@ -36,6 +38,9 @@ public final class Bewerto {
     public void run() throws Exception {
 
         LOG.info("Starting Bewerto with parameters: {}", bewertoParameters);
+
+        if (!Files.exists(Path.of(bewertoParameters.getElasticities().getFile())))
+            throw new IllegalArgumentException("Elasticities file does not exist: " + bewertoParameters.getElasticities().getFile());
 
         File outputDir = new File(bewertoParameters.getOutputDir());
 
@@ -72,7 +77,7 @@ public final class Bewerto {
         UmlegoSkimCalculator baseSkim = baseCase.getListener(UmlegoSkimCalculator.class);
         UmlegoSkimCalculator variantSkim = result.getListener(UmlegoSkimCalculator.class);
 
-        DemandMatrices updatedDemand = calculateInducedDemand(runner.getDemand(), baseSkim, variantSkim);
+        DemandMatrices updatedDemand = calculateInducedDemand(runner.getDemand(), variant.getName(), baseSkim, variantSkim);
 
         // Assign the demand again
         UmlegoRunner inducedDemandRunner = new UmlegoRunner(
@@ -86,15 +91,18 @@ public final class Bewerto {
     /**
      * Calculates the induced demand matrices based on the base and variant skims.
      */
-    private DemandMatrices calculateInducedDemand(DemandMatrices demand, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
+    private DemandMatrices calculateInducedDemand(DemandMatrices demand, String name, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
 
         ElasticitiesParameters elaParameters = bewertoParameters.getElasticities();
-        DemandFactorCalculator calculator = new DemandFactorCalculator(elaParameters.getFile(), elaParameters.getSegment(), baseSkim, variantSkim);
+        DemandFactorCalculator calculator = new DemandFactorCalculator(elaParameters.getFile(), elaParameters.getSegment(),
+                demand.getLookup(), baseSkim, variantSkim);
 
         DemandMatrices updatedDemand = new DemandMatrices(demand);
 
         // Applies the demand factor calculator to the demand matrices
         updatedDemand.multiplyMatrixValues((fromZone, toZone, timeMin) -> calculator.calculateFactor(fromZone, toZone));
+
+        calculator.writeFactors(new File(bewertoParameters.getOutputDir(), name + "-factors.csv").toString());
 
         return updatedDemand;
     }

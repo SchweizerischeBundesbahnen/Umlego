@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.demand;
+package ch.sbb.matsim.bewerto.elasticities;
 
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public record ElasticityEntry(
     int cluster,
     String segment,
     String description,
-    String skimType,
+    SkimType skimType,
     double elasticity0,
     double a,
     double b,
@@ -55,7 +56,7 @@ public record ElasticityEntry(
      * @return List of all elasticity entries from the file
      * @throws IOException If there's an error reading the file
      */
-    public static List<ElasticityEntry> readAllEntries(String filePath) throws IOException {
+    public static List<ElasticityEntry> readAllEntries(String filePath) {
         List<ElasticityEntry> entries = new ArrayList<>();
         
         // Configure CSV parser
@@ -86,7 +87,7 @@ public record ElasticityEntry(
                     int cluster = Integer.parseInt(line[0].trim());
                     String segment = line[1].trim();
                     String description = line[2].trim();
-                    String skimType = line[3].trim();
+                    SkimType skimType = SkimType.valueOf(line[3].trim());
                     double elasticity0 = Double.parseDouble(line[4].trim());
                     double a = Double.parseDouble(line[5].trim());
                     double b = Double.parseDouble(line[6].trim());
@@ -116,7 +117,10 @@ public record ElasticityEntry(
             LOG.info("Loaded {} elasticity entries from file: {}", entries.size(), filePath);
         } catch (CsvValidationException e) {
             LOG.error("CSV validation error in file {}: {}", filePath, e.getMessage());
-            throw new IOException("Error validating CSV file", e);
+            throw new RuntimeException("Error validating CSV file", e);
+        } catch (IOException e) {
+            LOG.error("Error reading elasticity file: {}", filePath, e);
+            throw new UncheckedIOException("Error reading elasticity file", e);
         }
         
         return entries;

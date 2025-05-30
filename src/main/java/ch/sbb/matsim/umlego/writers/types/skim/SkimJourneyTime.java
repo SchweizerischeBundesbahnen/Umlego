@@ -10,7 +10,7 @@ public class SkimJourneyTime implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.SUM_JOURNEYTIME;
+    public SkimColumn getSkimType() {
+        return SkimColumn.SUM_JOURNEYTIME;
     }
 }

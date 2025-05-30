@@ -10,7 +10,7 @@ public class SkimNumberOfRoutes implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.NUMBEROFROUTES;
+    public SkimColumn getSkimType() {
+        return SkimColumn.NUMBEROFROUTES;
     }
 }

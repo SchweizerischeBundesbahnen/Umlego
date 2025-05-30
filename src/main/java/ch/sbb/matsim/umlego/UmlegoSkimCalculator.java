@@ -28,6 +28,21 @@ import java.util.Map;
 
 public final class UmlegoSkimCalculator implements UmlegoListener {
 
+    /**
+     * Index of the journey time in the skim array.
+     */
+    public static final int JRT_IDX = 3;
+
+    /**
+     * Index of the number of transfers in the skim array.
+     */
+    public static final int NTR_IDX = 4;
+
+    /**
+     * Index of the adaptation time in the skim array.
+     */
+    public static final int ADT_IDX = 5;
+
     private final List<SkimCalculator> calculators;
     private final Map<ODPair, double[]> skims;
 

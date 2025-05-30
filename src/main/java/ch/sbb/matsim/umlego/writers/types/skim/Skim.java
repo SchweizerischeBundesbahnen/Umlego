@@ -6,12 +6,12 @@ import java.util.Set;
 
 /**
  * The Skim class represents a collection of skimming matrices, which store aggregated travel-related data for
- * origin-destination pairs. Each origin-destination pair is associated with a map of {@link SkimType} to Double
+ * origin-destination pairs. Each origin-destination pair is associated with a map of {@link SkimColumn} to Double
  * values.
  */
 public class Skim {
 
-    Map<ODPair, Map<SkimType, Double>> valueMap;
+    Map<ODPair, Map<SkimColumn, Double>> valueMap;
 
     /**
      * Default constructor for the {@link Skim} class. Initializes an empty collection of skimming matrices.
@@ -23,9 +23,9 @@ public class Skim {
     /**
      * Constructs a  nlink Skim} object with pre-populated values.
      *
-     * @param values A map of {@link ODPair} to maps of {@link SkimType} and Double values.
+     * @param values A map of {@link ODPair} to maps of {@link SkimColumn} and Double values.
      */
-    public Skim(Map<ODPair, Map<SkimType, Double>> values) {
+    public Skim(Map<ODPair, Map<SkimColumn, Double>> values) {
         this.valueMap = new HashMap<>(values);
     }
 
@@ -34,10 +34,10 @@ public class Skim {
      * provided default value.
      *
      * @param key The {@link ODPair} representing the origin-destination pair.
-     * @param defaultValue A default map of {@link SkimType} to Double to return if the pair is not present.
+     * @param defaultValue A default map of {@link SkimColumn} to Double to return if the pair is not present.
      * @return The skimming matrix for the given pair, or the default value if not found.
      */
-    public Map<SkimType, Double> getOrDefault(ODPair key, Map<SkimType, Double> defaultValue) {
+    public Map<SkimColumn, Double> getOrDefault(ODPair key, Map<SkimColumn, Double> defaultValue) {
         return valueMap.getOrDefault(key, defaultValue);
     }
 
@@ -45,9 +45,9 @@ public class Skim {
      * Adds or updates the skimming matrix for a given origin-destination pair.
      *
      * @param key The {@link ODPair} representing the origin-destination pair.
-     * @param value A map of {@link SkimType} to Double representing the skimming matrix.
+     * @param value A map of {@link SkimColumn} to Double representing the skimming matrix.
      */
-    public void put(ODPair key, Map<SkimType, Double> value) {
+    public void put(ODPair key, Map<SkimColumn, Double> value) {
         this.valueMap.put(key, value);
     }
 
@@ -64,9 +64,9 @@ public class Skim {
      * Retrieves the skimming matrix for a specific origin-destination pair.
      *
      * @param odPair The {@link ODPair} representing the origin-destination pair.
-     * @return A map of {@link SkimType} to Double values, or null if the pair is not found.
+     * @return A map of {@link SkimColumn} to Double values, or null if the pair is not found.
      */
-    public Map<SkimType, Double> get(ODPair odPair) {
+    public Map<SkimColumn, Double> get(ODPair odPair) {
         return valueMap.get(odPair);
     }
 }

@@ -11,7 +11,7 @@ public class SkimWeightedAdaptationTime implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.SUM_WEIGHTED_ADAPTATION_TIME;
+    public SkimColumn getSkimType() {
+        return SkimColumn.SUM_WEIGHTED_ADAPTATION_TIME;
     }
 }

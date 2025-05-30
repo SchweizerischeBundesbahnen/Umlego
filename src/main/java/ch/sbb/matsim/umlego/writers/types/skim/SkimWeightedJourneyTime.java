@@ -11,7 +11,7 @@ public class SkimWeightedJourneyTime implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.SUM_WEIGHTED_JOURNEYTIME;
+    public SkimColumn getSkimType() {
+        return SkimColumn.SUM_WEIGHTED_JOURNEYTIME;
     }
 }

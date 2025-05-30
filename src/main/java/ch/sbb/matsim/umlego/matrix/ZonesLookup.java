@@ -1,5 +1,8 @@
 package ch.sbb.matsim.umlego.matrix;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +14,12 @@ import java.util.Set;
 public class ZonesLookup {
 
     private final Map<String, Integer> zonalLookup;
+
+    /**
+     * Lookup for zone names to a cluster id.
+     */
+    private final Object2IntMap<String> clusterLookup = new Object2IntOpenHashMap<>();
+
     private final String[] idLookup;
 
     /**
@@ -53,6 +62,15 @@ public class ZonesLookup {
             throw new ZoneNotFoundException(zone);
         }
         return result;
+    }
+
+    /**
+     * Retrieves the cluster ID for the specified zone.
+     */
+    public int getCluster(String zone) {
+        int cluster = this.clusterLookup.getOrDefault(zone, 1);
+        // TODO: read and return actual cluster from the zonalLookup
+        return cluster;
     }
 
     /**

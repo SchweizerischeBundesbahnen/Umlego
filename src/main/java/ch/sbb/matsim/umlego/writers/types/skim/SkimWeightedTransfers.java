@@ -11,7 +11,7 @@ public class SkimWeightedTransfers implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.SUM_WEIGHTED_TRANSFERS;
+    public SkimColumn getSkimType() {
+        return SkimColumn.SUM_WEIGHTED_TRANSFERS;
     }
 }

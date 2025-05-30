@@ -10,7 +10,7 @@ public class SkimDemand implements SkimCalculator {
     }
 
     @Override
-    public SkimType getSkimType() {
-        return SkimType.DEMAND;
+    public SkimColumn getSkimType() {
+        return SkimColumn.DEMAND;
     }
 }

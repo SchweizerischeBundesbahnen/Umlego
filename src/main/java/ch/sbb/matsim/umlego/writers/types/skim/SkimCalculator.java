@@ -10,7 +10,7 @@ public interface SkimCalculator {
 
     double aggregateRoute(double currentValue, String destZone, FoundRoute route);
 
-    SkimType getSkimType();
+    SkimColumn getSkimType();
 
     /**
      * Indicates whether the skim calculator is weighted by demand, If true, it will be normalized by the total demand for the od pair.

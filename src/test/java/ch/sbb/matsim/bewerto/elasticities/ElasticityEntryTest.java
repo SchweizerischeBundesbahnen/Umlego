@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.demand;
+package ch.sbb.matsim.bewerto.elasticities;
 
 import java.io.IOException;
 import java.util.List;
@@ -19,14 +19,14 @@ class ElasticityEntryTest {
         // Test some specific entries to verify correct parsing
         // Test first entry (Cluster 1, Fr, Binnenverkehr, JRT)
         ElasticityEntry firstEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals("JRT"))
+                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.JRT))
                 .findFirst()
                 .orElseThrow();
         
         assertEquals(1, firstEntry.cluster());
         assertEquals("Fr", firstEntry.segment());
         assertEquals("Binnenverkehr", firstEntry.description());
-        assertEquals("JRT", firstEntry.skimType());
+        assertEquals(SkimType.JRT, firstEntry.skimType());
         assertEquals(-2.34, firstEntry.elasticity0(), 0.001);
         assertEquals(5.7, firstEntry.a(), 0.001);
         assertEquals(-9.8, firstEntry.b(), 0.001);
@@ -38,7 +38,7 @@ class ElasticityEntryTest {
         
         // Test an ADT entry which should have kg_max
         ElasticityEntry adtEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals("ADT"))
+                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.ADT))
                 .findFirst()
                 .orElseThrow();
         
@@ -46,7 +46,7 @@ class ElasticityEntryTest {
         
         // Test PM entry with large min/max values
         ElasticityEntry pmEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals("PM"))
+                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.PM))
                 .findFirst()
                 .orElseThrow();
         
