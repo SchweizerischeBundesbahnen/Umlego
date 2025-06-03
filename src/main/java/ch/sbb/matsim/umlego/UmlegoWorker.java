@@ -88,6 +88,7 @@ public class UmlegoWorker implements Runnable {
 		Map<String, List<Umlego.FoundRoute>> foundRoutes = calculateRoutesForZone(workItem.originZone);
 		calculateRouteCharacteristics(foundRoutes);
 		filterRoutes(foundRoutes);
+		calculateOriginality(foundRoutes);
 		return assignDemand(workItem.originZone, foundRoutes);
 	}
 
@@ -322,6 +323,11 @@ public class UmlegoWorker implements Runnable {
 			for (Umlego.FoundRoute route : routes) {
 				calculateRouteCharacteristics(route);
 			}
+		}
+	}
+
+	private void calculateOriginality(Map<String, List<Umlego.FoundRoute>> foundRoutes) {
+		for (List<Umlego.FoundRoute> routes : foundRoutes.values()) {
 			calculateOriginality(routes);
 		}
 	}
