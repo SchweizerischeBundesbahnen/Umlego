@@ -170,7 +170,11 @@ public class UmlegoWorker implements Runnable {
 								ConnectedStop originConnectedStop = originStopLookup.get(route.originStop);
 								ConnectedStop destinationConnectedStop = destinationStopLookup.get(route.destinationStop);
 
-								if (originConnectedStop != null && destinationConnectedStop != null) {
+								boolean invalidRoute =
+										routeStartsWithTransferWithinSameZone(route, originStopLookup.keySet())
+										|| routeEndsWithTransferWithinSameZone(route, destinationStopLookup.keySet());
+
+								if (originConnectedStop != null && destinationConnectedStop != null && !invalidRoute) {
 									// otherwise the route would not be valid, e.g. due to an additional transfer at the start or end
 									route.originConnectedStop = originConnectedStop;
 									route.destinationConnectedStop = destinationConnectedStop;
@@ -185,6 +189,26 @@ public class UmlegoWorker implements Runnable {
 			foundRoutesPerZone.put(destinationZoneId, new ArrayList<>(allRoutesFromTo));
 		}
 		return foundRoutesPerZone;
+	}
+
+	private boolean routeStartsWithTransferWithinSameZone(Umlego.FoundRoute route, Set<TransitStopFacility> zoneStops) {
+		var firstRoutePart = route.routeParts.getFirst();
+		boolean isTransfer = route.originStop != firstRoutePart.fromStop;
+		if (isTransfer) {
+			// test if both the from and to stop are in the same zone
+			return zoneStops.contains(route.originStop) && zoneStops.contains(firstRoutePart.fromStop);
+		}
+		return false;
+	}
+
+	private boolean routeEndsWithTransferWithinSameZone(Umlego.FoundRoute route, Set<TransitStopFacility> zoneStops) {
+		var lastRoutePart = route.routeParts.getLast();
+		boolean isTransfer = route.destinationStop != lastRoutePart.toStop;
+		if (isTransfer) {
+			// test if both the from and to stop are in the same zone
+			return zoneStops.contains(route.destinationStop) && zoneStops.contains(lastRoutePart.toStop);
+		}
+		return false;
 	}
 
 	private void filterRoutes(Map<String, List<Umlego.FoundRoute>> foundRoutes) {
