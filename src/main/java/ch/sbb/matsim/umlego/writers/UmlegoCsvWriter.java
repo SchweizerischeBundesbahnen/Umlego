@@ -59,17 +59,17 @@ public class UmlegoCsvWriter implements UmlegoWriter {
         this.writer.writeNext(new String[]{
             origZone,
             destZone,
-            route.originStop.getName(),
-            route.destinationStop.getName(),
+            route.stop2stopRoute.originStop.getName(),
+            route.stop2stopRoute.destinationStop.getName(),
             Time.writeTime(route.originConnectedStop.walkTime()),
             Time.writeTime(route.destinationConnectedStop.walkTime()),
-            Time.writeTime(route.depTime),
-            Time.writeTime(route.arrTime),
-            Time.writeTime(route.travelTimeWithoutAccess),
-            Integer.toString(route.transfers),
-            String.format(Locale.US,"%.2f", route.distance / 1000.0),
-            String.format(Locale.US,"%.5f", route.demand.getDouble(destZone)),
-            this.writeDetails ? route.getRouteAsString() : ""
+            Time.writeTime(route.stop2stopRoute.depTime),
+            Time.writeTime(route.stop2stopRoute.arrTime),
+            Time.writeTime(route.stop2stopRoute.travelTimeWithoutAccess),
+            Integer.toString(route.stop2stopRoute.transfers),
+            String.format(Locale.US,"%.2f", route.stop2stopRoute.distance / 1000.0),
+            String.format(Locale.US,"%.5f", route.demand),
+            this.writeDetails ? route.stop2stopRoute.getRouteAsString() : ""
         });
     }
 

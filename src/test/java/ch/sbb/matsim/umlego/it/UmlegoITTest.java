@@ -84,10 +84,10 @@ public class UmlegoITTest {
         umlego.run(params, 1, "");
 
         for (var route : listener.routes) {
-            var d = route.demand.getOrDefault(GENEVE, 0.);
-            var apz = route.adaptationTime.getOrDefault(GENEVE, 0.);
-            var lines = route.routeParts.stream().map(rp -> rp.line).filter(Objects::nonNull).map(TransitLine::getId).map(Object::toString).toList();
-            System.out.println("\t" + lines + " \t|  #transfer = " + route.transfers + "  \t| demand =" + +d + "\t" + apz / d / 60.0);
+            var d = route.demand;
+            var apz = route.adaptationTime;
+            var lines = route.stop2stopRoute.routeParts.stream().map(rp -> rp.line).filter(Objects::nonNull).map(TransitLine::getId).map(Object::toString).toList();
+            System.out.println("\t" + lines + " \t|  #transfer = " + route.stop2stopRoute.transfers + "  \t| demand =" + +d + "\t" + apz / d / 60.0);
 
         }
 
@@ -150,7 +150,7 @@ public class UmlegoITTest {
         baseUmlego.addListener(baseListener);
         baseUmlego.run(params, 1, "");
 
-        double totalDemand = baseListener.routes.stream().flatMapToDouble(r -> r.demand.values().doubleStream()).sum();
+        double totalDemand = baseListener.routes.stream().mapToDouble(r -> r.demand).sum();
 
         // Create the halved demand matrix
         double[][] halfMatrix = {{5, 5}, {5, 5}}; // Halved values
@@ -164,7 +164,7 @@ public class UmlegoITTest {
         halfUmlego.run(params, 1, "");
 
         // Calculate total demand for the halved case
-        double halfDemandTotal = halfListener.routes.stream().flatMapToDouble(r -> r.demand.values().doubleStream()).sum();
+        double halfDemandTotal = halfListener.routes.stream().mapToDouble(r -> r.demand).sum();
 
 
         // Verify that the total demand is halved

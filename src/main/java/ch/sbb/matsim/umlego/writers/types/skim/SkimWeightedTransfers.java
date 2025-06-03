@@ -6,8 +6,8 @@ public class SkimWeightedTransfers implements SkimCalculator {
 
     @Override
     public double aggregateRoute(double currentValue, String destZone, FoundRoute route) {
-        var demand = route.demand.getDouble(destZone);
-        return currentValue + demand * route.transfers;
+        var demand = route.demand;
+        return currentValue + demand * route.stop2stopRoute.transfers;
     }
 
     @Override

@@ -7,7 +7,7 @@ public class SkimWeightedAdaptationTime implements SkimCalculator {
     @Override
     public double aggregateRoute(double currentValue, String destZone, FoundRoute route) {
         // The adaptation time is already weighted during calculation of the routes
-        return currentValue + route.adaptationTime.getDouble(destZone);
+        return currentValue + route.adaptationTime;
     }
 
     @Override

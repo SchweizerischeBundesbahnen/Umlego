@@ -206,26 +206,17 @@ public class Umlego {
         demandWriter.write(unroutableDemand);
     }
 
-    public static class FoundRoute {
-
+    public static class Stop2StopRoute {
         public final TransitStopFacility originStop;
         public final TransitStopFacility destinationStop;
-        public ConnectedStop originConnectedStop;
-        public ConnectedStop destinationConnectedStop;
-        public double depTime;
-        public double arrTime;
+        public final double depTime;
+        public final double arrTime;
         public final double travelTimeWithoutAccess;
-        public double travelTimeWithAccess = Double.NaN;
-        public int transfers;
+        public final int transfers;
         public final double distance;
-        public List<RaptorRoute.RoutePart> routeParts = new ArrayList<>();
-        public double searchImpedance = Double.NaN; // Suchwiderstand
-        public double perceivedJourneyTimeMin = Double.NaN; // Empfundene Reisezeit
-        public Object2DoubleMap<String> demand = new Object2DoubleOpenHashMap<>();
-        public Object2DoubleMap<String> adaptationTime = new Object2DoubleOpenHashMap<>();
-        public double originality = 0; // Eigenständigkeit
+        public final List<RaptorRoute.RoutePart> routeParts = new ArrayList<>();
 
-        public FoundRoute(RaptorRoute route) {
+        public Stop2StopRoute(RaptorRoute route) {
             double firstDepTime = Double.NaN;
             double lastArrTime = Double.NaN;
 
@@ -273,7 +264,7 @@ public class Umlego {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            FoundRoute that = (FoundRoute) o;
+            Stop2StopRoute that = (Stop2StopRoute) o;
             boolean isEqual = Double.compare(depTime, that.depTime) == 0
                 && Double.compare(arrTime, that.arrTime) == 0
                 && transfers == that.transfers
@@ -339,6 +330,26 @@ public class Umlego {
             stringBuilder.append(' ');
             stringBuilder.append(Time.writeTime(part.arrivalTime));
             return stringBuilder.toString();
+        }
+    }
+
+    public static class FoundRoute {
+        public final Stop2StopRoute stop2stopRoute;
+        public final ConnectedStop originConnectedStop;
+        public final ConnectedStop destinationConnectedStop;
+        public final double travelTimeWithAccess;
+
+        public double searchImpedance = Double.NaN; // Suchwiderstand
+        public double perceivedJourneyTimeMin = Double.NaN; // Empfundene Reisezeit
+        public double demand = 0;
+        public double adaptationTime = 0;
+        public double originality = 0; // Eigenständigkeit
+
+        public FoundRoute(Stop2StopRoute stop2stopRoute, ConnectedStop originConnectedStop, ConnectedStop destinationConnectedStop) {
+            this.stop2stopRoute = stop2stopRoute;
+            this.originConnectedStop = originConnectedStop;
+            this.destinationConnectedStop = destinationConnectedStop;
+            this.travelTimeWithAccess = stop2stopRoute.travelTimeWithoutAccess + originConnectedStop.walkTime() + destinationConnectedStop.walkTime();
         }
     }
 }

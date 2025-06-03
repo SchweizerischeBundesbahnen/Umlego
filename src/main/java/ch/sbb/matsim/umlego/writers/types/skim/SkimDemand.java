@@ -6,7 +6,7 @@ public class SkimDemand implements SkimCalculator {
 
     @Override
     public double aggregateRoute(double currentValue, String destZone, FoundRoute route) {
-        return currentValue + route.demand.getDouble(destZone);
+        return currentValue + route.demand;
     }
 
     @Override
