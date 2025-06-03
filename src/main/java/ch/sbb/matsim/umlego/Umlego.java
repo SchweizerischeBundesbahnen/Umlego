@@ -11,6 +11,8 @@ import ch.sbb.matsim.umlego.UmlegoWorker.WorkItem;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
+import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
@@ -42,6 +44,7 @@ public class Umlego {
     private final DemandMatrices demand;
     private final Scenario scenario;
     private final Map<String, List<ConnectedStop>> stopsPerZone;
+    private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
 
     /**
      * List of listeners to be notified about found routes.
@@ -59,6 +62,10 @@ public class Umlego {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
+    }
+
+    public void setDeltaTCalculator(DeltaTCalculator deltaTCalculator) {
+        this.deltaTCalculator = deltaTCalculator;
     }
 
     /**
@@ -163,7 +170,7 @@ public class Umlego {
             SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
             threads[i] = new Thread(
                 new UmlegoWorker(workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
-                    this.stopsPerZone, stopLookupPerDestination));
+                    this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator));
             threads[i].start();
         }
 

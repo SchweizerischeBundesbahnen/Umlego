@@ -3,6 +3,7 @@ package ch.sbb.matsim.umlego;
 import ch.sbb.matsim.umlego.config.PerceivedJourneyTimeParameters;
 import ch.sbb.matsim.umlego.config.SearchImpedanceParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandPart;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
@@ -42,6 +43,7 @@ public class UmlegoWorker implements Runnable {
 	private final Map<String, List<ConnectedStop>> stopsPerZone;
 	private final Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination;
 	private final RouteUtilityCalculator utilityCalculator;
+	private final DeltaTCalculator deltaTCalculator;
 
 	public UmlegoWorker(BlockingQueue<WorkItem> workerQueue,
 											UmlegoParameters params,
@@ -50,7 +52,8 @@ public class UmlegoWorker implements Runnable {
 											RaptorParameters raptorParams,
 											List<String> destinationZoneIds,
 											Map<String, List<ConnectedStop>> stopsPerZone,
-											Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination) {
+											Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination,
+											DeltaTCalculator deltaTCalculator) {
 		this.workerQueue = workerQueue;
 		this.params = params;
 		this.demand = demand;
@@ -61,6 +64,7 @@ public class UmlegoWorker implements Runnable {
 		this.stopsPerZone = stopsPerZone;
 		this.stopLookupPerDestination = stopLookupPerDestination;
 		this.utilityCalculator = params.routeSelection().utilityCalculator().createUtilityCalculator();
+		this.deltaTCalculator = deltaTCalculator;
 	}
 
 	@Override
@@ -139,6 +143,10 @@ public class UmlegoWorker implements Runnable {
 				});
 	}
 
+	/**
+	 * Creates a Map containing for each destination zone id the List of found routes,
+	 * leading from the originZoneId to the destination, over the whole day.
+	 */
 	private Map<String, List<Umlego.FoundRoute>> aggregateOnZoneLevel(String originZoneId, Map<TransitStopFacility, Map<TransitStopFacility, Map<Umlego.FoundRoute, Boolean>>> foundRoutesPerStop) {
 		List<ConnectedStop> emptyList = Collections.emptyList();
 		Map<String, List<Umlego.FoundRoute>> foundRoutesPerZone = new HashMap<>();
@@ -461,18 +469,12 @@ public class UmlegoWorker implements Runnable {
 			for (int i = 0; i < potentialRoutes.length; i++) {
 				Umlego.FoundRoute route = potentialRoutes[i];
 				double routeDepTime = route.depTime - route.originConnectedStop.walkTime();
-				// assume wrap-around of 24 hours for schedule
-				// normalize the delta in the range of -12h ... +12h
-				double delta = time - routeDepTime;
-				while (delta > 12*3600) {
-					delta -= 24*3600;
-				}
-				while (delta < -12*3600) {
-					delta += 24*3600;
-				}
-				deltas[i] = Math.abs(delta);
-				double deltaTEarly = (delta < 0) ? Math.abs(delta) : 0.0;
-				double deltaTLate = (delta > 0) ? delta : 0.0;
+
+				double deltaTEarly = this.deltaTCalculator.calculateDeltaTEarly(routeDepTime, time, time + stepSize);
+				double deltaTLate = this.deltaTCalculator.calculateDeltaTLate(routeDepTime, time, time + stepSize);
+
+				// one of both must be zero, so we can sum them up
+				deltas[i] = Math.abs(deltaTEarly + deltaTLate);
 				double impedance = betaPJT * route.perceivedJourneyTimeMin
                         + betaDeltaTEarly * (deltaTEarly / 60.0) + betaDeltaTLate * (deltaTLate / 60.0);
 				impedances[i] = impedance;
