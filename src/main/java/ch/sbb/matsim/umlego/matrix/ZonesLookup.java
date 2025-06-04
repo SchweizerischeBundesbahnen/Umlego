@@ -1,8 +1,16 @@
 package ch.sbb.matsim.umlego.matrix;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.matsim.application.options.CsvOptions;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,32 +21,62 @@ import java.util.Set;
  */
 public class ZonesLookup {
 
+    /**
+     * Column for the market area (cluster) in the CSV file.
+     */
+    public static final String CLUSTER_COLUMN = "MARKTGEBIETVARELAST";
+
     private final Map<String, Integer> zonalLookup;
 
-    /**
-     * Lookup for zone names to a cluster id.
-     */
-    private final Object2IntMap<String> clusterLookup = new Object2IntOpenHashMap<>();
-
     private final String[] idLookup;
+
+    /**
+     * Lookup for zone names to a cluster id (or market area).
+     */
+    private final Map<String, String> clusterLookup = new HashMap<>();
+
 
     /**
      * Constructs a ZonesLookup object by parsing a CSV file containing zone information. Assumes semicolon as separator.
      *
      * @param zonesCsvFileName the path to the CSV file containing zone information
      */
-    public ZonesLookup(String zonesCsvFileName) {
-        this(zonesCsvFileName, ";");
-    }
+    public ZonesLookup(String zonesCsvFileName) throws IOException {
 
-    /**
-     * Constructs a ZonesLookup object by parsing a CSV file containing zone information.
-     *
-     * @param zonesCsvFileName the path to the CSV file containing zone information
-     * @param separator        the separator used in the CSV file
-     */
-    private ZonesLookup(String zonesCsvFileName, String separator) {
-        this(new ZonesLookupParser(zonesCsvFileName, separator).parseZones());
+        zonalLookup = new Object2IntOpenHashMap<>();
+        Character delimiter = CsvOptions.detectDelimiter(zonesCsvFileName);
+
+        CSVFormat format = CSVFormat.DEFAULT.builder().setDelimiter(delimiter).setHeader().setSkipHeaderRecord(true).build();
+        try (CSVParser parser = new CSVParser(new BufferedReader(new FileReader(zonesCsvFileName)), format)) {
+
+            if (!parser.getHeaderNames().contains("NAME")) {
+                throw new IllegalArgumentException("CSV file must contain 'NAME' column.");
+            }
+
+            if (!parser.getHeaderNames().contains("NO")) {
+                throw new IllegalArgumentException("CSV file must contain 'NO' column.");
+            }
+
+            for (CSVRecord r : parser) {
+
+                String name = r.get("NAME");
+                int id = Integer.parseInt(r.get("NO"));
+                zonalLookup.put(name, id);
+
+                if (r.isMapped(CLUSTER_COLUMN)) {
+                    clusterLookup.put(name, r.get(CLUSTER_COLUMN));
+                }
+
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        int length = zonalLookup.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+        this.idLookup = new String[length + 1];
+        for (Map.Entry<String, Integer> entry : zonalLookup.entrySet()) {
+            this.idLookup[entry.getValue()] = entry.getKey();
+        }
     }
 
     public ZonesLookup(Map<String, Integer> zonalLookup) {
@@ -67,10 +105,17 @@ public class ZonesLookup {
     /**
      * Retrieves the cluster ID for the specified zone.
      */
-    public int getCluster(String zone) {
-        int cluster = this.clusterLookup.getOrDefault(zone, 1);
-        // TODO: read and return actual cluster from the zonalLookup
-        return cluster;
+    public String getCluster(String zone) {
+        if (clusterLookup.isEmpty()) {
+            throw new IllegalStateException("Cluster lookup is not initialized. Ensure the CSV file contains '" + CLUSTER_COLUMN + "' column.");
+        }
+
+        String result = clusterLookup.get(zone);
+        if (result == null) {
+            throw new ZoneNotFoundException(zone);
+        }
+
+        return result;
     }
 
     /**

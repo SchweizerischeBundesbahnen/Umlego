@@ -67,7 +67,7 @@ public class OmxMatrixParser implements DemandMatricesParser {
             Group lookups = (Group) hdfFile.getChild("lookup");
             Map<String, Node> indexes = lookups.getChildren();
 
-            assert indexes.size() == 1 : "Requires one lookup index";
+            if (indexes.size() != 1) throw new AssertionError("Requires one lookup index");
 
             Dataset lookup = (Dataset) indexes.values().stream().findFirst().orElseThrow();
 
@@ -76,13 +76,22 @@ public class OmxMatrixParser implements DemandMatricesParser {
             if (t == long.class) {
                 long[] lookupValues = (long[]) lookup.getData();
                 for (int i = 0; i < lookupValues.length; i++) {
-                    assert i == this.zonalLookup.getIndex(String.valueOf(lookupValues[i]));
+                    if (i != this.zonalLookup.getIndex(String.valueOf(lookupValues[i])))
+                        throw new AssertionError("OMX lookup index does not match zonal lookup index for value: " + lookupValues[i]);
                 }
 
+                if (lookupValues.length != this.zonalLookup.size()) {
+                    throw new AssertionError("OMX lookup size does not match zonal lookup size");
+                }
             } else if (t == int.class) {
                 int[] lookupValues = (int[]) lookup.getData();
                 for (int i = 0; i < lookupValues.length; i++) {
-                    assert i == this.zonalLookup.getIndex(String.valueOf(lookupValues[i]));
+                    if (i != this.zonalLookup.getIndex(String.valueOf(lookupValues[i])))
+                        throw new AssertionError("OMX lookup index does not match zonal lookup index for value: " + lookupValues[i]);
+                }
+
+                if (lookupValues.length != this.zonalLookup.size()) {
+                    throw new AssertionError("OMX lookup size does not match zonal lookup size");
                 }
             } else
                 throw new RuntimeException("Unsupported lookup type: " + t.getName());

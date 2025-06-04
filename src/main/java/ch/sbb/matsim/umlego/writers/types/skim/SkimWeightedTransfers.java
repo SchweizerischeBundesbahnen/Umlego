@@ -14,4 +14,9 @@ public class SkimWeightedTransfers implements SkimCalculator {
     public SkimColumn getSkimType() {
         return SkimColumn.SUM_WEIGHTED_TRANSFERS;
     }
+
+    @Override
+    public boolean isNormalizedByDemand() {
+        return true;
+    }
 }

@@ -14,4 +14,9 @@ public class SkimWeightedAdaptationTime implements SkimCalculator {
     public SkimColumn getSkimType() {
         return SkimColumn.SUM_WEIGHTED_ADAPTATION_TIME;
     }
+
+    @Override
+    public boolean isNormalizedByDemand() {
+        return true;
+    }
 }

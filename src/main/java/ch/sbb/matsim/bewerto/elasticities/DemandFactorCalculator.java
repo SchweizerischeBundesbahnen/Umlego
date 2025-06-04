@@ -131,7 +131,7 @@ public final class DemandFactorCalculator {
         }
 
         // TODO: correct cluster calculation
-        int cluster = lookup.getCluster(od.fromZone());
+        String cluster = lookup.getCluster(od.fromZone());
 
         // TODO: OG_A PZ ?
 

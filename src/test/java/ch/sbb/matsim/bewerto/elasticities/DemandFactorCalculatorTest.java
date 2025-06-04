@@ -52,7 +52,7 @@ class DemandFactorCalculatorTest {
         // Configure mocks
         when(mockBaseSkim.getSkims()).thenReturn(baseSkims);
         when(mockVariantSkim.getSkims()).thenReturn(variantSkims);
-        when(mockLookup.getCluster(anyString())).thenReturn(1); // Default cluster
+        when(mockLookup.getCluster(anyString())).thenReturn("CH"); // Default cluster
 
         // Create the calculator
         calculator = new DemandFactorCalculator(
@@ -75,9 +75,9 @@ class DemandFactorCalculatorTest {
         variantSkims.put(od3, new double[]{Double.NaN, Double.NaN, Double.NaN, 70.0, 13.0, 3.5, 0.0}); // Worse JRT, better ADT
 
         // Set clusters for testing zones
-        when(mockLookup.getCluster("zone1")).thenReturn(1);
-        when(mockLookup.getCluster("zone2")).thenReturn(1);
-        when(mockLookup.getCluster("zone3")).thenReturn(2);
+        when(mockLookup.getCluster("zone1")).thenReturn("CH");
+        when(mockLookup.getCluster("zone2")).thenReturn("GG");
+        when(mockLookup.getCluster("zone3")).thenReturn("AUSLAND");
     }
 
     @Test
