@@ -11,6 +11,8 @@ import ch.sbb.matsim.umlego.UmlegoWorker.WorkItem;
 import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
+import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
@@ -42,6 +44,7 @@ public class Umlego {
     private final DemandMatrices demand;
     private final Scenario scenario;
     private final Map<String, List<ConnectedStop>> stopsPerZone;
+    private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
 
     /**
      * List of listeners to be notified about found routes.
@@ -59,6 +62,10 @@ public class Umlego {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
+    }
+
+    public void setDeltaTCalculator(DeltaTCalculator deltaTCalculator) {
+        this.deltaTCalculator = deltaTCalculator;
     }
 
     /**
@@ -163,7 +170,7 @@ public class Umlego {
             SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
             threads[i] = new Thread(
                 new UmlegoWorker(workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
-                    this.stopsPerZone, stopLookupPerDestination));
+                    this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator));
             threads[i].start();
         }
 
@@ -199,26 +206,17 @@ public class Umlego {
         demandWriter.write(unroutableDemand);
     }
 
-    public static class FoundRoute {
-
+    public static class Stop2StopRoute {
         public final TransitStopFacility originStop;
         public final TransitStopFacility destinationStop;
-        public ConnectedStop originConnectedStop;
-        public ConnectedStop destinationConnectedStop;
-        public double depTime;
-        public double arrTime;
+        public final double depTime;
+        public final double arrTime;
         public final double travelTimeWithoutAccess;
-        public double travelTimeWithAccess = Double.NaN;
-        public int transfers;
+        public final int transfers;
         public final double distance;
-        public List<RaptorRoute.RoutePart> routeParts = new ArrayList<>();
-        public double searchImpedance = Double.NaN; // Suchwiderstand
-        public double perceivedJourneyTimeMin = Double.NaN; // Empfundene Reisezeit
-        public Object2DoubleMap<String> demand = new Object2DoubleOpenHashMap<>();
-        public Object2DoubleMap<String> adaptationTime = new Object2DoubleOpenHashMap<>();
-        public double originality = 0; // Eigenständigkeit
+        public final List<RaptorRoute.RoutePart> routeParts = new ArrayList<>();
 
-        public FoundRoute(RaptorRoute route) {
+        public Stop2StopRoute(RaptorRoute route) {
             double firstDepTime = Double.NaN;
             double lastArrTime = Double.NaN;
 
@@ -266,7 +264,7 @@ public class Umlego {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            FoundRoute that = (FoundRoute) o;
+            Stop2StopRoute that = (Stop2StopRoute) o;
             boolean isEqual = Double.compare(depTime, that.depTime) == 0
                 && Double.compare(arrTime, that.arrTime) == 0
                 && transfers == that.transfers
@@ -332,6 +330,26 @@ public class Umlego {
             stringBuilder.append(' ');
             stringBuilder.append(Time.writeTime(part.arrivalTime));
             return stringBuilder.toString();
+        }
+    }
+
+    public static class FoundRoute {
+        public final Stop2StopRoute stop2stopRoute;
+        public final ConnectedStop originConnectedStop;
+        public final ConnectedStop destinationConnectedStop;
+        public final double travelTimeWithAccess;
+
+        public double searchImpedance = Double.NaN; // Suchwiderstand
+        public double perceivedJourneyTimeMin = Double.NaN; // Empfundene Reisezeit
+        public double demand = 0;
+        public double adaptationTime = 0;
+        public double originality = 0; // Eigenständigkeit
+
+        public FoundRoute(Stop2StopRoute stop2stopRoute, ConnectedStop originConnectedStop, ConnectedStop destinationConnectedStop) {
+            this.stop2stopRoute = stop2stopRoute;
+            this.originConnectedStop = originConnectedStop;
+            this.destinationConnectedStop = destinationConnectedStop;
+            this.travelTimeWithAccess = stop2stopRoute.travelTimeWithoutAccess + originConnectedStop.walkTime() + destinationConnectedStop.walkTime();
         }
     }
 }

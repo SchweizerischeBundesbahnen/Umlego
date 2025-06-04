@@ -77,9 +77,9 @@ public class PutSurveyWriter implements UmlegoWriter {
         int legId = 0;
         String teilweg_kennung = "E"; // first teilweg should have E, all later ones N
 
-        double demand = route.demand.get(toZone);
+        double demand = route.demand;
 
-        for (RaptorRoute.RoutePart routePart : route.routeParts) {
+        for (RaptorRoute.RoutePart routePart : route.stop2stopRoute.routeParts) {
             if (routePart.line != null) {
                 legId++;
                 writeRow(routePart, legId, pathId, teilweg_kennung, fromZone, toZone, demand);

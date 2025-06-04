@@ -160,7 +160,7 @@ public class UmlegoResultWorker implements Runnable {
                             listener.processRoute(origZone, destZone, route);
                         }
 
-                        if (route.demand.getDouble(destZone) >= this.params.minimalDemandForWriting()) {
+                        if (route.demand >= this.params.minimalDemandForWriting()) {
                             writers.writeRoute(origZone, destZone, route);
                         }
                     }

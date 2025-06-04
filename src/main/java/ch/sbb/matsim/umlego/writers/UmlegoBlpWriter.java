@@ -137,10 +137,10 @@ public class UmlegoBlpWriter implements UmlegoWriter {
 
     @Override
     public void writeRoute(String origZone, String destZone, FoundRoute route) {
-        double demand = route.demand.getDouble(destZone);
+        double demand = route.demand;
 
-        for (int i = 0; i<route.routeParts.size(); i++) {
-            RoutePart routePart = route.routeParts.get(i);
+        for (int i = 0; i<route.stop2stopRoute.routeParts.size(); i++) {
+            RoutePart routePart = route.stop2stopRoute.routeParts.get(i);
             if (routePart.line != null && routePart.mode.equals("pt")) {
                 routePart.route.getAttributes();
 
@@ -162,7 +162,7 @@ public class UmlegoBlpWriter implements UmlegoWriter {
 
                     if (item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
                         item.addAlighting(demand);
-                        if (i == route.routeParts.size() - 1) {
+                        if (i == route.stop2stopRoute.routeParts.size() - 1) {
                             item.addDestinationAlighting(demand);
                         }
                         break;

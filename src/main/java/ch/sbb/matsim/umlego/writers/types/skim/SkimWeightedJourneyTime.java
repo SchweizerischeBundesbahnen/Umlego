@@ -6,8 +6,8 @@ public class SkimWeightedJourneyTime implements SkimCalculator {
 
     @Override
     public double aggregateRoute(double currentValue, String destZone, FoundRoute route) {
-        var demand = route.demand.getDouble(destZone);
-        return currentValue + demand * (route.arrTime - route.depTime);
+        var demand = route.demand;
+        return currentValue + demand * (route.stop2stopRoute.arrTime - route.stop2stopRoute.depTime);
     }
 
     @Override
