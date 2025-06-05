@@ -33,7 +33,7 @@ import java.util.List;
  * @param kgMax        kg_max value (optional, can be null)
  */
 public record ElasticityEntry(
-    int cluster,
+    String cluster,
     String segment,
     String description,
     SkimType skimType,
@@ -54,7 +54,6 @@ public record ElasticityEntry(
      *
      * @param filePath Path to the elasticity CSV file
      * @return List of all elasticity entries from the file
-     * @throws IOException If there's an error reading the file
      */
     public static List<ElasticityEntry> readAllEntries(String filePath) {
         List<ElasticityEntry> entries = new ArrayList<>();
@@ -84,7 +83,7 @@ public record ElasticityEntry(
                 }
                 
                 try {
-                    int cluster = Integer.parseInt(line[0].trim());
+                    String cluster = line[0].trim();
                     String segment = line[1].trim();
                     String description = line[2].trim();
                     SkimType skimType = SkimType.valueOf(line[3].trim());

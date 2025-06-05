@@ -4,8 +4,6 @@ import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
 import com.opencsv.CSVWriter;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 
@@ -33,7 +31,7 @@ public final class DemandFactorCalculator {
     /**
      * Contains the entries for elasticity calculation. Mapped by {@link ElasticityEntry#cluster()} and {@link ElasticityEntry#skimType()}.
      */
-    private final Int2ObjectMap<Map<SkimType, ElasticityEntry>> entries = new Int2ObjectOpenHashMap<>();
+    private final Map<String, Map<SkimType, ElasticityEntry>> entries = new LinkedHashMap<>();
 
     /**
      * Cache for calculated factors.
@@ -130,11 +128,9 @@ public final class DemandFactorCalculator {
             return 1;
         }
 
-        // TODO: correct cluster calculation
-        String cluster = lookup.getCluster(od.fromZone());
+        String cluster = computeCluster(od.fromZone(), od.toZone());
 
         // TODO: OG_A PZ ?
-
         double ax = Math.min(baseValues[UmlegoSkimCalculator.ADT_IDX], Double.MAX_VALUE) / 15;
         double bx = baseValues[UmlegoSkimCalculator.JRT_IDX] / 45;
 
@@ -150,6 +146,21 @@ public final class DemandFactorCalculator {
         indvFactors.put(od, new double[]{FJRT, FADT, FNTR});
         
         return FJRT * FADT * FNTR;
+    }
+
+    /**
+     * Compute the cluster, i.e. type of relation (international or national) based on the origin and destination zones.
+     */
+    private String computeCluster(String fromZone, String toZone) {
+
+        String a = lookup.getCluster(fromZone);
+        String b = lookup.getCluster(toZone);
+
+        // Only CH and CH are considered as domestic traffic
+        // Others are international
+        // TODO: What about GG Grenzgebiete?
+
+        return Objects.equals(a, b) && Objects.equals(a, "CH") ? "1" : "2";
     }
 
     private double computeElasticity(ElasticityEntry e, double ax, double bx) {
