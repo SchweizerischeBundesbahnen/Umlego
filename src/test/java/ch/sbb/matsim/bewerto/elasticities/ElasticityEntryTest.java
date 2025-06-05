@@ -19,11 +19,11 @@ class ElasticityEntryTest {
         // Test some specific entries to verify correct parsing
         // Test first entry (Cluster 1, Fr, Binnenverkehr, JRT)
         ElasticityEntry firstEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.JRT))
+                .filter(e -> e.cluster().equals("1") && e.segment().equals("Fr") && e.skimType().equals(SkimType.JRT))
                 .findFirst()
                 .orElseThrow();
         
-        assertEquals(1, firstEntry.cluster());
+        assertEquals("1", firstEntry.cluster());
         assertEquals("Fr", firstEntry.segment());
         assertEquals("Binnenverkehr", firstEntry.description());
         assertEquals(SkimType.JRT, firstEntry.skimType());
@@ -38,7 +38,7 @@ class ElasticityEntryTest {
         
         // Test an ADT entry which should have kg_max
         ElasticityEntry adtEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.ADT))
+                .filter(e -> e.cluster().equals("1") && e.segment().equals("Fr") && e.skimType().equals(SkimType.ADT))
                 .findFirst()
                 .orElseThrow();
         
@@ -46,7 +46,7 @@ class ElasticityEntryTest {
         
         // Test PM entry with large min/max values
         ElasticityEntry pmEntry = entries.stream()
-                .filter(e -> e.cluster() == 1 && e.segment().equals("Fr") && e.skimType().equals(SkimType.PM))
+                .filter(e -> e.cluster().equals("1") && e.segment().equals("Fr") && e.skimType().equals(SkimType.PM))
                 .findFirst()
                 .orElseThrow();
         
