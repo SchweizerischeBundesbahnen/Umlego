@@ -4,6 +4,9 @@ import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * Base class for workers that process work items from a blocking queue.
+ */
 public abstract class AbstractWorker implements Runnable {
 
     protected final BlockingQueue<WorkItem> workerQueue;

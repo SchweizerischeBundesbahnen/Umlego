@@ -10,6 +10,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -25,4 +26,14 @@ public interface WorkerFactory {
                                 Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone,
                                 Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination,
                                 DeltaTCalculator deltaTCalculator);
+
+
+    /**
+     * Creates a work item with the specified origin zone.
+     */
+    default WorkItem createWorkItem(String originZone) {
+        CompletableFuture<WorkResult> future = new CompletableFuture<>();
+        return new UmlegoWorkItem(originZone, List.of(future));
+    }
+
 }

@@ -163,7 +163,7 @@ public class Umlego {
 		   memory being used for the found routes until they get written. To prevent
 		   OutOfMemoryErrors, we use a blocking queue for the writer with a limited capacity.
 		 */
-        WorkItem workEndMarker = new WorkItem(null, null);
+        UmlegoWorkItem workEndMarker = new UmlegoWorkItem(null, null);
         CompletableFuture<WorkResult> writeEndMarker = new CompletableFuture<>();
         writeEndMarker.complete(new WorkResult(null, null, null));
 
@@ -192,9 +192,8 @@ public class Umlego {
         for (String originZoneId : originZoneIds) {
 
             try {
-                CompletableFuture<WorkResult> future = new CompletableFuture<>();
-                WorkItem workItem = new WorkItem(originZoneId, future);
-                writerQueue.put(future);
+                WorkItem workItem = workerFactory.createWorkItem(originZoneId);
+                writerQueue.put(workItem.result());
                 workerQueue.put(workItem);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
