@@ -1,7 +1,5 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-
 /**
  * Interface representing a listener for processing found routes.
  */

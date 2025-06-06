@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.writers.types.skim;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 
 public class SkimNumberOfRoutes implements SkimCalculator {
 

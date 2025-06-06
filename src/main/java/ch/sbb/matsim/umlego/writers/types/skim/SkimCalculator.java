@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.writers.types.skim;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 
 /**
  * The SkimCalculator interface defines the contract for calculating skims based on routes and destination zones.

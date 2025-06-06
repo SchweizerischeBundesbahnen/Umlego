@@ -19,7 +19,7 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoResultWorker;
 import com.opencsv.CSVWriter;
 import org.matsim.core.utils.misc.Time;

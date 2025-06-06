@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.it;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoListener;
 
 import java.util.ArrayList;

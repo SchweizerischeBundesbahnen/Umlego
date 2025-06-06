@@ -19,7 +19,6 @@
 
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
 import ch.sbb.matsim.umlego.writers.types.skim.*;
 
 import java.util.HashMap;
