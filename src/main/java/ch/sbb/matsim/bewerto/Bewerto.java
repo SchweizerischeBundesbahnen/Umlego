@@ -94,8 +94,7 @@ public final class Bewerto {
     private DemandMatrices calculateInducedDemand(DemandMatrices demand, String name, UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
 
         ElasticitiesParameters elaParameters = bewertoParameters.getElasticities();
-        DemandFactorCalculator calculator = new DemandFactorCalculator(elaParameters.getFile(), elaParameters.getSegment(),
-                demand.getLookup(), baseSkim, variantSkim);
+        DemandFactorCalculator calculator = new DemandFactorCalculator(elaParameters, demand.getLookup(), baseSkim, variantSkim);
 
         DemandMatrices updatedDemand = new DemandMatrices(demand);
 

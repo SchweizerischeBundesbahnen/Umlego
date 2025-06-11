@@ -70,6 +70,8 @@ bewerto:
   elasticities:
     file: ""
     segment: "Fr"
+    transferOffset: 0.5
+    adtUB: 90
 
   ref:
     name: "ref"
