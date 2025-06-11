@@ -1,5 +1,6 @@
 package ch.sbb.matsim.bewerto.elasticities;
 
+import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
@@ -30,7 +31,7 @@ class DemandFactorCalculatorTest {
     @Mock
     private UmlegoSkimCalculator mockVariantSkim;
 
-    private String testElasticitiesFile;
+    private ElasticitiesParameters params;
     private DemandFactorCalculator calculator;
     private Map<ODPair, double[]> baseSkims;
     private Map<ODPair, double[]> variantSkims;
@@ -40,11 +41,14 @@ class DemandFactorCalculatorTest {
         MockitoAnnotations.openMocks(this);
 
         // Use the existing elasticities file from resources
-        testElasticitiesFile = "src/test/resources/test_Elastizitaeten.csv";
+        String testElasticitiesFile = "src/test/resources/test_Elastizitaeten.csv";
 
         // Set up the mock behavior
         baseSkims = new HashMap<>();
         variantSkims = new HashMap<>();
+        params = new ElasticitiesParameters()
+                .setFile(testElasticitiesFile)
+                .setSegment("Fr");
 
         // Sample data for testing
         setupTestData();
@@ -55,8 +59,7 @@ class DemandFactorCalculatorTest {
         when(mockLookup.getCluster(anyString())).thenReturn("CH"); // Default cluster
 
         // Create the calculator
-        calculator = new DemandFactorCalculator(
-                testElasticitiesFile, "Fr", mockLookup, mockBaseSkim, mockVariantSkim);
+        calculator = new DemandFactorCalculator(params, mockLookup, mockBaseSkim, mockVariantSkim);
     }
 
     private void setupTestData() {
@@ -83,19 +86,15 @@ class DemandFactorCalculatorTest {
     @Test
     void constructor_shouldInitializeCorrectly() {
         // Test with segments that exist in the test file
-        assertDoesNotThrow(() -> new DemandFactorCalculator(
-                testElasticitiesFile, "Fr", mockLookup, mockBaseSkim, mockVariantSkim));
+        assertDoesNotThrow(() -> new DemandFactorCalculator(params, mockLookup, mockBaseSkim, mockVariantSkim));
 
-        assertDoesNotThrow(() -> new DemandFactorCalculator(
-                testElasticitiesFile, "FrK", mockLookup, mockBaseSkim, mockVariantSkim));
+        assertDoesNotThrow(() -> new DemandFactorCalculator(params.setSegment("FrK"), mockLookup, mockBaseSkim, mockVariantSkim));
 
-        assertDoesNotThrow(() -> new DemandFactorCalculator(
-                testElasticitiesFile, "Pe", mockLookup, mockBaseSkim, mockVariantSkim));
+        assertDoesNotThrow(() -> new DemandFactorCalculator(params.setSegment("Pe"), mockLookup, mockBaseSkim, mockVariantSkim));
 
         // Test with non-existent segment
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                new DemandFactorCalculator(
-                        testElasticitiesFile, "NonExistentSegment", mockLookup, mockBaseSkim, mockVariantSkim)
+                new DemandFactorCalculator(params.setSegment("NonExistent"), mockLookup, mockBaseSkim, mockVariantSkim)
         );
 
         assertTrue(exception.getMessage().contains("No elasticity entries found for segment"));
