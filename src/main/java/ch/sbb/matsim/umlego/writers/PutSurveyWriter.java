@@ -21,7 +21,7 @@ package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 

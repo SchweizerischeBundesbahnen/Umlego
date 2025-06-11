@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
 
 /**
  * An interface for a writer for Umlego.

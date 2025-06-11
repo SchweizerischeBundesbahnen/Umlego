@@ -2,9 +2,7 @@ package ch.sbb.matsim.umlego;
 
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
 import ch.sbb.matsim.umlego.config.WriterParameters;
-import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 

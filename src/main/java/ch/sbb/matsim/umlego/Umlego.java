@@ -1,14 +1,10 @@
 package ch.sbb.matsim.umlego;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
-import ch.sbb.matsim.umlego.UmlegoWorker.WorkItem;
-import ch.sbb.matsim.umlego.UmlegoWorker.WorkResult;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
@@ -20,8 +16,6 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -31,7 +25,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 /**
@@ -45,6 +38,7 @@ public class Umlego {
     private final Scenario scenario;
     private final Map<String, List<ConnectedStop>> stopsPerZone;
     private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
+    private WorkerFactory workerFactory = UmlegoWorker::new;
 
     /**
      * List of listeners to be notified about found routes.
@@ -64,10 +58,6 @@ public class Umlego {
         this.stopsPerZone = stopsPerZone;
     }
 
-    public void setDeltaTCalculator(DeltaTCalculator deltaTCalculator) {
-        this.deltaTCalculator = deltaTCalculator;
-    }
-
     /**
      * Adds a listener to be notified about found routes.
      *
@@ -79,6 +69,22 @@ public class Umlego {
         }
 
         this.listeners.add(listener);
+    }
+
+    /**
+     * Sets the {@link DeltaTCalculator} to be used for calculating adaptation times.
+     */
+    public Umlego setDeltaTCalculator(DeltaTCalculator deltaTCalculator) {
+        this.deltaTCalculator = deltaTCalculator;
+        return this;
+    }
+
+    /**
+     * Sets the {@link WorkerFactory} to be used for creating worker threads.
+     */
+    public Umlego setWorkerFactory(WorkerFactory workerFactory) {
+        this.workerFactory = workerFactory;
+        return this;
     }
 
     /**
@@ -157,7 +163,7 @@ public class Umlego {
 		   memory being used for the found routes until they get written. To prevent
 		   OutOfMemoryErrors, we use a blocking queue for the writer with a limited capacity.
 		 */
-        WorkItem workEndMarker = new WorkItem(null, null);
+        UmlegoWorkItem workEndMarker = new UmlegoWorkItem(null, null);
         CompletableFuture<WorkResult> writeEndMarker = new CompletableFuture<>();
         writeEndMarker.complete(new WorkResult(null, null, null));
 
@@ -168,9 +174,12 @@ public class Umlego {
         Thread[] threads = new Thread[threadCount];
         for (int i = 0; i < threads.length; i++) {
             SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
-            threads[i] = new Thread(
-                new UmlegoWorker(workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
-                    this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator));
+
+            AbstractWorker worker = workerFactory.createWorker(
+                    workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
+                    this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator);
+
+            threads[i] = new Thread(worker);
             threads[i].start();
         }
 
@@ -183,9 +192,8 @@ public class Umlego {
         for (String originZoneId : originZoneIds) {
 
             try {
-                CompletableFuture<UmlegoWorker.WorkResult> future = new CompletableFuture<>();
-                UmlegoWorker.WorkItem workItem = new UmlegoWorker.WorkItem(originZoneId, future);
-                writerQueue.put(future);
+                WorkItem workItem = workerFactory.createWorkItem(originZoneId);
+                writerQueue.put(workItem.result());
                 workerQueue.put(workItem);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -206,150 +214,4 @@ public class Umlego {
         demandWriter.write(unroutableDemand);
     }
 
-    public static class Stop2StopRoute {
-        public final TransitStopFacility originStop;
-        public final TransitStopFacility destinationStop;
-        public final double depTime;
-        public final double arrTime;
-        public final double travelTimeWithoutAccess;
-        public final int transfers;
-        public final double distance;
-        public final List<RaptorRoute.RoutePart> routeParts = new ArrayList<>();
-
-        public Stop2StopRoute(RaptorRoute route) {
-            double firstDepTime = Double.NaN;
-            double lastArrTime = Double.NaN;
-
-            TransitStopFacility originStopFacility = null;
-            TransitStopFacility destinationStopFacility = null;
-
-            double distanceSum = 0;
-            RaptorRoute.RoutePart prevTransfer = null;
-            int stageCount = 0;
-            for (RaptorRoute.RoutePart part : route.getParts()) {
-                if (part.line == null) {
-                    // it is a transfer
-                    prevTransfer = part;
-                    // still update the destination stop in case we arrive the destination by a transfer / walk-link
-                    destinationStopFacility = part.toStop;
-                } else {
-                    stageCount++;
-                    if (routeParts.isEmpty()) {
-                        // it is the first real stage
-                        firstDepTime = part.vehicleDepTime;
-                        originStopFacility = part.fromStop;
-                    } else if (prevTransfer != null) {
-                        this.routeParts.add(prevTransfer);
-                    }
-                    this.routeParts.add(part);
-                    lastArrTime = part.arrivalTime;
-                    destinationStopFacility = part.toStop;
-                    distanceSum += part.distance;
-                }
-            }
-            this.originStop = originStopFacility;
-            this.destinationStop = destinationStopFacility;
-            this.depTime = firstDepTime;
-            this.arrTime = lastArrTime;
-            this.travelTimeWithoutAccess = this.arrTime - this.depTime;
-            this.transfers = stageCount - 1;
-            this.distance = distanceSum;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Stop2StopRoute that = (Stop2StopRoute) o;
-            boolean isEqual = Double.compare(depTime, that.depTime) == 0
-                && Double.compare(arrTime, that.arrTime) == 0
-                && transfers == that.transfers
-                && Objects.equals(originStop.getId(), that.originStop.getId())
-                && Objects.equals(destinationStop.getId(), that.destinationStop.getId());
-            if (isEqual) {
-                // also check route parts
-                for (int i = 0; i < routeParts.size(); i++) {
-                    RaptorRoute.RoutePart routePartThis = this.routeParts.get(i);
-                    RaptorRoute.RoutePart routePartThat = that.routeParts.get(i);
-
-                    boolean partIsEqual =
-                        ((routePartThis.line == null && routePartThat.line == null) || (routePartThis.line != null
-                            && routePartThat.line != null && Objects.equals(routePartThis.line.getId(),
-                            routePartThat.line.getId())))
-                            && ((routePartThis.route == null && routePartThat.route == null) || (
-                            routePartThis.route != null && routePartThat.route != null && Objects.equals(
-                                routePartThis.route.getId(), routePartThat.route.getId())));
-                    if (!partIsEqual) {
-                        return false;
-                    }
-                }
-            }
-            return isEqual;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(depTime, arrTime, transfers);
-        }
-
-        public String getRouteAsString() {
-            StringBuilder details = new StringBuilder();
-            for (RaptorRoute.RoutePart part : this.routeParts) {
-                if (part.line == null) {
-                    continue;
-                }
-                if (!details.isEmpty()) {
-                    details.append(", ");
-                }
-                details.append(getPartString(part));
-                while (part.chainedPart != null) {
-                    part = part.chainedPart;
-                    details.append(" => ");
-                    details.append(getPartString(part));
-                }
-            }
-            return details.toString();
-        }
-
-        private String getPartString(RoutePart part) {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(part.line.getId());
-            stringBuilder.append(" (");
-            stringBuilder.append(part.route.getId());
-            stringBuilder.append(") ");
-            stringBuilder.append(": ");
-            stringBuilder.append(part.fromStop.getName());
-            stringBuilder.append(' ');
-            stringBuilder.append(Time.writeTime(part.vehicleDepTime));
-            stringBuilder.append(" - ");
-            stringBuilder.append(part.toStop.getName());
-            stringBuilder.append(' ');
-            stringBuilder.append(Time.writeTime(part.arrivalTime));
-            return stringBuilder.toString();
-        }
-    }
-
-    public static class FoundRoute {
-        public final Stop2StopRoute stop2stopRoute;
-        public final ConnectedStop originConnectedStop;
-        public final ConnectedStop destinationConnectedStop;
-        public final double travelTimeWithAccess;
-
-        public double searchImpedance = Double.NaN; // Suchwiderstand
-        public double perceivedJourneyTimeMin = Double.NaN; // Empfundene Reisezeit
-        public double demand = 0;
-        public double adaptationTime = 0;
-        public double originality = 0; // Eigenständigkeit
-
-        public FoundRoute(Stop2StopRoute stop2stopRoute, ConnectedStop originConnectedStop, ConnectedStop destinationConnectedStop) {
-            this.stop2stopRoute = stop2stopRoute;
-            this.originConnectedStop = originConnectedStop;
-            this.destinationConnectedStop = destinationConnectedStop;
-            this.travelTimeWithAccess = stop2stopRoute.travelTimeWithoutAccess + originConnectedStop.walkTime() + destinationConnectedStop.walkTime();
-        }
-    }
 }

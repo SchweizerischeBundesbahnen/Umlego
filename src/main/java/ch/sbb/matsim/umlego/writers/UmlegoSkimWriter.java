@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.Umlego;
+import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoResultWorker;
 import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
@@ -49,7 +49,7 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, Umlego.FoundRoute route) {
+    public void writeRoute(String origZone, String destZone, FoundRoute route) {
         // Nothing needs to be done here
     }
 
