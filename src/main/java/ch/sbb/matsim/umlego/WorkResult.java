@@ -1,16 +1,13 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-
-import java.util.List;
-import java.util.Map;
-
 /**
- * WorkResult represents the result of processing a {@link WorkItem}.
+ * Interface representing a (partial) result of a work item processed by a worker.
  */
-public record WorkResult(
-        String originZone,
-        Map<String, List<FoundRoute>> routesPerDestinationZone,
-        UnroutableDemand unroutableDemand
-) {
+public interface WorkResult {
+
+    /**
+     * Returns the origin zone for this work item.
+     */
+    String originZone();
+
 }

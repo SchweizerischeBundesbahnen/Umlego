@@ -1,10 +1,5 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
-import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
-import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
@@ -37,13 +32,14 @@ public class Umlego {
     private final DemandMatrices demand;
     private final Scenario scenario;
     private final Map<String, List<ConnectedStop>> stopsPerZone;
-    private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
-    private WorkerFactory workerFactory = UmlegoWorker::new;
+    private final WorkflowFactory workflowFactory;
 
     /**
      * List of listeners to be notified about found routes.
      */
     private final List<UmlegoListener> listeners = new LinkedList<>();
+
+    private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
 
     /**
      * Constructor.
@@ -53,9 +49,21 @@ public class Umlego {
      * @param stopsPerZone stop per zone
      */
     public Umlego(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone) {
+       this(demand, scenario, stopsPerZone, new UmlegoWorkflowFactory(demand, scenario));
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param demand demand matrices
+     * @param scenario MATSim object collecting all sort of data
+     * @param stopsPerZone stop per zone
+     */
+    public Umlego(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone, WorkflowFactory workflowFactory) {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
+        this.workflowFactory = workflowFactory;
     }
 
     /**
@@ -76,14 +84,6 @@ public class Umlego {
      */
     public Umlego setDeltaTCalculator(DeltaTCalculator deltaTCalculator) {
         this.deltaTCalculator = deltaTCalculator;
-        return this;
-    }
-
-    /**
-     * Sets the {@link WorkerFactory} to be used for creating worker threads.
-     */
-    public Umlego setWorkerFactory(WorkerFactory workerFactory) {
-        this.workerFactory = workerFactory;
         return this;
     }
 
@@ -144,19 +144,6 @@ public class Umlego {
         // Default listeners which are always added
         addListener(new UmlegoSkimCalculator());
 
-        // prepare SwissRailRaptor
-        // TODO: these parameters could be added to a central location.
-        RaptorParameters raptorParams = RaptorUtils.createParameters(scenario.getConfig());
-        raptorParams.setTransferPenaltyFixCostPerTransfer(0.01);
-        raptorParams.setTransferPenaltyMinimum(0.01);
-        raptorParams.setTransferPenaltyMaximum(0.01);
-
-        RaptorStaticConfig raptorConfig = RaptorUtils.createStaticConfig(scenario.getConfig());
-        raptorConfig.setOptimization(RaptorStaticConfig.RaptorOptimization.OneToAllRouting);
-        // make sure SwissRailRaptor does not add any more transfers than what is specified in minimal transfer times:
-        raptorConfig.setBeelineWalkConnectionDistance(10.0);
-        SwissRailRaptorData raptorData = SwissRailRaptorData.create(this.scenario.getTransitSchedule(),
-            this.scenario.getTransitVehicles(), raptorConfig, this.scenario.getNetwork(), null);
 
         // prepare queues with work items
 		/* Writing might actually be slower than the computation, resulting in more and more
@@ -165,7 +152,7 @@ public class Umlego {
 		 */
         UmlegoWorkItem workEndMarker = new UmlegoWorkItem(null, null);
         CompletableFuture<WorkResult> writeEndMarker = new CompletableFuture<>();
-        writeEndMarker.complete(new WorkResult(null, null, null));
+        writeEndMarker.complete(new UmlegoWorkResult(null, null, null));
 
         BlockingQueue<WorkItem> workerQueue = new LinkedBlockingQueue<>(5 * threadCount);
         BlockingQueue<Future<WorkResult>> writerQueue = new LinkedBlockingQueue<>(4 * threadCount);
@@ -173,10 +160,8 @@ public class Umlego {
         // start worker threads
         Thread[] threads = new Thread[threadCount];
         for (int i = 0; i < threads.length; i++) {
-            SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
-
-            AbstractWorker worker = workerFactory.createWorker(
-                    workerQueue, params, this.demand, raptor, raptorParams, destinationZoneIds,
+            AbstractWorker worker = workflowFactory.createWorker(
+                    workerQueue, params, destinationZoneIds,
                     this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator);
 
             threads[i] = new Thread(worker);
@@ -192,7 +177,7 @@ public class Umlego {
         for (String originZoneId : originZoneIds) {
 
             try {
-                WorkItem workItem = workerFactory.createWorkItem(originZoneId);
+                WorkItem workItem = workflowFactory.createWorkItem(originZoneId);
                 writerQueue.put(workItem.result());
                 workerQueue.put(workItem);
             } catch (InterruptedException e) {

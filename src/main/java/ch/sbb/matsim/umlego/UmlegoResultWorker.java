@@ -127,7 +127,8 @@ public class UmlegoResultWorker implements Runnable {
         try (UmlegoWriters writers = this.getWriters()) {
             while (true) {
                 Future<WorkResult> futureResult = this.queue.take();
-                WorkResult result = futureResult.get();
+                // TODO: handle different types
+                UmlegoWorkResult result = (UmlegoWorkResult) futureResult.get();
                 if (result.originZone() == null) {
                     // end marker, the work is done
                     break;

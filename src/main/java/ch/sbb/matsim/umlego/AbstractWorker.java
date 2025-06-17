@@ -24,7 +24,7 @@ public abstract class AbstractWorker implements Runnable {
                 if (item.originZone() == null) {
                     return;
                 }
-                WorkResult result = processOriginZone(item);
+                UmlegoWorkResult result = processOriginZone(item);
                 item.result().complete(result);
             } catch (InterruptedException | ZoneNotFoundException e) {
                 throw new RuntimeException(e);
@@ -32,6 +32,6 @@ public abstract class AbstractWorker implements Runnable {
         }
     }
 
-    abstract protected WorkResult processOriginZone(WorkItem item);
+    abstract protected UmlegoWorkResult processOriginZone(WorkItem item);
 
 }

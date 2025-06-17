@@ -104,7 +104,7 @@ public class UmlegoWorker extends AbstractWorker {
     }
 
     @Override
-    protected WorkResult processOriginZone(WorkItem workItem) throws ZoneNotFoundException {
+    protected UmlegoWorkResult processOriginZone(WorkItem workItem) throws ZoneNotFoundException {
         Map<String, List<FoundRoute>> foundRoutes = calculateRoutesForZone(workItem.originZone());
         calculateRouteCharacteristics(foundRoutes);
         filterRoutes(foundRoutes);
@@ -327,7 +327,7 @@ public class UmlegoWorker extends AbstractWorker {
                         + searchParams.betaTransferCount() * transferCount;
     }
 
-    protected final WorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
+    protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
         UmlegoRouteUtils.sortRoutesByDepartureTime(foundRoutes);
         UnroutableDemand unroutableDemand = new UnroutableDemand();
         for (String destinationZone : this.destinationZoneIds) {
@@ -353,7 +353,7 @@ public class UmlegoWorker extends AbstractWorker {
                 }
             }
         }
-        return new WorkResult(originZone, foundRoutes, unroutableDemand);
+        return new UmlegoWorkResult(originZone, foundRoutes, unroutableDemand);
     }
 
     private void assignDemand(String originZone, String destinationZone, double startTime, double endTime, double odDemand, List<FoundRoute> routes, UnroutableDemand unroutableDemand) {

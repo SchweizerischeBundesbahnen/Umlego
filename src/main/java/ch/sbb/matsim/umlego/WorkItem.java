@@ -18,7 +18,7 @@ public interface WorkItem {
     CompletableFuture<WorkResult> result();
 
     /**
-     * Returns a iterable of CompletableFutures for work items that produce multiple results.
+     * Returns an iterable of CompletableFutures for work items that produce multiple results.
      */
     Iterable<CompletableFuture<WorkResult>> results();
 
