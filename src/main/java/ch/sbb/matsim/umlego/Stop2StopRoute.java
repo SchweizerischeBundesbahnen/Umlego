@@ -32,7 +32,7 @@ public class Stop2StopRoute {
             if (part.line == null) {
                 // it is a transfer
                 prevTransfer = part;
-                // still update the destination stop in case we arrive the destination by a transfer / walk-link
+                // still update the destination stop in case we arrive at the destination by a transfer / walk-link
                 destinationStopFacility = part.toStop;
             } else {
                 stageCount++;
@@ -47,6 +47,13 @@ public class Stop2StopRoute {
                 lastArrTime = part.arrivalTime;
                 destinationStopFacility = part.toStop;
                 distanceSum += part.distance;
+                var nextPart = part.chainedPart;
+                while (nextPart != null) {
+                    lastArrTime = nextPart.arrivalTime;
+                    destinationStopFacility = nextPart.toStop;
+                    distanceSum += nextPart.distance;
+                    nextPart = nextPart.chainedPart;
+                }
             }
         }
         this.originStop = originStopFacility;

@@ -34,6 +34,10 @@ public class UmlegoRouteUtils {
      */
     public static boolean routeEndsWithTransferWithinSameZone(Stop2StopRoute route, Set<TransitStopFacility> zoneStops) {
         var lastRoutePart = route.routeParts.getLast();
+        while (lastRoutePart.chainedPart != null) {
+            lastRoutePart = lastRoutePart.chainedPart;
+        }
+
         boolean isTransfer = route.destinationStop != lastRoutePart.toStop;
         if (isTransfer) {
             // test if both the from and to stop are in the same zone
