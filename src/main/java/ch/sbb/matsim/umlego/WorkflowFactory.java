@@ -11,13 +11,15 @@ import java.util.concurrent.BlockingQueue;
 
 /**
  * The {@code WorkerFactory} interface defines a factory for creating workers that process work items in a multi-threaded environment.
+ *
+ * @param <T> the type of work item that the factory creates
  */
-public interface WorkflowFactory {
+public interface WorkflowFactory<T extends WorkItem> {
 
     /**
      * Creates a worker that processes work items from the provided queue.
      */
-    AbstractWorker createWorker(BlockingQueue<WorkItem> workerQueue, UmlegoParameters params,
+    AbstractWorker<T> createWorker(BlockingQueue<T> workerQueue, UmlegoParameters params,
                                 List<String> destinationZoneIds, Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone,
                                 Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination,
                                 DeltaTCalculator deltaTCalculator);
@@ -27,12 +29,17 @@ public interface WorkflowFactory {
      * Creates a work item with the specified origin zone.
      * The length of {@link WorkItem#results()} must be equal within all work items and one {@link WorkResultHandler} must be provided for each result type.
      */
-    WorkItem createWorkItem(String originZone);
+    T createWorkItem(String originZone);
 
     /**
      * Create a list of result handlers that will be used to process the results of the work items.
      * The length of the list must be equal to {@link WorkItem#results()}.
+     *
+     * @param params             the parameters for the Umlego workflow
+     * @param outputFolder       the folder where the results should be written
+     * @param destinationZoneIds the list of destination zone IDs for which results are being processed
+     * @param listeners          the list of listeners to notify about the results
      */
-    List<WorkResultHandler<?>> createResultHandler();
+    List<WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners);
 
 }

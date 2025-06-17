@@ -4,6 +4,7 @@ import ch.sbb.matsim.routing.pt.raptor.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.writers.ResultWriter;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
@@ -16,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * Factory to create the standard Umlego workflow.
  * This workflow computes all routes and assigns the demand once.
  */
-public class UmlegoWorkflowFactory implements WorkflowFactory {
+public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
     private final DemandMatrices demand;
     private final Scenario scenario;
@@ -44,7 +45,7 @@ public class UmlegoWorkflowFactory implements WorkflowFactory {
     }
 
     @Override
-    public AbstractWorker createWorker(BlockingQueue<WorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds,
+    public AbstractWorker<UmlegoWorkItem> createWorker(BlockingQueue<UmlegoWorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds,
                                        Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone,
                                        Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination,
                                        DeltaTCalculator deltaTCalculator) {
@@ -56,13 +57,14 @@ public class UmlegoWorkflowFactory implements WorkflowFactory {
 
 
     @Override
-    public WorkItem createWorkItem(String originZone) {
+    public UmlegoWorkItem createWorkItem(String originZone) {
         CompletableFuture<WorkResult> future = new CompletableFuture<>();
         return new UmlegoWorkItem(originZone, List.of(future));
     }
 
     @Override
-    public List<WorkResultHandler<?>> createResultHandler() {
-        return List.of();
+    public List<WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners) {
+        // Umlego workflow has one ResultWriter that writes the results to the output folder.
+        return List.of(new ResultWriter(outputFolder, this.scenario.getTransitSchedule(), listeners, params.writer(), destinationZoneIds));
     }
 }

@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
+
 /**
  * Writes skim matrices to a CSV file.
  */
@@ -29,7 +31,7 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
         this.skims = skims;
 
         try {
-            this.writer = new CSVWriter(UmlegoResultWorker.newBufferedWriter(filename), ',', '"', '\\', "\n");
+            this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         };

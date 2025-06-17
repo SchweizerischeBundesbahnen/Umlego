@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -20,7 +21,7 @@ public interface WorkItem {
     /**
      * Returns an iterable of CompletableFutures for work items that produce multiple results.
      */
-    Iterable<CompletableFuture<WorkResult>> results();
+    List<CompletableFuture<WorkResult>> results();
 
 
 }

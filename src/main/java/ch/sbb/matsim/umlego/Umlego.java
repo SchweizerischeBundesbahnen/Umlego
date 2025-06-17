@@ -4,33 +4,28 @@ import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
-import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-import ch.sbb.matsim.umlego.demand.UnroutableDemandWriter;
-import ch.sbb.matsim.umlego.demand.UnroutableDemandWriterFactory;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 /**
  * @author mrieser / Simunto
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Umlego {
 
     private static final Logger LOG = LogManager.getLogger(Umlego.class);
 
     private final DemandMatrices demand;
-    private final Scenario scenario;
     private final Map<String, List<ConnectedStop>> stopsPerZone;
     private final WorkflowFactory workflowFactory;
 
@@ -44,24 +39,22 @@ public class Umlego {
     /**
      * Constructor.
      *
-     * @param demand demand matrices
-     * @param scenario MATSim object collecting all sort of data
+     * @param demand       demand matrices
+     * @param scenario     MATSim object collecting all sort of data
      * @param stopsPerZone stop per zone
      */
     public Umlego(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone) {
-       this(demand, scenario, stopsPerZone, new UmlegoWorkflowFactory(demand, scenario));
+        this(demand, stopsPerZone, new UmlegoWorkflowFactory(demand, scenario));
     }
 
     /**
      * Constructor.
      *
-     * @param demand demand matrices
-     * @param scenario MATSim object collecting all sort of data
+     * @param demand       demand matrices
      * @param stopsPerZone stop per zone
      */
-    public Umlego(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone, WorkflowFactory workflowFactory) {
+    public Umlego(DemandMatrices demand, Map<String, List<ConnectedStop>> stopsPerZone, WorkflowFactory workflowFactory) {
         this.demand = demand;
-        this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
         this.workflowFactory = workflowFactory;
     }
@@ -90,8 +83,8 @@ public class Umlego {
     /**
      * Retrieves the listener of the specified type from the collection of registered listeners.
      *
-     * @param <T>   the type of the listener to retrieve, which must extend {@code UmlegoListener}
-     * @param type  the {@code Class} object representing the type of listener to search for
+     * @param <T>  the type of the listener to retrieve, which must extend {@code UmlegoListener}
+     * @param type the {@code Class} object representing the type of listener to search for
      * @return an instance of the listener of the specified type
      * @throws IllegalArgumentException if no listener of the specified type is found
      */
@@ -109,14 +102,14 @@ public class Umlego {
         run(null, null, params, threadCount, outputFolder);
     }
 
-    public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount,
-        String outputFolder) throws ZoneNotFoundException {
+    public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
+
         List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-            : new ArrayList<>(originZones);
+                : new ArrayList<>(originZones);
         originZoneIds.sort(String::compareTo);
         List<String> destinationZoneIds =
-            destinationZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-                : new ArrayList<>(destinationZones);
+                destinationZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
+                        : new ArrayList<>(destinationZones);
         destinationZoneIds.sort(String::compareTo);
 
         // detect relevant stops
@@ -124,7 +117,7 @@ public class Umlego {
         IntSet destinationStopIndices = new IntOpenHashSet();
         for (String zoneId : destinationZoneIds) {
             List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, emptyList).stream()
-                .map(ConnectedStop::stopFacility).toList();
+                    .map(ConnectedStop::stopFacility).toList();
             for (TransitStopFacility stop : stops) {
                 destinationStopIndices.add(stop.getId().index());
             }
@@ -144,18 +137,15 @@ public class Umlego {
         // Default listeners which are always added
         addListener(new UmlegoSkimCalculator());
 
-
         // prepare queues with work items
 		/* Writing might actually be slower than the computation, resulting in more and more
 		   memory being used for the found routes until they get written. To prevent
 		   OutOfMemoryErrors, we use a blocking queue for the writer with a limited capacity.
 		 */
         UmlegoWorkItem workEndMarker = new UmlegoWorkItem(null, null);
-        CompletableFuture<WorkResult> writeEndMarker = new CompletableFuture<>();
-        writeEndMarker.complete(new UmlegoWorkResult(null, null, null));
 
         BlockingQueue<WorkItem> workerQueue = new LinkedBlockingQueue<>(5 * threadCount);
-        BlockingQueue<Future<WorkResult>> writerQueue = new LinkedBlockingQueue<>(4 * threadCount);
+        BlockingQueue<WorkItem> writerQueue = new LinkedBlockingQueue<>(4 * threadCount);
 
         // start worker threads
         Thread[] threads = new Thread[threadCount];
@@ -169,8 +159,8 @@ public class Umlego {
         }
 
         // start writer threads
-        UmlegoResultWorker writerManager = new UmlegoResultWorker(writerQueue, outputFolder, originZoneIds,
-                destinationZoneIds, listeners, scenario.getTransitSchedule(), params.writer());
+        List<WorkResultHandler<?>> handler = workflowFactory.createResultHandler(params, outputFolder, destinationZoneIds, listeners);
+        UmlegoResultWorker writerManager = new UmlegoResultWorker(writerQueue, handler, originZoneIds);
         new Thread(writerManager).start();
 
         // submit work items into queues
@@ -178,7 +168,13 @@ public class Umlego {
 
             try {
                 WorkItem workItem = workflowFactory.createWorkItem(originZoneId);
-                writerQueue.put(workItem.result());
+
+                if (workItem.results().size() != handler.size()) {
+                    throw new IllegalArgumentException(String.format("The number of results in the work item (%d) must match the number of WorkResultHandler (%d).",
+                            workItem.results().size(), handler.size()));
+                }
+
+                writerQueue.put(workItem);
                 workerQueue.put(workItem);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -189,14 +185,22 @@ public class Umlego {
             for (int i = 0; i < threadCount; i++) {
                 workerQueue.put(workEndMarker);
             }
-            writerQueue.put(writeEndMarker);
+            writerQueue.put(workEndMarker);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
-        UnroutableDemand unroutableDemand = writerManager.getUnroutableDemand();
-        UnroutableDemandWriter demandWriter = UnroutableDemandWriterFactory.createWriter(outputFolder);
-        demandWriter.write(unroutableDemand);
+        try {
+            // Wait for the result worker to finish processing all items
+            LOG.info("Waiting for result worker to complete...");
+
+            writerManager.waitForCompletion();
+
+            LOG.info("Result pipeline completed.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted while waiting for result worker to complete", e);
+        }
     }
 
 }

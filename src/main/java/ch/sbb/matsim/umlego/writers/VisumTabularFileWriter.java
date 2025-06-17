@@ -12,6 +12,8 @@ import org.matsim.core.utils.misc.Counter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
+import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
+
 /**
  * The HeaderColumnWriter allows so write a header before the comma-separated colums.
  * Used i.e. for writing Visum files.
@@ -29,7 +31,7 @@ class VisumTabularFileWriter implements AutoCloseable {
 	private final Counter counter;
 
 	VisumTabularFileWriter(final String header, final String[] columns, final String filename) throws IOException {
-		this(header, columns, UmlegoResultWorker.newBufferedWriter(filename), DEFAULT_SEPARATOR);
+		this(header, columns, newBufferedWriter(filename), DEFAULT_SEPARATOR);
 	}
 
 	private VisumTabularFileWriter(final String header, final String[] columns, final BufferedWriter writer, final String separator) throws IOException {

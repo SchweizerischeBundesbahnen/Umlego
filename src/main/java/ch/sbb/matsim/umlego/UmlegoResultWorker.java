@@ -1,227 +1,88 @@
 package ch.sbb.matsim.umlego;
 
-import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
-
-import ch.sbb.matsim.umlego.config.WriterParameters;
-import ch.sbb.matsim.umlego.config.UmlegoWriterType;
-import ch.sbb.matsim.umlego.demand.UnroutableDemand;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
-
-import ch.sbb.matsim.umlego.writers.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 /**
- * The {@code UmlegoResultWorker} class is responsible for processing work results stored in a
- * blocking queue and invokes {@link UmlegoListener} and {@link UmlegoWriter}.
+ * The {@code UmlegoResultWorker} class is responsible for processing work results and passing them to {@link WorkResultHandler}.
  */
 public class UmlegoResultWorker implements Runnable {
 
     private static final Logger LOG = LogManager.getLogger(UmlegoResultWorker.class);
 
-    private final BlockingQueue<Future<WorkResult>> queue;
-    private final String outputFolder;
+    private final BlockingQueue<WorkItem> queue;
+    private final List<WorkResultHandler<?>> handlers;
     private final List<String> originZoneIds;
-    private final List<String> destinationZoneIds;
-    private final List<UmlegoListener> listeners;
-    private final TransitSchedule schedule;
-    private final WriterParameters params;
-    private final CompletableFuture<UnroutableDemand> futureUnroutableDemand = new CompletableFuture<>();
+    private final CountDownLatch completionLatch = new CountDownLatch(1);
 
-    public UmlegoResultWorker(BlockingQueue<Future<WorkResult>> queue,
-                              String outputFolder, List<String> originZoneIds,
-                              List<String> destinationZoneIds,
-                              List<UmlegoListener> listeners,
-                              TransitSchedule schedule,
-                              WriterParameters params) {
+    public UmlegoResultWorker(BlockingQueue<WorkItem> queue, List<WorkResultHandler<?>> handlers, List<String> originZoneIds) {
         this.queue = queue;
-        this.outputFolder = outputFolder;
+        this.handlers = handlers;
         this.originZoneIds = originZoneIds;
-        this.destinationZoneIds = destinationZoneIds;
-        this.listeners = listeners;
-        this.schedule = schedule;
-        this.params = params;
-    }
-
-    /**
-     * Creates a BufferedWriter for the given filename. Supports .gz compressed output.
-     */
-    public static BufferedWriter newBufferedWriter(String filename) throws IOException {
-
-        Path path = Paths.get(filename);
-        if (filename.endsWith(".gz"))
-            return new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(path))));
-
-        return Files.newBufferedWriter(path);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void run() {
-        UnroutableDemand unroutableDemand = writeRoutes();
 
-        // close all listeners
-        listeners.forEach(UmlegoListener::finish);
-
-        this.futureUnroutableDemand.complete(unroutableDemand);
-    }
-
-    private UmlegoWriter getWriter(UmlegoWriterType type) throws IOException {
-
-        ensureDir(outputFolder);
-
-        return switch (type) {
-            case BLP -> createBlpWriter();
-            case SKIM -> createSkimWriter();
-            case CSV -> new UmlegoCsvWriter(Paths.get(this.outputFolder, "connections.csv.gz").toString(), true);
-            case PutSurvey -> new PutSurveyWriter(Paths.get(this.outputFolder, "visum.net.gz").toString());
-        };
-    }
-
-    private UmlegoWriter createBlpWriter() {
-        return new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(), schedule);
-    }
-
-    private UmlegoWriter createSkimWriter() {
-        Optional<UmlegoSkimCalculator> calc = this.listeners.stream()
-                .filter(s -> s instanceof UmlegoSkimCalculator)
-                .map(UmlegoSkimCalculator.class::cast)
-                .findFirst();
-
-        return new UmlegoSkimWriter(calc.orElseThrow(), Paths.get(this.outputFolder, "skims.csv.gz").toString());
-    }
-
-
-    private UmlegoWriters getWriters() throws IOException {
-        var writers = params.writerTypes().stream().map(type -> {
-            try {
-                return this.getWriter(type);
-            } catch (IOException exception) {
-                throw new UncheckedIOException(exception);
-            }
-
-        }).collect(Collectors.toSet());
-        return new UmlegoWriters(writers);
-    }
-
-    private UnroutableDemand writeRoutes() {
-        LOG.info("writing output to {}", this.outputFolder);
-        UnroutableDemand unroutableDemand = new UnroutableDemand();
         int totalItems = this.originZoneIds.size();
         int counter = 0;
 
-        try (UmlegoWriters writers = this.getWriters()) {
-            while (true) {
-                Future<WorkResult> futureResult = this.queue.take();
-                // TODO: handle different types
-                UmlegoWorkResult result = (UmlegoWorkResult) futureResult.get();
-                if (result.originZone() == null) {
+        while (true) {
+
+            try {
+                WorkItem item = this.queue.take();
+
+                if (item.originZone() == null) {
                     // end marker, the work is done
                     break;
                 }
 
-                counter++;
-                LOG.info(" - writing routes starting in zone {} ({}/{})", result.originZone(), counter, totalItems);
-                unroutableDemand.getParts().addAll(result.unroutableDemand().getParts());
-                String origZone = result.originZone();
-                Map<String, List<FoundRoute>> routesPerDestination = result.routesPerDestinationZone();
-                if (routesPerDestination == null) {
-                    // looks like this zone cannot reach any destination
-                    continue;
+                Iterator<WorkResultHandler<?>> it = handlers.iterator();
+                for (CompletableFuture<WorkResult> result : item.results()) {
+
+                    WorkResult wr = result.get();
+                    WorkResultHandler<? super WorkResult> handler = (WorkResultHandler<? super WorkResult>) it.next();
+                    handler.handleResult(wr);
                 }
-                for (String destZone : destinationZoneIds) {
-                    if (origZone.equals(destZone)) {
-                        // we're not interested in intrazonal trips
-                        continue;
-                    }
-                    List<FoundRoute> routesToDestination = routesPerDestination.get(destZone);
-                    if (routesToDestination == null || routesToDestination.isEmpty()) {
-                        // looks like there are no routes to this destination from the given origin zone
-                        continue;
-                    }
 
-                    for (FoundRoute route : routesToDestination) {
-                        for (var listener : listeners) {
-                            listener.processRoute(origZone, destZone, route);
-                        }
+                LOG.info(" - finished processing zone {} ({}/{})", item.originZone(), ++counter, totalItems);
 
-                        if (route.demand >= this.params.minimalDemandForWriting()) {
-                            writers.writeRoute(origZone, destZone, route);
-                        }
-                    }
-
-                    for (UmlegoListener listener : listeners) {
-                        listener.processODPair(origZone, destZone);
-                    }
-
-                    writers.writeODPair(origZone, destZone);
-                }
+            } catch (InterruptedException e) {
+                LOG.error("Worker interrupted while waiting for work item", e);
+                Thread.currentThread().interrupt(); // restore the interrupted status
+                break;
+            } catch (Exception e) {
+                LOG.error("Error processing work item", e);
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
 
-        return unroutableDemand;
+        // Close all handlers
+        for (WorkResultHandler<?> handler : handlers) {
+            try {
+                handler.close();
+            } catch (Exception e) {
+                LOG.error("Error closing handler", e);
+            }
+        }
+
+        // Signal that the worker has completed its task
+        completionLatch.countDown();
     }
 
     /**
-     * Once the unroutable demand becomes available, the calculation and writing has finished
+     * Waits for this worker to finish processing all items.
      *
-     * @return UnroutableDemand
+     * @throws InterruptedException if the thread is interrupted while waiting
      */
-    public UnroutableDemand getUnroutableDemand() {
-        try {
-            return futureUnroutableDemand.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+    public void waitForCompletion() throws InterruptedException {
+        completionLatch.await();
     }
 
-    private static final class UmlegoWriters implements AutoCloseable {
-
-        Set<UmlegoWriter> writers;
-
-        public UmlegoWriters(Set<UmlegoWriter> writers) {
-            this.writers = writers;
-        }
-
-        public void writeRoute(String origZone, String destZone, FoundRoute route) {
-            for (var writer : writers) {
-                writer.writeRoute(origZone, destZone, route);
-            }
-        }
-
-        public void writeODPair(String origZone, String destZone) {
-            for (var writer : writers) {
-                writer.writeODPair(origZone, destZone);
-            }
-        }
-
-        @Override
-        public void close() throws Exception {
-            this.writers.forEach(w -> {
-                try {
-                    w.close();
-                } catch (Exception exception) {
-                    throw new RuntimeException(exception);
-                }
-            });
-        }
-    }
 }

@@ -28,7 +28,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * @author mrieser / Simunto
  */
-public class UmlegoWorker extends AbstractWorker {
+public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
 
     private final UmlegoParameters params;
     private final DemandMatrices demand;
@@ -41,7 +41,7 @@ public class UmlegoWorker extends AbstractWorker {
     private final RouteUtilityCalculator utilityCalculator;
     private final DeltaTCalculator deltaTCalculator;
 
-    public UmlegoWorker(BlockingQueue<WorkItem> workerQueue,
+    public UmlegoWorker(BlockingQueue<UmlegoWorkItem> workerQueue,
                         UmlegoParameters params,
                         DemandMatrices demand,
                         SwissRailRaptor raptor,
@@ -104,12 +104,14 @@ public class UmlegoWorker extends AbstractWorker {
     }
 
     @Override
-    protected UmlegoWorkResult processOriginZone(WorkItem workItem) throws ZoneNotFoundException {
+    protected void processOriginZone(UmlegoWorkItem workItem) throws ZoneNotFoundException {
         Map<String, List<FoundRoute>> foundRoutes = calculateRoutesForZone(workItem.originZone());
         calculateRouteCharacteristics(foundRoutes);
         filterRoutes(foundRoutes);
         calculateOriginality(foundRoutes);
-        return assignDemand(workItem.originZone(), foundRoutes);
+
+        UmlegoWorkResult result = assignDemand(workItem.originZone(), foundRoutes);
+        workItem.result().complete(result);
     }
 
     protected final Map<String, List<FoundRoute>> calculateRoutesForZone(String originZone) throws ZoneNotFoundException {

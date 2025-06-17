@@ -2,7 +2,6 @@ package ch.sbb.matsim.umlego.it;
 
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
-import ch.sbb.matsim.umlego.config.*;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
@@ -13,20 +12,14 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 public class UmlegoITTest {
-
-    UmlegoParameters createUmlegoParameters() {
-        SearchImpedanceParameters search = new SearchImpedanceParameters(1.0, 1.0, 1.0, 1.0, 1.0, 10.0);
-        PreselectionParameters preselection = new PreselectionParameters(2.0, 60.0);
-        PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
-        RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
-        RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
-        WriterParameters writer = new WriterParameters(1e-5, Set.of());
-        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, writer);
-
-    }
 
     private TransitStopFacility getStop(Scenario scenario, String stopId) {
         return scenario.getTransitSchedule().getFacilities().get(Id.create(stopId, TransitStopFacility.class));
