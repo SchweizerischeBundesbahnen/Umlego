@@ -25,7 +25,10 @@ import com.opencsv.CSVWriter;
 import org.matsim.core.utils.misc.Time;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Locale;
+
+import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
 
 public class UmlegoCsvWriter implements UmlegoWriter {
 
@@ -48,9 +51,13 @@ public class UmlegoCsvWriter implements UmlegoWriter {
     private final boolean writeDetails;
     private final CSVWriter writer;
 
-    public UmlegoCsvWriter(String filename, boolean writeDetails) throws IOException {
+    public UmlegoCsvWriter(String filename, boolean writeDetails) {
         this.writeDetails = writeDetails;
-        this.writer = new CSVWriter(UmlegoResultWorker.newBufferedWriter(filename), ',', '"', '\\', "\n");
+        try {
+            this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         this.writer.writeNext(HEADER_ROW);
     }
 

@@ -26,6 +26,7 @@ import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PutSurveyWriter implements UmlegoWriter {
@@ -65,10 +66,13 @@ public class PutSurveyWriter implements UmlegoWriter {
      * TODO: combine with UmlegoCsvWriter.
      *
      * @param filename the name of the file to write the CSV data to
-     * @throws IOException if an I/O error occurs during file creation
      */
-    public PutSurveyWriter(String filename) throws IOException {
-        this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
+    public PutSurveyWriter(String filename) {
+        try {
+            this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override

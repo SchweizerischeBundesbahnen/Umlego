@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -13,14 +14,9 @@ public interface WorkItem {
     String originZone();
 
     /**
-     * Returns a CompletableFuture that will be completed with the last result of processing this work item.
+     * Returns a list of CompletableFutures for all results of this work item.
      */
-    CompletableFuture<WorkResult> result();
-
-    /**
-     * Returns a iterable of CompletableFutures for work items that produce multiple results.
-     */
-    Iterable<CompletableFuture<WorkResult>> results();
+    List<CompletableFuture<WorkResult>> results();
 
 
 }
