@@ -11,7 +11,9 @@ public record UmlegoWorkItem(
         List<CompletableFuture<WorkResult>> results
 ) implements WorkItem {
 
-    @Override
+    /**
+     * Return the only result of this work item. Results should never contain more than one result.
+     */
     public CompletableFuture<WorkResult> result() {
         return results.getLast();
     }

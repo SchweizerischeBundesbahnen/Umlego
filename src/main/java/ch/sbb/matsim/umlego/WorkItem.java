@@ -14,12 +14,7 @@ public interface WorkItem {
     String originZone();
 
     /**
-     * Returns a CompletableFuture that will be completed with the last result of processing this work item.
-     */
-    CompletableFuture<WorkResult> result();
-
-    /**
-     * Returns an iterable of CompletableFutures for work items that produce multiple results.
+     * Returns a list of CompletableFutures for all results of this work item.
      */
     List<CompletableFuture<WorkResult>> results();
 
