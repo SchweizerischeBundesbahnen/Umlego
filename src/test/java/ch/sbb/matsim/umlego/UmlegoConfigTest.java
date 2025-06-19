@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,5 +47,8 @@ public class UmlegoConfigTest {
         assertEquals(17.236, params.pjt().transferFix(), 0.001);
         assertEquals(0.033, params.pjt().transferTraveltimeFactor(), 0.001);
         assertEquals(58.0, params.pjt().secondsPerAdditionalStop());
+
+        assertEquals(LocalTime.of(5,0), params.skims().startTime());
+        assertEquals(LocalTime.of(22,0), params.skims().endTime());
     }
 }
