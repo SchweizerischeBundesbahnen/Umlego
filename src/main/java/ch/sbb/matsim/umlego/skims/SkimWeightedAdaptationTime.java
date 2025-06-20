@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego.writers.types.skim;
+package ch.sbb.matsim.umlego.skims;
 
 import ch.sbb.matsim.umlego.FoundRoute;
 

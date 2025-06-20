@@ -17,15 +17,20 @@
  *                                                                         *
  * *********************************************************************** */
 
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.skims;
 
-import ch.sbb.matsim.umlego.writers.types.skim.*;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class UmlegoSkimCalculator implements UmlegoListener {
+/**
+ * Utility class for calculating skims values.
+ */
+public final class UmlegoSkimCalculator {
+
+    public final static UmlegoSkimCalculator INSTANCE = new UmlegoSkimCalculator();
 
     /**
      * Index of the journey time in the skim array.
@@ -43,7 +48,6 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
     public static final int ADT_IDX = 5;
 
     private final List<SkimCalculator> calculators;
-    private final Map<ODPair, double[]> skims;
 
     /**
      * Calculate skim matrices. For each origin and destination zone the following Skims are calculated:
@@ -58,8 +62,6 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
      * <p>
      */
     public UmlegoSkimCalculator() {
-        this.skims = new HashMap<>();
-
         // Don't change something here without checking the DemandFactorCalculator, it depends on the indices of the calculators
         this.calculators = List.of(
                 new SkimDemand(),
@@ -79,38 +81,28 @@ public final class UmlegoSkimCalculator implements UmlegoListener {
     }
 
     /**
-     * Retrieves the skim matrices for origin-destination zone pairs. Each origin-destination pair is associated with an array of doubles
-     * that represent various calculated skim metrics such as demand, journey time, number of routes, weighted journey time, weighted
-     * transfers, and weighted adaptation time.
+     * Calculates skims for the given work result. The result is stored in {@link UmlegoWorkResult#skims()}.
      */
-    public Map<ODPair, double[]> getSkims() {
-        return skims;
-    }
+    public void calculateSkims(UmlegoWorkResult result) {
 
-    @Override
-    public void processRoute(String origZone, String destZone, FoundRoute route) {
-        ODPair key = new ODPair(origZone, destZone);
+        for (Map.Entry<String, List<FoundRoute>> e : result.routesPerDestinationZone().entrySet()) {
+            String destZone = e.getKey();
 
-        double[] matrices = this.skims.computeIfAbsent(key, (k) -> new double[this.calculators.size()]);
+            double[] matrices = new double[this.calculators.size()];
+            result.skims().put(destZone, matrices);
 
-        for (int i = 0; i < this.calculators.size(); i++) {
-            SkimCalculator calculator = this.calculators.get(i);
-            matrices[i] = calculator.aggregateRoute(matrices[i], destZone, route);
-        }
+            for (int i = 0; i < this.calculators.size(); i++) {
+                SkimCalculator calculator = this.calculators.get(i);
 
-        this.skims.put(key, matrices);
-    }
+                for (FoundRoute route : e.getValue()) {
+                    matrices[i] = calculator.aggregateRoute(matrices[i], destZone, route);
+                }
 
-    @Override
-    public void processODPair(String origZone, String destZone) {
-        double[] entry = skims.get(new ODPair(origZone, destZone));
-
-        for (int i = 0; i < this.calculators.size(); i++) {
-            SkimCalculator calculator = this.calculators.get(i);
-            if (calculator.isNormalizedByDemand()) {
-                entry[i] = entry[i] / entry[0]; // Demand is at index 0
+                if (calculator.isNormalizedByDemand()) {
+                    matrices[i] = matrices[i] / matrices[0]; // Demand is at index 0
+                }
             }
+
         }
     }
-
 }

@@ -12,16 +12,16 @@ import java.util.concurrent.CountDownLatch;
 /**
  * The {@code UmlegoResultWorker} class is responsible for processing work results and passing them to {@link WorkResultHandler}.
  */
-public class UmlegoResultWorker implements Runnable {
+public class ResultWorker implements Runnable {
 
-    private static final Logger LOG = LogManager.getLogger(UmlegoResultWorker.class);
+    private static final Logger LOG = LogManager.getLogger(ResultWorker.class);
 
     private final BlockingQueue<WorkItem> queue;
     private final List<WorkResultHandler<?>> handlers;
     private final List<String> originZoneIds;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
-    public UmlegoResultWorker(BlockingQueue<WorkItem> queue, List<WorkResultHandler<?>> handlers, List<String> originZoneIds) {
+    public ResultWorker(BlockingQueue<WorkItem> queue, List<WorkResultHandler<?>> handlers, List<String> originZoneIds) {
         this.queue = queue;
         this.handlers = handlers;
         this.originZoneIds = originZoneIds;
@@ -45,7 +45,7 @@ public class UmlegoResultWorker implements Runnable {
                 }
 
                 Iterator<WorkResultHandler<?>> it = handlers.iterator();
-                for (CompletableFuture<WorkResult> result : item.results()) {
+                for (CompletableFuture<? extends WorkResult> result : item.results()) {
 
                     WorkResult wr = result.get();
                     WorkResultHandler<? super WorkResult> handler = (WorkResultHandler<? super WorkResult>) it.next();

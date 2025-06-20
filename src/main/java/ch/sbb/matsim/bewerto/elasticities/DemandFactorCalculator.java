@@ -1,9 +1,9 @@
 package ch.sbb.matsim.bewerto.elasticities;
 
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
-import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
+import ch.sbb.matsim.umlego.skims.ODPair;
 import com.opencsv.CSVWriter;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -120,12 +120,14 @@ public final class DemandFactorCalculator {
      */
     private double computeFactors(ODPair od) {
 
-        double[] variantValues = variantSkim.getSkims().getOrDefault(od, EMPTY);
+        // TODO: Calculation needs to be refactored fpr new architecture
+
+        double[] variantValues = EMPTY;
         if (variantValues == EMPTY) {
             return 1;
         }
 
-        double[] baseValues = baseSkim.getSkims().getOrDefault(od, EMPTY);
+        double[] baseValues = EMPTY;
         if (baseValues == EMPTY) {
             return 1;
         }

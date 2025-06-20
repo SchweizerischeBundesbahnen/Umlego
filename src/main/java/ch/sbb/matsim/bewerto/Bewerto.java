@@ -5,7 +5,7 @@ import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoRunner;
-import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.config.ScenarioParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
@@ -74,8 +74,9 @@ public final class Bewerto {
 
         LOG.info("Variant {} completed. Updating demand...", variant.getName());
 
-        UmlegoSkimCalculator baseSkim = baseCase.getListener(UmlegoSkimCalculator.class);
-        UmlegoSkimCalculator variantSkim = result.getListener(UmlegoSkimCalculator.class);
+        // TODO
+        UmlegoSkimCalculator baseSkim = null;
+        UmlegoSkimCalculator variantSkim = null;
 
         DemandMatrices updatedDemand = calculateInducedDemand(runner.getDemand(), variant.getName(), baseSkim, variantSkim);
 

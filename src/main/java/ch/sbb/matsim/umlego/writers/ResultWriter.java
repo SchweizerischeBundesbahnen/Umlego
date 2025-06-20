@@ -1,6 +1,9 @@
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.*;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.WorkResultHandler;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
@@ -16,7 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.GZIPOutputStream;
 
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
@@ -63,14 +65,7 @@ public class ResultWriter implements WorkResultHandler<UmlegoWorkResult> {
         return switch (type) {
             case BLP ->
                     new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(), schedule);
-            case SKIM -> {
-                Optional<UmlegoSkimCalculator> calc = this.listeners.stream()
-                        .filter(s -> s instanceof UmlegoSkimCalculator)
-                        .map(UmlegoSkimCalculator.class::cast)
-                        .findFirst();
-
-                yield new UmlegoSkimWriter(calc.orElseThrow(), Paths.get(this.outputFolder, "skims.csv.gz").toString());
-            }
+            case SKIM -> new UmlegoSkimWriter(Paths.get(this.outputFolder, "skims.csv.gz").toString());
             case CSV -> new UmlegoCsvWriter(Paths.get(this.outputFolder, "connections.csv.gz").toString(), true);
             case PutSurvey -> new PutSurveyWriter(Paths.get(this.outputFolder, "visum.net.gz").toString());
         };
@@ -116,7 +111,7 @@ public class ResultWriter implements WorkResultHandler<UmlegoWorkResult> {
                 listener.processODPair(origZone, destZone);
             }
 
-            writers.forEach(w -> w.writeODPair(origZone, destZone));
+            writers.forEach(w -> w.writeResult(result, destZone));
         }
 
     }

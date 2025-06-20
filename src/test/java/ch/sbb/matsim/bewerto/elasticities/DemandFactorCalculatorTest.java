@@ -1,9 +1,9 @@
 package ch.sbb.matsim.bewerto.elasticities;
 
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
-import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
+import ch.sbb.matsim.umlego.skims.ODPair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;

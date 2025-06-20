@@ -1,6 +1,7 @@
 package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.WorkResult;
 
 /**
  * An interface for a writer for Umlego.
@@ -24,11 +25,11 @@ public interface UmlegoWriter extends AutoCloseable {
 
 
     /**
-     * Write the results for an origin-destination pair.
-     * No actual data is provided to the function, the writer must retrieve or collect necessary data
+     * Generic method to write out the result of a work item for a specific destination zone.
      */
-    default void writeODPair(String origZone, String destZone) {
-
+    default void writeResult(WorkResult result, String destZone) {
+        // Default implementation does nothing.
+        // Subclasses can override this method to provide specific behavior.
     }
 
     /**

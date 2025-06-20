@@ -12,6 +12,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.apache.logging.log4j.LogManager;
@@ -19,12 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -115,6 +111,9 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
         calculateOriginality(foundRoutes);
 
         UmlegoWorkResult result = assignDemand(workItem.originZone(), foundRoutes);
+
+        UmlegoSkimCalculator.INSTANCE.calculateSkims(result);
+
         workItem.result().complete(result);
     }
 
@@ -360,7 +359,7 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
                 }
             }
         }
-        return new UmlegoWorkResult(originZone, foundRoutes, unroutableDemand);
+        return new UmlegoWorkResult(originZone, foundRoutes, new LinkedHashMap<>(), unroutableDemand);
     }
 
     private void assignDemand(String originZone, String destinationZone, double startTime, double endTime, double odDemand, List<FoundRoute> routes, UnroutableDemand unroutableDemand) {

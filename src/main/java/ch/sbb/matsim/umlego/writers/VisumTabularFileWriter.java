@@ -4,7 +4,6 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.UmlegoResultWorker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.utils.misc.Counter;

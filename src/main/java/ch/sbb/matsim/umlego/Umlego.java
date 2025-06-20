@@ -6,6 +6,7 @@ import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.apache.logging.log4j.LogManager;
@@ -134,9 +135,6 @@ public class Umlego {
             stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
         }
 
-        // Default listeners which are always added
-        addListener(new UmlegoSkimCalculator());
-
         // prepare queues with work items
 		/* Writing might actually be slower than the computation, resulting in more and more
 		   memory being used for the found routes until they get written. To prevent
@@ -160,7 +158,7 @@ public class Umlego {
 
         // start writer threads
         List<WorkResultHandler<?>> handler = workflowFactory.createResultHandler(params, outputFolder, destinationZoneIds, listeners);
-        UmlegoResultWorker writerManager = new UmlegoResultWorker(writerQueue, handler, originZoneIds);
+        ResultWorker writerManager = new ResultWorker(writerQueue, handler, originZoneIds);
         new Thread(writerManager).start();
 
         // submit work items into queues

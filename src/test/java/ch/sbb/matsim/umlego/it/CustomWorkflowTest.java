@@ -96,14 +96,14 @@ public class CustomWorkflowTest {
     /**
      * Mock implementation of WorkflowFactory for testing purposes.
      */
-    private static class MockWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
+    private static class MockWorkflowFactory implements WorkflowFactory<MockWorkItem> {
         boolean createWorkerCalled = false;
         boolean createWorkItemCalled = false;
         boolean createResultHandlerCalled = false;
         boolean workItemProcessed = false;
 
         @Override
-        public AbstractWorker<UmlegoWorkItem> createWorker(BlockingQueue<UmlegoWorkItem> workerQueue, UmlegoParameters params,
+        public AbstractWorker<MockWorkItem> createWorker(BlockingQueue<MockWorkItem> workerQueue, UmlegoParameters params,
                                                            List<String> destinationZoneIds,
                                                            Map<String, List<ConnectedStop>> stopsPerZone,
                                                            Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination,
@@ -111,11 +111,11 @@ public class CustomWorkflowTest {
             createWorkerCalled = true;
             return new AbstractWorker<>(workerQueue) {
                 @Override
-                protected void processOriginZone(UmlegoWorkItem workItem) {
+                protected void processOriginZone(MockWorkItem workItem) {
                     workItemProcessed = true;
 
                     for (int i = 0; i < workItem.results().size(); i++) {
-                        CompletableFuture<WorkResult> future = workItem.results().get(i);
+                        CompletableFuture<WorkResult> future = (CompletableFuture<WorkResult>) workItem.results().get(i);
                         if (!future.isDone()) {
                             future.complete(new MockWorkResult(workItem.originZone(), i == 0 ? "result1" : "result2"));
                         }
@@ -125,11 +125,11 @@ public class CustomWorkflowTest {
         }
 
         @Override
-        public UmlegoWorkItem createWorkItem(String originZone) {
+        public MockWorkItem createWorkItem(String originZone) {
             createWorkItemCalled = true;
-            CompletableFuture<WorkResult> future1 = new CompletableFuture<>();
-            CompletableFuture<WorkResult> future2 = new CompletableFuture<>();
-            return new UmlegoWorkItem(originZone, List.of(future1, future2));
+            CompletableFuture<MockWorkResult> future1 = new CompletableFuture<>();
+            CompletableFuture<MockWorkResult> future2 = new CompletableFuture<>();
+            return new MockWorkItem(originZone, List.of(future1, future2));
         }
 
         @Override
@@ -139,6 +139,9 @@ public class CustomWorkflowTest {
             createResultHandlerCalled = true;
             return List.of(new MockResultHandler(listeners), new MockResultHandler(listeners));
         }
+    }
+
+    private record MockWorkItem(String originZone, List<CompletableFuture<? extends WorkResult>> results) implements WorkItem {
     }
 
     /**

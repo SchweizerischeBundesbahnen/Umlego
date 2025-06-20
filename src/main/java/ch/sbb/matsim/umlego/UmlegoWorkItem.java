@@ -8,14 +8,11 @@ import java.util.concurrent.CompletableFuture;
  */
 public record UmlegoWorkItem(
         String originZone,
-        List<CompletableFuture<WorkResult>> results
+        CompletableFuture<UmlegoWorkResult> result
 ) implements WorkItem {
 
-    /**
-     * Return the only result of this work item. Results should never contain more than one result.
-     */
-    public CompletableFuture<WorkResult> result() {
-        return results.getLast();
+    @Override
+    public List<CompletableFuture<? extends WorkResult>> results() {
+        return List.of(result);
     }
-
 }

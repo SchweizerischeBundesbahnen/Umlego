@@ -16,7 +16,7 @@ public interface WorkItem {
     /**
      * Returns a list of CompletableFutures for all results of this work item.
      */
-    List<CompletableFuture<WorkResult>> results();
+    List<CompletableFuture<? extends WorkResult>> results();
 
 
 }

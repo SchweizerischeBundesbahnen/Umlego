@@ -58,8 +58,8 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
     @Override
     public UmlegoWorkItem createWorkItem(String originZone) {
-        CompletableFuture<WorkResult> future = new CompletableFuture<>();
-        return new UmlegoWorkItem(originZone, List.of(future));
+        CompletableFuture<UmlegoWorkResult> future = new CompletableFuture<>();
+        return new UmlegoWorkItem(originZone, future);
     }
 
     @Override
