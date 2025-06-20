@@ -129,7 +129,7 @@ public class UmlegoRunner {
 
         this.outputFolder = outputFolder;
         this.scenario = loadScenario(scenarioParameters);
-        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());;
+        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
         this.demand = other.demand;
         this.params = other.params;
     }
@@ -196,11 +196,16 @@ public class UmlegoRunner {
         return config;
     }
 
-    private Scenario loadScenario(ScenarioParameters scenarioParameters) {
+    /**
+     * Load the scenario based on the provided parameters.
+     *
+     */
+    public static Scenario loadScenario(ScenarioParameters scenarioParameters) {
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new TransitScheduleReader(scenario).readFile(scenarioParameters.getScheduleFile());
         new MatsimVehicleReader(scenario.getTransitVehicles()).readFile(scenarioParameters.getVehiclesFile());
         new MatsimNetworkReader(scenario.getNetwork()).readFile(scenarioParameters.getNetworkFile());
+        scenario.getConfig().controller().setRunId(scenarioParameters.getName());
         return scenario;
     }
 
@@ -209,7 +214,7 @@ public class UmlegoRunner {
      *
      * @return Map<String, List < ConnectedStop>>
      */
-    private static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {
+    public static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {
         BufferedReader reader = IOUtils.getBufferedReader(zoneConnectionsFilename);
         Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnections(reader, schedule);
         return zoneConnections.rowMap().entrySet().stream()

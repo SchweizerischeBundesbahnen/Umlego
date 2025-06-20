@@ -140,4 +140,44 @@ public class UmlegoRouteUtils {
         }
         return Integer.compare(o1.stop2stopRoute.transfers, o2.stop2stopRoute.transfers);
     }
+
+    public static void calculateOriginality(List<FoundRoute> routes) {
+        routes.sort(UmlegoRouteUtils::compareFoundRoutesByDepartureTime);
+        for (int i = 0; i < routes.size(); i++) {
+            FoundRoute route1 = routes.get(i);
+            int countEqualRoutes = 1; // comparison with itself would always result in equality
+
+            // search for equal routes before this route
+            for (int j = i - 1; j >= 0; j--) {
+                FoundRoute route2 = routes.get(j);
+                if (route1.stop2stopRoute.depTime != route2.stop2stopRoute.depTime) {
+                    break; // because the routes are sorted, there cannot be any more equal routes
+                }
+
+                boolean areEqual = (route1.stop2stopRoute.depTime == route2.stop2stopRoute.depTime)
+                        && (route1.stop2stopRoute.arrTime == route2.stop2stopRoute.arrTime)
+                        && (route1.searchImpedance == route2.searchImpedance)
+                        && route1.stop2stopRoute.transfers == route2.stop2stopRoute.transfers;
+                if (areEqual) {
+                    countEqualRoutes++;
+                }
+            }
+            // search for equal routes after this route
+            for (int j = i + 1; j < routes.size(); j++) {
+                FoundRoute route2 = routes.get(j);
+                if (route1.stop2stopRoute.depTime != route2.stop2stopRoute.depTime) {
+                    break; // because the routes are sorted, there cannot be any more equal routes
+                }
+
+                boolean areEqual = (route1.stop2stopRoute.depTime == route2.stop2stopRoute.depTime)
+                        && (route1.stop2stopRoute.arrTime == route2.stop2stopRoute.arrTime)
+                        && (route1.searchImpedance == route2.searchImpedance)
+                        && route1.stop2stopRoute.transfers == route2.stop2stopRoute.transfers;
+                if (areEqual) {
+                    countEqualRoutes++;
+                }
+            }
+            route1.originality = 1.0 / countEqualRoutes;
+        }
+    }
 }

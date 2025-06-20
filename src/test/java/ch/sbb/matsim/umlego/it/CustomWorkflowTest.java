@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,7 +110,8 @@ public class CustomWorkflowTest {
                                                            Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination,
                                                            DeltaTCalculator deltaTCalculator) {
             createWorkerCalled = true;
-            return new AbstractWorker<>(workerQueue) {
+            return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(DemandMatrices.class), null, stopsPerZone,
+                    stopLookupPerDestination, null, null, deltaTCalculator) {
                 @Override
                 protected void processOriginZone(MockWorkItem workItem) {
                     workItemProcessed = true;

@@ -51,6 +51,7 @@ public class ResultWriter implements WorkResultHandler<UmlegoWorkResult> {
     public ResultWriter(String outputFolder, TransitSchedule schedule,
                         List<UmlegoListener> listeners,
                         WriterParameters params, List<String> destinationZoneIds) {
+        ensureDir(outputFolder);
         this.outputFolder = outputFolder;
         this.schedule = schedule;
         this.listeners = listeners;
@@ -60,8 +61,6 @@ public class ResultWriter implements WorkResultHandler<UmlegoWorkResult> {
     }
 
     private UmlegoWriter getWriter(UmlegoWriterType type) {
-
-        ensureDir(outputFolder);
         return switch (type) {
             case BLP ->
                     new UmlegoBlpWriter(Paths.get(this.outputFolder, "belastungsteppich.csv.gz").toString(), schedule);

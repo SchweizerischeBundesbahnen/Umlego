@@ -1,13 +1,11 @@
 package ch.sbb.matsim.bewerto;
 
-import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
-import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
-import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
+import ch.sbb.matsim.routing.pt.raptor.*;
 import ch.sbb.matsim.umlego.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.writers.ResultWriter;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
@@ -30,9 +28,10 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     private final List<Scenario> scenarios;
     private final List<SwissRailRaptorData> raptorData = new ArrayList<>();
 
-    public BewertoWorkflowFactory(DemandMatrices demand, List<Scenario> scenarios) {
+    public BewertoWorkflowFactory(DemandMatrices demand, Scenario baseCase, List<Scenario> variants) {
         this.demand = demand;
-        this.scenarios = scenarios;
+        this.scenarios = new ArrayList<>(variants);
+        this.scenarios.addFirst(baseCase);
 
         // prepare SwissRailRaptor
         // TODO: these parameters could be added to a central location.
@@ -56,7 +55,11 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
 
     @Override
     public AbstractWorker<BewertoWorkItem> createWorker(BlockingQueue<BewertoWorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone, Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination, DeltaTCalculator deltaTCalculator) {
-        return null;
+        return new BewertoWorker(
+                workerQueue, params, demand,
+                raptorData.stream().map(r -> new SwissRailRaptor.Builder(r, this.scenarios.getFirst().getConfig()).build()).toList(),
+                raptorParams, destinationZoneIds, stopsPerZone, stopLookupPerDestination, deltaTCalculator
+        );
     }
 
     @Override
@@ -67,8 +70,18 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     }
 
     @Override
-    public List<WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners) {
+    public List<? extends WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners) {
 
-        return List.of();
+        // TODO: there are multiple results (base/induced demand) per variant also
+
+        return scenarios.stream().map(
+                s -> new ResultWriter(
+                        outputFolder + "/" + s.getConfig().controller().getRunId(),
+                        s.getTransitSchedule(),
+                        listeners,
+                        params.writer(),
+                        destinationZoneIds
+                )
+        ).toList();
     }
 }

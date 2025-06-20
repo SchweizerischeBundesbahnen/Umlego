@@ -4,7 +4,10 @@ import ch.sbb.matsim.bewerto.config.BewertoParameters;
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
+import ch.sbb.matsim.umlego.UmlegoLogger;
 import ch.sbb.matsim.umlego.UmlegoRunner;
+import ch.sbb.matsim.umlego.ZoneConnections;
+import ch.sbb.matsim.umlego.readers.DemandManager;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.config.ScenarioParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
@@ -12,10 +15,15 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Scenario;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 /**
  * The {@code Bewerto} class serves the core functionality of the Bewerto application.
@@ -37,28 +45,29 @@ public final class Bewerto {
 
     public void run() throws Exception {
 
-        LOG.info("Starting Bewerto with parameters: {}", bewertoParameters);
-
         if (!Files.exists(Path.of(bewertoParameters.getElasticities().getFile())))
             throw new IllegalArgumentException("Elasticities file does not exist: " + bewertoParameters.getElasticities().getFile());
 
-        File outputDir = new File(bewertoParameters.getOutputDir());
+        String outputFolder = bewertoParameters.getOutputDir();
+        UmlegoLogger.setOutputFolder(outputFolder);
+        ensureDir(outputFolder);
 
-        UmlegoRunner runner = new UmlegoRunner(new File(outputDir, "base").getAbsolutePath(),
-                bewertoParameters.getZoneNamesFile(),
-                bewertoParameters.getZoneConnectionsFile(),
-                bewertoParameters.getRef(),
-                umlegoParameters,
-                bewertoParameters.getDemandFile(), new String[0]
-        );
+        LOG.info("Starting Bewerto with parameters: {}", bewertoParameters);
 
-        Umlego baseCase = runner.run();
+        Scenario scenario = UmlegoRunner.loadScenario(bewertoParameters.getRef());
+        Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone = UmlegoRunner.readConnections(bewertoParameters.getZoneConnectionsFile(), scenario.getTransitSchedule());
 
-        LOG.info("Base case completed. Starting variants...");
+        // TODO: the stopsPerZone is per scenario, workflow and workers need to be adapted accordingly
 
-        for (ScenarioParameters variant : bewertoParameters.getVariants()) {
-            processVariant(runner, baseCase, variant);
-        }
+        DemandMatrices demand = DemandManager.prepareDemand(bewertoParameters.getZoneNamesFile(), bewertoParameters.getDemandFile(), new String[0]);
+
+        BewertoWorkflowFactory workflow = new BewertoWorkflowFactory(demand, scenario, bewertoParameters.getVariants().stream().map(UmlegoRunner::loadScenario).toList());
+
+        Umlego umlego = new Umlego(demand, stopsPerZone, workflow);
+
+        int threads = umlegoParameters.threads() < 0 ? Runtime.getRuntime().availableProcessors() : umlegoParameters.threads();
+
+        umlego.run(umlegoParameters, threads, outputFolder);
     }
 
     private void processVariant(UmlegoRunner runner, Umlego baseCase, ScenarioParameters variant) throws ZoneNotFoundException {

@@ -40,6 +40,6 @@ public interface WorkflowFactory<T extends WorkItem> {
      * @param destinationZoneIds the list of destination zone IDs for which results are being processed
      * @param listeners          the list of listeners to notify about the results
      */
-    List<WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners);
+    List<? extends WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners);
 
 }
