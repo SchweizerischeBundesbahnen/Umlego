@@ -14,6 +14,8 @@ import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
@@ -29,6 +31,8 @@ import java.util.concurrent.BlockingQueue;
  * @author mrieser / Simunto
  */
 public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
+
+    private static final Logger log = LogManager.getLogger(UmlegoWorker.class);
 
     private final UmlegoParameters params;
     private final DemandMatrices demand;
@@ -283,7 +287,7 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
                 if (hadTransferBefore) {
                     transferWaitTime += (part.vehicleDepTime - part.depTime);
                 }
-                inVehicleTime += (part.arrivalTime - part.vehicleDepTime);
+                inVehicleTime += (part.getChainedArrivalTime() - part.vehicleDepTime);
                 hadTransferBefore = false;
                 int startIndex = -1;
                 int endIndex = -1;
@@ -304,9 +308,10 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
             }
         }
 
-        double expectedTotalTime = route.stop2stopRoute.routeParts.get(route.stop2stopRoute.routeParts.size() - 1).arrivalTime - route.stop2stopRoute.routeParts.get(0).vehicleDepTime;
+        double expectedTotalTime = route.stop2stopRoute.routeParts.getLast().getChainedArrivalTime() - route.stop2stopRoute.routeParts.getFirst().vehicleDepTime;
         if ((walkTime + transferWaitTime + inVehicleTime) != expectedTotalTime) {
-            System.err.println("INCONSISTENT TIMES " + route.stop2stopRoute.getRouteAsString());
+            double totalTime = walkTime + transferWaitTime + inVehicleTime;
+            log.error("INCONSISTENT TIMES expected total time: {}, got: {} | {}", expectedTotalTime, totalTime, route.stop2stopRoute.getRouteAsString());
         }
         double totalTravelTime = expectedTotalTime + accessTime + egressTime;
 
