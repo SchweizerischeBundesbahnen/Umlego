@@ -6,6 +6,7 @@ import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +44,14 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
 
         UmlegoWorkResult result = assignDemand(workItem.originZone(), foundRoutes);
 
-        UmlegoSkimCalculator.INSTANCE.calculateSkims(result);
+        // Reassign the demand for the filtered interval
+        UmlegoWorkResult skim = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
+                params.skims().startTime(), params.skims().endTime(),
+                DemandMatrixMultiplier.IDENTITY);
+        UmlegoSkimCalculator.INSTANCE.calculateSkims(skim);
+
+        // Copy skims to result
+        result.setSkims(skim.skims());
 
         workItem.result().complete(result);
     }

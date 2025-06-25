@@ -8,6 +8,7 @@ import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandPart;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -281,16 +283,19 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                         + searchParams.betaTransferCount() * transferCount;
     }
 
-    protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
+    protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes,
+                                                  LocalTime startInterval, LocalTime endInterval, DemandMatrixMultiplier multiplier) throws ZoneNotFoundException {
+
         UmlegoRouteUtils.sortRoutesByDepartureTime(foundRoutes);
         UnroutableDemand unroutableDemand = new UnroutableDemand();
+
         for (String destinationZone : this.destinationZoneIds) {
             var routes = foundRoutes.get(destinationZone);
             if (routes == null || routes.isEmpty()) {
                 double sum = 0;
                 for (String matrixName : this.demandMatrixNames) {
                     double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
-                    sum += value;
+                    sum += value * multiplier.getFactor(matrixName, destinationZone, -1);
                 }
                 if (sum > 0) {
                     unroutableDemand.addPart(new UnroutableDemandPart(originZone, destinationZone, sum));
@@ -298,16 +303,22 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
             } else {
                 for (String matrixName : this.demandMatrixNames) {
                     double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
-                    if (value > 0) {
-                        int matrixNumber = Integer.parseInt(matrixName);
-                        double startTime = (matrixNumber - 1) * 10 * 60; // 10-minute time slots, in seconds TODO: make configurable
-                        double endTime = (matrixNumber) * 10 * 60;
-                        assignDemand(originZone, destinationZone, startTime, endTime, value, routes, unroutableDemand);
+                    int matrixNumber = Integer.parseInt(matrixName);
+                    double startTime = (matrixNumber - 1) * 10 * 60; // 10-minute time slots, in seconds TODO: make configurable
+                    double endTime = (matrixNumber) * 10 * 60;
+
+                    if (value > 0 && (startTime >= startInterval.toSecondOfDay() && endTime < endInterval.toSecondOfDay())) {
+                        double factor = multiplier.getFactor(matrixName, destinationZone, (int) (startTime / 60.0));
+                        assignDemand(originZone, destinationZone, startTime, endTime, value * factor, routes, unroutableDemand);
                     }
                 }
             }
         }
         return new UmlegoWorkResult(originZone, foundRoutes, new LinkedHashMap<>(), unroutableDemand);
+    }
+
+    protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
+        return assignDemand(originZone, foundRoutes, LocalTime.MIN, LocalTime.MAX, DemandMatrixMultiplier.IDENTITY);
     }
 
     private void assignDemand(String originZone, String destinationZone, double startTime, double endTime, double odDemand, List<FoundRoute> routes, UnroutableDemand unroutableDemand) {

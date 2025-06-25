@@ -18,4 +18,20 @@ public class FoundRoute {
         this.destinationConnectedStop = destinationConnectedStop;
         this.travelTimeWithAccess = stop2stopRoute.travelTimeWithoutAccess + originConnectedStop.walkTime() + destinationConnectedStop.walkTime();
     }
+
+    /**
+     * This is a copy constructor. But demand and calculations are not copied so they can be recalculated.
+     */
+    @SuppressWarnings("CopyConstructorMissesField")
+    public FoundRoute(FoundRoute other) {
+        this.stop2stopRoute = other.stop2stopRoute;
+        this.originConnectedStop = other.originConnectedStop;
+        this.destinationConnectedStop = other.destinationConnectedStop;
+        this.travelTimeWithAccess = other.travelTimeWithAccess;
+
+        // Copy the calculated values
+        this.searchImpedance = other.searchImpedance;
+        this.perceivedJourneyTimeMin = other.perceivedJourneyTimeMin;
+        this.originality = other.originality;
+    }
 }

@@ -1,12 +1,10 @@
 package ch.sbb.matsim.bewerto;
 
-import ch.sbb.matsim.umlego.AbstractWorker;
-import ch.sbb.matsim.umlego.FoundRoute;
-import ch.sbb.matsim.umlego.RoutingContext;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 
 import java.util.Iterator;
@@ -46,7 +44,11 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
             UmlegoWorkResult result = assignDemand(item.originZone(), foundRoutes);
 
-            UmlegoSkimCalculator.INSTANCE.calculateSkims(result);
+            // Reassign the demand for the filtered interval
+            UmlegoWorkResult skim = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
+                    params.skims().startTime(), params.skims().endTime(),
+                    DemandMatrixMultiplier.IDENTITY);
+            UmlegoSkimCalculator.INSTANCE.calculateSkims(skim);
 
             it.next().complete(result);
         }

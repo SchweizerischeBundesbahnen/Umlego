@@ -2,10 +2,8 @@ package ch.sbb.matsim.umlego;
 
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for handling routes in the Umlego context.
@@ -14,6 +12,19 @@ public class UmlegoRouteUtils {
 
     private UmlegoRouteUtils() {
         // Utility class, no instantiation
+    }
+
+    /**
+     * Shallow clone of the foundRoutes map. Demand is not copied, but can be recalculated.
+     */
+    public static Map<String, List<FoundRoute>> cloneRoutes(Map<String, List<FoundRoute>> foundRoutes) {
+        Map<String, List<FoundRoute>> clone = new LinkedHashMap<>();
+        // Use the copy constructor
+        for (Map.Entry<String, List<FoundRoute>> e : foundRoutes.entrySet()) {
+            clone.put(e.getKey(), e.getValue().stream().map(FoundRoute::new).collect(Collectors.toList()));
+        }
+
+        return clone;
     }
 
     /**

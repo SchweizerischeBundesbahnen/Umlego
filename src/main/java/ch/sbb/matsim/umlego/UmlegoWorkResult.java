@@ -19,4 +19,13 @@ public record UmlegoWorkResult(
         Map<String, double[]> skims,
         UnroutableDemand unroutableDemand
 ) implements WorkResult {
+
+    /**
+     * Sets the skims for this work result.
+     */
+    void setSkims(Map<String, double[]> skims) {
+        this.skims.clear();
+        this.skims.putAll(skims);
+    }
+
 }

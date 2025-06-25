@@ -7,6 +7,10 @@ package ch.sbb.matsim.umlego.matrix;
 @FunctionalInterface
 public interface DemandMatrixMultiplier {
 
+    /**
+     * Multiplier that always returns 1.0, effectively acting as an identity function.
+     */
+    DemandMatrixMultiplier IDENTITY = (fromZone, toZone, timeMin) -> 1.0;
 
     /**
      * Calculates an adjustment factor based on the specified zones and time.

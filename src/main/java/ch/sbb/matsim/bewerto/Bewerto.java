@@ -6,13 +6,12 @@ import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoLogger;
 import ch.sbb.matsim.umlego.UmlegoRunner;
-import ch.sbb.matsim.umlego.ZoneConnections;
-import ch.sbb.matsim.umlego.readers.DemandManager;
-import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.config.ScenarioParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.readers.DemandManager;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
@@ -20,8 +19,6 @@ import org.matsim.api.core.v01.Scenario;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
 
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
