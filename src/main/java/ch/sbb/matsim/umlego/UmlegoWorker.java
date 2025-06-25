@@ -21,29 +21,22 @@ import java.util.concurrent.BlockingQueue;
  */
 public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
 
-    private static final Logger log = LogManager.getLogger(UmlegoWorker.class);
-
-    private final SwissRailRaptor raptor;
+    private final RoutingContext ctx;
 
     public UmlegoWorker(BlockingQueue<UmlegoWorkItem> workerQueue,
                         UmlegoParameters params,
                         DemandMatrices demand,
-                        SwissRailRaptor raptor,
-                        RaptorParameters raptorParams,
+                        RoutingContext ctx,
                         List<String> destinationZoneIds,
-                        Map<String, List<ConnectedStop>> stopsPerZone,
-                        Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination,
                         DeltaTCalculator deltaTCalculator) {
-        super(workerQueue, params, destinationZoneIds, demand, demand.getMatrixNames(), stopsPerZone,
-                stopLookupPerDestination, raptorParams,
+        super(workerQueue, params, destinationZoneIds, demand, demand.getMatrixNames(),
                 params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
-
-        this.raptor = raptor;
+        this.ctx = ctx;
     }
 
     @Override
     protected void processOriginZone(UmlegoWorkItem workItem) throws ZoneNotFoundException {
-        Map<String, List<FoundRoute>> foundRoutes = calculateRoutesForZone(raptor, workItem.originZone());
+        Map<String, List<FoundRoute>> foundRoutes = calculateRoutesForZone(ctx, workItem.originZone());
         calculateRouteCharacteristics(foundRoutes);
         filterRoutes(foundRoutes);
         calculateOriginality(foundRoutes);

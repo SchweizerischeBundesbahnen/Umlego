@@ -55,15 +55,13 @@ public final class Bewerto {
         LOG.info("Starting Bewerto with parameters: {}", bewertoParameters);
 
         Scenario scenario = UmlegoRunner.loadScenario(bewertoParameters.getRef());
-        Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone = UmlegoRunner.readConnections(bewertoParameters.getZoneConnectionsFile(), scenario.getTransitSchedule());
-
-        // TODO: the stopsPerZone is per scenario, workflow and workers need to be adapted accordingly
 
         DemandMatrices demand = DemandManager.prepareDemand(bewertoParameters.getZoneNamesFile(), bewertoParameters.getDemandFile(), new String[0]);
 
-        BewertoWorkflowFactory workflow = new BewertoWorkflowFactory(demand, scenario, bewertoParameters.getVariants().stream().map(UmlegoRunner::loadScenario).toList());
+        BewertoWorkflowFactory workflow = new BewertoWorkflowFactory(demand, bewertoParameters.getZoneConnectionsFile(), scenario,
+                bewertoParameters.getVariants().stream().map(UmlegoRunner::loadScenario).toList());
 
-        Umlego umlego = new Umlego(demand, stopsPerZone, workflow);
+        Umlego umlego = new Umlego(demand, workflow);
 
         int threads = umlegoParameters.threads() < 0 ? Runtime.getRuntime().availableProcessors() : umlegoParameters.threads();
 

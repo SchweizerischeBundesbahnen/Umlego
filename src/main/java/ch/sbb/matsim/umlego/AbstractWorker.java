@@ -1,8 +1,6 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.umlego.config.PerceivedJourneyTimeParameters;
 import ch.sbb.matsim.umlego.config.SearchImpedanceParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
@@ -35,25 +33,16 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
     protected final List<String> destinationZoneIds;
     protected final DemandMatrices demand;
     protected final List<String> demandMatrixNames;
-
-    // TODO: don't store these and rather use new routing context argument
-    protected final Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone;
-    protected final Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination;
-    protected final RaptorParameters raptorParams;
-
     protected final RouteUtilityCalculator utilityCalculator;
     protected final DeltaTCalculator deltaTCalculator;
 
 
-    protected AbstractWorker(BlockingQueue<T> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, DemandMatrices demand, List<String> demandMatrixNames, Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone, Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination, RaptorParameters raptorParams, RouteUtilityCalculator utilityCalculator, DeltaTCalculator deltaTCalculator) {
+    protected AbstractWorker(BlockingQueue<T> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, DemandMatrices demand, List<String> demandMatrixNames, RouteUtilityCalculator utilityCalculator, DeltaTCalculator deltaTCalculator) {
         this.workerQueue = workerQueue;
         this.params = params;
         this.destinationZoneIds = destinationZoneIds;
         this.demand = demand;
         this.demandMatrixNames = demandMatrixNames;
-        this.stopsPerZone = stopsPerZone;
-        this.stopLookupPerDestination = stopLookupPerDestination;
-        this.raptorParams = raptorParams;
         this.utilityCalculator = utilityCalculator;
         this.deltaTCalculator = deltaTCalculator;
     }
@@ -76,16 +65,16 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
 
     abstract protected void processOriginZone(T item);
 
-    protected final Map<String, List<FoundRoute>> calculateRoutesForZone(SwissRailRaptor raptor, String originZone) throws ZoneNotFoundException {
-        IntSet activeDestinationStopIndices = getActiveDestinationStopIndices(originZone);
+    protected final Map<String, List<FoundRoute>> calculateRoutesForZone(RoutingContext ctx, String originZone) throws ZoneNotFoundException {
+        IntSet activeDestinationStopIndices = getActiveDestinationStopIndices(ctx, originZone);
         Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes = new HashMap<>();
-        for (ZoneConnections.ConnectedStop stop : stopsPerZone.getOrDefault(originZone, Collections.emptyList())) {
-            calcRoutesFromStop(raptor, stop.stopFacility(), activeDestinationStopIndices, foundRoutes);
+        for (ZoneConnections.ConnectedStop stop : ctx.stopsPerZone().getOrDefault(originZone, Collections.emptyList())) {
+            calcRoutesFromStop(ctx, stop.stopFacility(), activeDestinationStopIndices, foundRoutes);
         }
-        return aggregateOnZoneLevel(originZone, foundRoutes);
+        return aggregateOnZoneLevel(ctx, originZone, foundRoutes);
     }
 
-    private IntSet getActiveDestinationStopIndices(String originZone) throws ZoneNotFoundException {
+    private IntSet getActiveDestinationStopIndices(RoutingContext ctx, String originZone) throws ZoneNotFoundException {
         List<ZoneConnections.ConnectedStop> emptyList = Collections.emptyList();
         IntSet destinationStopIndices = new IntOpenHashSet();
 
@@ -95,7 +84,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                 for (String matrixName : this.demandMatrixNames) {
                     double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
                     if (value > 0) {
-                        List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(destinationZone, emptyList).stream().map(stop -> stop.stopFacility()).toList();
+                        List<TransitStopFacility> stops = ctx.stopsPerZone().getOrDefault(destinationZone, emptyList).stream().map(stop -> stop.stopFacility()).toList();
                         for (TransitStopFacility stop : stops) {
                             destinationStopIndices.add(stop.getId().index());
                         }
@@ -107,13 +96,13 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
         return destinationStopIndices;
     }
 
-    private void calcRoutesFromStop(SwissRailRaptor raptor, TransitStopFacility originStop, IntSet destinationStopIndices, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes) {
-        this.raptorParams.setMaxTransfers(this.params.maxTransfers());
-        raptor.calcTreesObservable(
+    private void calcRoutesFromStop(RoutingContext ctx, TransitStopFacility originStop, IntSet destinationStopIndices, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes) {
+        ctx.raptorParams().setMaxTransfers(this.params.maxTransfers());
+        ctx.raptor().calcTreesObservable(
                 originStop,
                 0,
                 Double.POSITIVE_INFINITY,
-                this.raptorParams,
+                ctx.raptorParams(),
                 null,
                 (departureTime, arrivalStop, arrivalTime, transferCount, route) -> {
                     if (destinationStopIndices.contains(arrivalStop.getId().index())) {
@@ -132,23 +121,23 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
      * Creates a Map containing for each destination zone id the List of found routes,
      * leading from the originZoneId to the destination, over the whole day.
      */
-    private Map<String, List<FoundRoute>> aggregateOnZoneLevel(String originZoneId, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutesPerStop) {
+    private Map<String, List<FoundRoute>> aggregateOnZoneLevel(RoutingContext ctx, String originZoneId, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutesPerStop) {
         List<ZoneConnections.ConnectedStop> emptyList = Collections.emptyList();
         Map<String, List<FoundRoute>> foundRoutesPerZone = new HashMap<>();
 
-        List<ZoneConnections.ConnectedStop> stopsPerOriginZone = this.stopsPerZone.getOrDefault(originZoneId, emptyList);
+        List<ZoneConnections.ConnectedStop> stopsPerOriginZone = ctx.stopsPerZone().getOrDefault(originZoneId, emptyList);
         Map<TransitStopFacility, ZoneConnections.ConnectedStop> originStopLookup = new HashMap<>();
         for (ZoneConnections.ConnectedStop stop : stopsPerOriginZone) {
             originStopLookup.put(stop.stopFacility(), stop);
         }
 
         for (String destinationZoneId : destinationZoneIds) {
-            Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = this.stopLookupPerDestination.get(destinationZoneId);
+            Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = ctx.stopLookupPerDestination().get(destinationZoneId);
             List<FoundRoute> allRoutesFromTo = new ArrayList<>();
             for (ZoneConnections.ConnectedStop originStop : stopsPerOriginZone) {
                 Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>> routesPerDestinationStop = foundRoutesPerStop.get(originStop.stopFacility());
                 if (routesPerDestinationStop != null) {
-                    for (ZoneConnections.ConnectedStop destinationStop : this.stopsPerZone.getOrDefault(destinationZoneId, emptyList)) {
+                    for (ZoneConnections.ConnectedStop destinationStop : ctx.stopsPerZone().getOrDefault(destinationZoneId, emptyList)) {
                         Map<Stop2StopRoute, Boolean> routesPerOriginDestinationStop = routesPerDestinationStop.get(destinationStop.stopFacility());
                         if (routesPerOriginDestinationStop != null) {
                             for (Stop2StopRoute route : routesPerOriginDestinationStop.keySet()) {

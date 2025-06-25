@@ -7,16 +7,14 @@ import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
@@ -29,7 +27,6 @@ public class CustomWorkflowTest {
 
     private String LAUSANNE;
     private String GENEVE;
-    private Map<String, List<ConnectedStop>> stopsPerZone;
     private DemandMatrices demand;
 
     @BeforeEach
@@ -52,7 +49,7 @@ public class CustomWorkflowTest {
         var matrix = new DemandMatrix(23 * 60 + 50, 24 * 60, m);
         demand = new DemandMatrices(List.of(matrix), new ZonesLookup(data));
 
-        stopsPerZone = new HashMap<>();
+        Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(new ConnectedStop(GENEVE, 0, geneve)));
         stopsPerZone.put(LAUSANNE, List.of(new ConnectedStop(LAUSANNE, 0, lausanne)));
     }
@@ -63,7 +60,7 @@ public class CustomWorkflowTest {
         MockWorkflowFactory mockWorkflowFactory = new MockWorkflowFactory();
 
         // Initialize Umlego with the custom workflow factory
-        Umlego umlego = new Umlego(demand, stopsPerZone, mockWorkflowFactory);
+        Umlego umlego = new Umlego(demand, mockWorkflowFactory);
 
         // Create a test result listener
         TestResultListener listener = new TestResultListener();
@@ -104,14 +101,15 @@ public class CustomWorkflowTest {
         boolean workItemProcessed = false;
 
         @Override
+        public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
+            return IntSet.of();
+        }
+
+        @Override
         public AbstractWorker<MockWorkItem> createWorker(BlockingQueue<MockWorkItem> workerQueue, UmlegoParameters params,
-                                                           List<String> destinationZoneIds,
-                                                           Map<String, List<ConnectedStop>> stopsPerZone,
-                                                           Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination,
-                                                           DeltaTCalculator deltaTCalculator) {
+                                                         List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
             createWorkerCalled = true;
-            return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(DemandMatrices.class), null, stopsPerZone,
-                    stopLookupPerDestination, null, null, deltaTCalculator) {
+            return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(DemandMatrices.class), null, null, deltaTCalculator) {
                 @Override
                 protected void processOriginZone(MockWorkItem workItem) {
                     workItemProcessed = true;
@@ -143,7 +141,8 @@ public class CustomWorkflowTest {
         }
     }
 
-    private record MockWorkItem(String originZone, List<CompletableFuture<? extends WorkResult>> results) implements WorkItem {
+    private record MockWorkItem(String originZone,
+                                List<CompletableFuture<? extends WorkResult>> results) implements WorkItem {
     }
 
     /**
