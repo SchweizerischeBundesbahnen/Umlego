@@ -45,13 +45,11 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
         UmlegoWorkResult result = assignDemand(workItem.originZone(), foundRoutes);
 
         // Reassign the demand for the filtered interval
-        UmlegoWorkResult skim = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
+        UmlegoWorkResult filteredDemand = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
                 params.skims().startTime(), params.skims().endTime(),
                 DemandMatrixMultiplier.IDENTITY);
-        UmlegoSkimCalculator.INSTANCE.calculateSkims(skim);
 
-        // Copy skims to result
-        result.setSkims(skim.skims());
+        UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, result.skims());
 
         workItem.result().complete(result);
     }

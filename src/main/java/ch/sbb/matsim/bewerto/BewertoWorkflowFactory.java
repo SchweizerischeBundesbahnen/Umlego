@@ -1,5 +1,7 @@
 package ch.sbb.matsim.bewerto;
 
+import ch.sbb.matsim.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.routing.pt.raptor.*;
 import ch.sbb.matsim.umlego.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
@@ -17,12 +19,13 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Factory for the bewerto workflow.
- *
+ * <p>
  * The workflow processed multiple scenarios at once, computing the routes and assigning the demand once for all scenarios.
  */
 public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> {
 
     private final DemandMatrices demand;
+    private final DemandFactorCalculator demandFactorCalculator;
     private final String zoneConnectionsFile;
 
     private final RaptorParameters raptorParams;
@@ -34,9 +37,11 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     private final List<RoutingContext> ctxs = new ArrayList<>();
     private final List<SwissRailRaptorData> raptorData = new ArrayList<>();
 
-    public BewertoWorkflowFactory(DemandMatrices demand, String zoneConnectionsFile, Scenario baseCase, List<Scenario> variants) {
+    public BewertoWorkflowFactory(BewertoParameters parameters, DemandMatrices demand, String zoneConnectionsFile,
+                                  Scenario baseCase, List<Scenario> variants) {
         this.demand = demand;
         this.zoneConnectionsFile = zoneConnectionsFile;
+        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getLookup());
         this.scenarios = new ArrayList<>(variants);
         this.scenarios.addFirst(baseCase);
 
@@ -108,29 +113,63 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
         }
 
         return new BewertoWorker(
-                workerQueue, params, demand, routingContexts, destinationZoneIds, deltaTCalculator
+                workerQueue, params, demand, routingContexts, destinationZoneIds, deltaTCalculator, demandFactorCalculator
         );
     }
 
     @Override
     public BewertoWorkItem createWorkItem(String originZone) {
-        return new BewertoWorkItem(originZone,
-                scenarios.stream().map(s -> new CompletableFuture<UmlegoWorkResult>()).toList()
-        );
+        List<CompletableFuture<UmlegoWorkResult>> results = new ArrayList<>();
+
+        // For the base case
+        results.add(new CompletableFuture<>());
+
+        // For each variant, we create two results: one for the base case and one for the induced demand
+        for (int i = 1; i < scenarios.size(); i++) {
+            results.add(new CompletableFuture<>());
+            results.add(new CompletableFuture<>());
+        }
+
+        return new BewertoWorkItem(originZone, results);
     }
 
     @Override
     public List<? extends WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners) {
 
-        // TODO: there are multiple results (base/induced demand) per variant also
-        return scenarios.stream().map(
-                s -> new ResultWriter(
-                        outputFolder + "/" + s.getConfig().controller().getRunId(),
-                        s.getTransitSchedule(),
-                        listeners,
-                        params.writer(),
-                        destinationZoneIds
-                )
-        ).toList();
+        List<ResultWriter> handler = new ArrayList<>();
+
+        // Base case results
+        handler.add(new ResultWriter(
+                outputFolder + "/" + scenarios.getFirst().getConfig().controller().getRunId(),
+                scenarios.getFirst().getTransitSchedule(),
+                listeners,
+                params.writer(),
+                destinationZoneIds
+        ));
+
+        for (int i = 1; i < scenarios.size(); i++) {
+
+            Scenario s = scenarios.get(i);
+
+            ResultWriter writer = new ResultWriter(
+                    outputFolder + "/" + s.getConfig().controller().getRunId(),
+                    s.getTransitSchedule(),
+                    listeners,
+                    params.writer(),
+                    destinationZoneIds
+            );
+            handler.add(writer);
+
+            ResultWriter writer2 = new ResultWriter(
+                    outputFolder + "/" + s.getConfig().controller().getRunId() + "_induced",
+                    s.getTransitSchedule(),
+                    listeners,
+                    params.writer(),
+                    destinationZoneIds
+            );
+            handler.add(writer2);
+        }
+
+        return handler;
     }
 }

@@ -82,14 +82,18 @@ public final class UmlegoSkimCalculator {
 
     /**
      * Calculates skims for the given work result. The result is stored in {@link UmlegoWorkResult#skims()}.
+     *
+     * @param result The work result containing the routes per destination zone.
+     * @param target The target map for storing the skim values.
      */
-    public void calculateSkims(UmlegoWorkResult result) {
+    public void calculateSkims(UmlegoWorkResult result,  Map<String, double[]> target) {
 
+        target.clear();
         for (Map.Entry<String, List<FoundRoute>> e : result.routesPerDestinationZone().entrySet()) {
             String destZone = e.getKey();
 
             double[] matrices = new double[this.calculators.size()];
-            result.skims().put(destZone, matrices);
+            target.put(destZone, matrices);
 
             for (int i = 0; i < this.calculators.size(); i++) {
                 SkimCalculator calculator = this.calculators.get(i);
