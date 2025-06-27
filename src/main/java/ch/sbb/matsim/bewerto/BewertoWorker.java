@@ -9,11 +9,9 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 
 import java.time.LocalTime;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Worker for the Bewerto workflow.
@@ -42,8 +40,6 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
     @Override
     protected void processOriginZone(BewertoWorkItem item) {
 
-        Iterator<CompletableFuture<UmlegoWorkResult>> it = item.allResults().iterator();
-
         RoutingContext baseCtx = scenarios.getFirst();
 
         Map<String, List<FoundRoute>> baseRoutes = process(baseCtx, item.originZone());
@@ -56,7 +52,7 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, baseResult.skims());
 
-        it.next().complete(baseResult);
+        item.baseCase().complete(baseResult);
 
         for (int i = 1; i < scenarios.size(); i++) {
 
@@ -73,17 +69,16 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
             UmlegoSkimCalculator.INSTANCE.calculateSkims(filtered, result.skims());
 
-            it.next().complete(result);
+            item.variants().get(i - 1).complete(result);
 
-            DemandMatrixMultiplier f = factorCalculator.createMultiplier(baseResult.skims(), result.skims());
+            DemandFactorCalculator.Multiplier f = factorCalculator.createMultiplier(baseResult.skims(), result.skims());
 
             // Induced demand calculation
             UmlegoWorkResult induced = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
                     LocalTime.MIN, LocalTime.MAX, f);
 
-            it.next().complete(induced);
-
-            // TODO: write the resulting factors
+            item.induced().get(i - 1).complete(induced);
+            item.factors().get(i - 1).complete(f.createResult(item.originZone()));
         }
     }
 

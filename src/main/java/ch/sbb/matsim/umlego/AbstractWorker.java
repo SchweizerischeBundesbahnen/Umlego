@@ -295,7 +295,8 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                 double sum = 0;
                 for (String matrixName : this.demandMatrixNames) {
                     double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
-                    sum += value * multiplier.getFactor(matrixName, destinationZone, -1);
+                    if (value > 0)
+                        sum += value * multiplier.getFactor(originZone, destinationZone, -1);
                 }
                 if (sum > 0) {
                     unroutableDemand.addPart(new UnroutableDemandPart(originZone, destinationZone, sum));
@@ -308,7 +309,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                     double endTime = (matrixNumber) * 10 * 60;
 
                     if (value > 0 && (startTime >= startInterval.toSecondOfDay() && endTime < endInterval.toSecondOfDay())) {
-                        double factor = multiplier.getFactor(matrixName, destinationZone, (int) (startTime / 60.0));
+                        double factor = multiplier.getFactor(originZone, destinationZone, (int) (startTime / 60.0));
                         assignDemand(originZone, destinationZone, startTime, endTime, value * factor, routes, unroutableDemand);
                     }
                 }

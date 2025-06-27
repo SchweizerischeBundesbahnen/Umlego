@@ -104,54 +104,6 @@ public class UmlegoRunner {
         this.params = umlegoParameters;
     }
 
-    public UmlegoRunner(
-        String outputFolder,
-        String zonesFile,
-        String zoneConnectionsFile,
-        ScenarioParameters scenarioParameters,
-        UmlegoParameters umlegoParameters,
-        String... factorMatrix) throws IOException, ZoneNotFoundException {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-        this.outputFolder = outputFolder;
-        this.zoneConnectionsFile = zoneConnectionsFile;
-        this.scenario = loadScenario(scenarioParameters);
-        this.demand = DemandManager.prepareDemand(zonesFile, factorMatrix);
-        this.params = umlegoParameters;
-    }
-
-    /**
-     * Constructor to re-use UmlegoRunner on a different scenario.
-     */
-    public UmlegoRunner(String outputFolder, String zoneConnectionsFile, ScenarioParameters scenarioParameters, UmlegoRunner other) {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-
-        this.outputFolder = outputFolder;
-        this.zoneConnectionsFile = zoneConnectionsFile;
-        this.scenario = loadScenario(scenarioParameters);
-        this.demand = other.demand;
-        this.params = other.params;
-    }
-
-    /**
-     * Constructor to re-use UmlegoRunner on the same scenario with different demand.
-     */
-    public UmlegoRunner(String outputFolder, DemandMatrices updatedDemand, String zoneConnectionsFile, UmlegoRunner other) {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-
-        this.outputFolder = outputFolder;
-        this.zoneConnectionsFile = zoneConnectionsFile;
-        this.scenario = other.scenario;
-        this.demand = updatedDemand;
-        this.params = other.params;
-    }
-
-    public DemandMatrices getDemand() {
-        return demand;
-    }
-
     /**
      * Run Umlego and return the created Umlego object.
      */

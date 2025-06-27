@@ -4,6 +4,7 @@ import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.WorkItem;
 import ch.sbb.matsim.umlego.WorkResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -13,12 +14,23 @@ import java.util.concurrent.CompletableFuture;
  */
 public record BewertoWorkItem(
         String originZone,
-        List<CompletableFuture<UmlegoWorkResult>> allResults
+        CompletableFuture<UmlegoWorkResult> baseCase,
+        List<CompletableFuture<UmlegoWorkResult>> variants,
+        List<CompletableFuture<UmlegoWorkResult>> induced,
+        List<CompletableFuture<BewertoWorkResult>> factors
 ) implements WorkItem {
 
-    @SuppressWarnings("unchecked")
     @Override
     public List<CompletableFuture<? extends WorkResult>> results() {
-        return (List<CompletableFuture<? extends WorkResult>>) (Object) allResults;
+
+        List<CompletableFuture<? extends WorkResult>> all = new ArrayList<>();
+        all.add(baseCase);
+        for (int i = 0; i < variants.size(); i++) {
+            all.add(variants.get(i));
+            all.add(induced.get(i));
+            all.add(factors.get(i));
+        }
+
+        return all;
     }
 }

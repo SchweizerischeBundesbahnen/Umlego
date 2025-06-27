@@ -16,6 +16,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 /**
  * Factory for the bewerto workflow.
@@ -119,24 +120,22 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
 
     @Override
     public BewertoWorkItem createWorkItem(String originZone) {
-        List<CompletableFuture<UmlegoWorkResult>> results = new ArrayList<>();
 
-        // For the base case
-        results.add(new CompletableFuture<>());
+        // The number of variants
+        int v = scenarios.size() - 1;
 
-        // For each variant, we create two results: one for the base case and one for the induced demand
-        for (int i = 1; i < scenarios.size(); i++) {
-            results.add(new CompletableFuture<>());
-            results.add(new CompletableFuture<>());
-        }
-
-        return new BewertoWorkItem(originZone, results);
+        return new BewertoWorkItem(originZone,
+                new CompletableFuture<>(),
+                IntStream.of(v).mapToObj(i -> new CompletableFuture<UmlegoWorkResult>()).toList(),
+                IntStream.of(v).mapToObj(i -> new CompletableFuture<UmlegoWorkResult>()).toList(),
+                IntStream.of(v).mapToObj(i -> new CompletableFuture<BewertoWorkResult>()).toList()
+        );
     }
 
     @Override
     public List<? extends WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder, List<String> destinationZoneIds, List<UmlegoListener> listeners) {
 
-        List<ResultWriter> handler = new ArrayList<>();
+        List<WorkResultHandler<?>> handler = new ArrayList<>();
 
         // Base case results
         handler.add(new ResultWriter(
@@ -160,14 +159,17 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
             );
             handler.add(writer);
 
+            String out = outputFolder + "/" + s.getConfig().controller().getRunId() + "_induced";
             ResultWriter writer2 = new ResultWriter(
-                    outputFolder + "/" + s.getConfig().controller().getRunId() + "_induced",
+                    out,
                     s.getTransitSchedule(),
                     listeners,
                     params.writer(),
                     destinationZoneIds
             );
+
             handler.add(writer2);
+            handler.add(new BewertoResultWriter(out));
         }
 
         return handler;
