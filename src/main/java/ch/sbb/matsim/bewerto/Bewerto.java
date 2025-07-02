@@ -39,6 +39,8 @@ public final class Bewerto {
         if (!Files.exists(Path.of(bewertoParameters.getElasticities().getFile())))
             throw new IllegalArgumentException("Elasticities file does not exist: " + bewertoParameters.getElasticities().getFile());
 
+        long startTime = System.currentTimeMillis();
+
         String outputFolder = bewertoParameters.getOutputDir();
         UmlegoLogger.setOutputFolder(outputFolder);
         ensureDir(outputFolder);
@@ -57,6 +59,10 @@ public final class Bewerto {
         int threads = umlegoParameters.threads() < 0 ? Runtime.getRuntime().availableProcessors() : umlegoParameters.threads();
 
         umlego.run(umlegoParameters, threads, outputFolder);
+
+        long endTime = System.currentTimeMillis();
+        LOG.info("Total time: {} seconds", (endTime - startTime) / 1000.0);
+
     }
 
 }

@@ -57,6 +57,7 @@ umlego:
   # Writer parameters for output configuration
   writer:
     minimalDemandForWriting: "0.00001"
+    compression: gzip
     writerTypes:
       - CSV
       - PutSurvey

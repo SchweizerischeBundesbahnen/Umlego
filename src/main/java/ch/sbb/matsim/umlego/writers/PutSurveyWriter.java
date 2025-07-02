@@ -19,17 +19,20 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
-import ch.sbb.matsim.umlego.FoundRoute;
-import org.matsim.core.utils.misc.Time;
-import org.matsim.pt.transitSchedule.api.TransitRoute;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PutSurveyWriter implements UmlegoWriter {
+import org.matsim.core.utils.misc.Time;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
+
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
+
+public class PutSurveyWriter implements UmlegoListener {
 
     private static final String COL_PATH_ID = "$OEVTEILWEG:DATENSATZNR";
     private static final String COL_LEG_ID = "TWEGIND";
@@ -60,14 +63,17 @@ public class PutSurveyWriter implements UmlegoWriter {
     public static final String FZPNAME = "05_Name";
     private final VisumTabularFileWriter writer;
     private final AtomicInteger teilwegNr = new AtomicInteger();
+    private final WriterParameters params;
 
     /**
      * The PutSurveyWriter writes the routes in a format that be later imported into Visum.
      * TODO: combine with UmlegoCsvWriter.
      *
      * @param filename the name of the file to write the CSV data to
+     * @param params the writer parameters
      */
-    public PutSurveyWriter(String filename) {
+    public PutSurveyWriter(String filename, WriterParameters params) {
+        this.params = params;
         try {
             this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
         } catch (IOException e) {
@@ -76,7 +82,11 @@ public class PutSurveyWriter implements UmlegoWriter {
     }
 
     @Override
-    public void writeRoute(String fromZone, String toZone, FoundRoute route) {
+    public void processRoute(String fromZone, String toZone, FoundRoute route) {
+        if (route.demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
+
         String pathId = String.valueOf(this.teilwegNr.incrementAndGet());
         int legId = 0;
         String teilweg_kennung = "E"; // first teilweg should have E, all later ones N
@@ -134,7 +144,7 @@ public class PutSurveyWriter implements UmlegoWriter {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         this.writer.close();
     }
 

@@ -1,29 +1,31 @@
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.FoundRoute;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
-import ch.sbb.matsim.umlego.WorkResult;
-import ch.sbb.matsim.umlego.skims.SkimCalculator;
-import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
-import com.opencsv.CSVWriter;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.opencsv.CSVWriter;
+
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.config.WriterParameters;
+import ch.sbb.matsim.umlego.skims.SkimCalculator;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
 
 /**
  * Writes skim matrices to a CSV file.
  */
-public final class UmlegoSkimWriter implements UmlegoWriter {
+public final class UmlegoSkimWriter implements UmlegoListener {
 
     private final CSVWriter writer;
     private final String[] row = new String[UmlegoSkimCalculator.INSTANCE.getCalculators().size() + 2];
 
-    public UmlegoSkimWriter(String filename) {
+    public UmlegoSkimWriter(String filename, WriterParameters params) {
         try {
             this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
         } catch (IOException e) {
@@ -45,12 +47,12 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
         // Nothing needs to be done here
     }
 
     @Override
-    public void writeResult(WorkResult result, String destZone) {
+    public void processResult(WorkResult result, String destZone) {
 
         if (!(result instanceof UmlegoWorkResult wr)) {
             return;
@@ -72,7 +74,7 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         writer.close();
     }
 
