@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego.writers.types.skim;
+package ch.sbb.matsim.umlego.skims;
 
 public enum SkimColumn {
     DEMAND, SUM_JOURNEYTIME, NUMBEROFROUTES, SUM_WEIGHTED_JOURNEYTIME, SUM_WEIGHTED_TRANSFERS, SUM_WEIGHTED_ADAPTATION_TIME

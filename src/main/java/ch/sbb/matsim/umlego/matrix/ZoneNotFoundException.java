@@ -8,6 +8,6 @@ package ch.sbb.matsim.umlego.matrix;
 public class ZoneNotFoundException extends RuntimeException {
 
     public ZoneNotFoundException(String zone) {
-        super("Zone " + zone + " not found.");
+        super("Zone '" + zone + "' not found.");
     }
 }

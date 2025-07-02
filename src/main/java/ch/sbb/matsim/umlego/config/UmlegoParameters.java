@@ -8,6 +8,7 @@ public record UmlegoParameters(
         PerceivedJourneyTimeParameters pjt,
         RouteImpedanceParameters impedance,
         RouteSelectionParameters routeSelection,
+        SkimsParameters skims,
         WriterParameters writer
 ) {
 

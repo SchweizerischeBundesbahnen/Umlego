@@ -22,13 +22,20 @@ public interface UmlegoListener {
      * @param destZone the destination zone
      */
     default void processODPair(String origZone, String destZone) {
+    }
 
+    /**
+     * Generic method to process the result of a work item for a specific destination zone.
+     */
+    default void processResult(WorkResult result, String destZone) {
+        // Default implementation does nothing.
+        // Subclasses can override this method to provide specific behavior.
     }
 
     /**
      * Called when the processing of routes is finished.
      */
-    default void finish() {
+    default void finish() throws Exception {
         // Default implementation does nothing
     }
 

@@ -6,6 +6,7 @@ import java.util.Set;
 
 public record WriterParameters(
         double minimalDemandForWriting,
+        CompressionType compression,
         Set<UmlegoWriterType> writerTypes
 ) {
 }

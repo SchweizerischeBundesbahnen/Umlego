@@ -21,6 +21,8 @@ package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
 import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.writers.types.volume.Journey;
 import ch.sbb.matsim.umlego.writers.types.volume.JourneyItem;
 import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
@@ -41,7 +43,7 @@ import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-public class UmlegoBlpWriter implements UmlegoWriter {
+public class UmlegoBlpWriter implements UmlegoListener {
 
     private static final Logger LOG = LogManager.getLogger(UmlegoBlpWriter.class);
 
@@ -65,6 +67,7 @@ public class UmlegoBlpWriter implements UmlegoWriter {
     };
 
     private final String filename;
+    private final WriterParameters params;
     private final Map<Id<TransitLine>, Map<Id<TransitRoute>, Map<Id<TransitStopFacility>, Map<Double, TrainNo>>>> trainNos;
     private final Map<TrainNo, Journey> journeyByTrainNo = new HashMap<>();
 
@@ -87,10 +90,12 @@ public class UmlegoBlpWriter implements UmlegoWriter {
      * - destinationAlighting
      *
      * @param filename the filename of the outputfile
+     * @param params
      * @param schedule the transitSchedule
      */
-    public UmlegoBlpWriter(String filename, TransitSchedule schedule) {
+    public UmlegoBlpWriter(String filename, WriterParameters params, TransitSchedule schedule) {
         this.filename = filename;
+        this.params = params;
 
         this.trainNos = new HashMap<>();
         for (TransitLine line : schedule.getTransitLines().values()) {
@@ -136,8 +141,12 @@ public class UmlegoBlpWriter implements UmlegoWriter {
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
         double demand = route.demand;
+
+        if (demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
 
         for (int i = 0; i<route.stop2stopRoute.routeParts.size(); i++) {
             RoutePart routePart = route.stop2stopRoute.routeParts.get(i);
@@ -178,7 +187,7 @@ public class UmlegoBlpWriter implements UmlegoWriter {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         LOG.info("Writing BLP matrices...");
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
         CSVWriter writer = new CSVWriter(bufferedWriter, ',', '"', '\\', "\n");

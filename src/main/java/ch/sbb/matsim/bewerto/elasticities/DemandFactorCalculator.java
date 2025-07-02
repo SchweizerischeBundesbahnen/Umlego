@@ -1,17 +1,15 @@
 package ch.sbb.matsim.bewerto.elasticities;
 
+import ch.sbb.matsim.bewerto.BewertoWorkResult;
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
-import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
-import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
-import com.opencsv.CSVWriter;
-import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * The {@code DemandFactorCalculator} class is responsible for calculating demand factors.
@@ -27,8 +25,6 @@ public final class DemandFactorCalculator {
 
     private final ElasticitiesParameters params;
     private final ZonesLookup lookup;
-    private final UmlegoSkimCalculator baseSkim;
-    private final UmlegoSkimCalculator variantSkim;
 
     /**
      * Contains the entries for elasticity calculation. Mapped by {@link ElasticityEntry#cluster()} and {@link ElasticityEntry#skimType()}.
@@ -36,30 +32,15 @@ public final class DemandFactorCalculator {
     private final Map<String, Map<SkimType, ElasticityEntry>> entries = new LinkedHashMap<>();
 
     /**
-     * Cache for calculated factors.
-     */
-    private final Object2DoubleMap<ODPair> factors = new Object2DoubleOpenHashMap<>();
-
-    /**
-     * Separate factors, used for output.
-     */
-    private final Map<ODPair, double[]> indvFactors = new HashMap<>();
-
-    /**
      * Constructs a {@code DemandFactorCalculator} used to calculate demand factors
      * by comparing base and variant skim matrices for given origin-destination zones.
      *
      * @param params      elasticities parameters object containing elasticity parameters for the given segment
      * @param lookup      zone lookup object
-     * @param baseSkim    the base skim calculator containing metrics for the base scenario
-     * @param variantSkim the variant skim calculator containing metrics for the variant scenario
      */
-    public DemandFactorCalculator(ElasticitiesParameters params, ZonesLookup lookup,
-                                  UmlegoSkimCalculator baseSkim, UmlegoSkimCalculator variantSkim) {
+    public DemandFactorCalculator(ElasticitiesParameters params, ZonesLookup lookup) {
         this.params = params;
         this.lookup = lookup;
-        this.baseSkim = baseSkim;
-        this.variantSkim = variantSkim;
 
         ElasticityEntry.readAllEntries(params.getFile()).stream()
                 .filter(e -> Objects.equals(e.segment(), params.getSegment()))
@@ -72,81 +53,15 @@ public final class DemandFactorCalculator {
             throw new IllegalArgumentException("No elasticity entries found for segment " + params.getSegment());
         }
     }
-
     /**
-     * Retrieves the demand factor for a given origin-destination pair.
-     */
-    public double calculateFactor(String origZone, String destZone) {
-        return factors.computeIfAbsent(new ODPair(origZone, destZone), this::computeFactors);
-    }
-
-    /**
-     * Writes calculated demand factors to a specified file.
+     * Creates a demand matrix multiplier based on the base and variant skim matrices.
      *
-     * @param file the path of the file where the demand factors will be written
+     * @param base     the base skim matrix
+     * @param variant  the variant skim matrix
+     * @return a {@link DemandMatrixMultiplier} that can be used to multiply demand matrices
      */
-    public void writeFactors(String file) {
-        try (FileWriter fileWriter = new FileWriter(file);
-             CSVWriter writer = new CSVWriter(fileWriter, ';', CSVWriter.NO_QUOTE_CHARACTER,
-                     CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END)) {
-            // Write header row
-            writer.writeNext(new String[]{"From", "To", "F_JRT", "F_ADT", "F_NTR", "TotalFactor"});
-
-            // Write data rows
-            for (Map.Entry<ODPair, double[]> e : indvFactors.entrySet()) {
-                double[] factorValues = e.getValue();
-
-                // Calculate total factor as the product of individual factors
-                double totalFactor = factorValues[0] * factorValues[1] * factorValues[2];
-
-                String[] row = {
-                        e.getKey().fromZone(),
-                        e.getKey().toZone(),
-                        String.format(Locale.US, "%.6f", factorValues[0]),
-                        String.format(Locale.US, "%.6f", factorValues[1]),
-                        String.format(Locale.US, "%.6f", factorValues[2]),
-                        String.format(Locale.US, "%.6f", totalFactor)
-                };
-
-                writer.writeNext(row);
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException("Error writing elasticity factors to file: " + file, e);
-        }
-    }
-
-    /**
-     * Computation of the demand factor.
-     */
-    private double computeFactors(ODPair od) {
-
-        double[] variantValues = variantSkim.getSkims().getOrDefault(od, EMPTY);
-        if (variantValues == EMPTY) {
-            return 1;
-        }
-
-        double[] baseValues = baseSkim.getSkims().getOrDefault(od, EMPTY);
-        if (baseValues == EMPTY) {
-            return 1;
-        }
-
-        String cluster = computeCluster(od.fromZone(), od.toZone());
-
-        double ax = Math.min(baseValues[UmlegoSkimCalculator.ADT_IDX], params.getAdtUB()) / 15;
-        double bx = baseValues[UmlegoSkimCalculator.JRT_IDX] / 45;
-
-        double eJRT = computeElasticity(entries.get(cluster).get(SkimType.JRT), ax, bx);
-        double FJRT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.JRT_IDX, eJRT);
-
-        double eADT = computeElasticity(entries.get(cluster).get(SkimType.ADT), ax, bx);
-        double FADT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.ADT_IDX, eADT);
-
-        double eNTR = computeElasticity(entries.get(cluster).get(SkimType.NTR), ax, bx);
-        double FNTR = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.NTR_IDX, eNTR);
-
-        indvFactors.put(od, new double[]{FJRT, FADT, FNTR});
-
-        return FJRT * FADT * FNTR;
+    public Multiplier createMultiplier(Map<String, double[]> base, Map<String, double[]> variant) {
+        return new Multiplier(base, variant);
     }
 
     /**
@@ -183,4 +98,54 @@ public final class DemandFactorCalculator {
         return Math.pow(variantValues[idx] / baseValues[idx], e);
     }
 
+    /**
+     * Implement the {@link DemandMatrixMultiplier} interface and stores all calculated factors.
+     */
+    public final class Multiplier implements DemandMatrixMultiplier {
+
+        private final Map<String, double[]> base;
+        private final Map<String, double[]> variant;
+
+        /**
+         * Store the computed factors for each target zone.
+         */
+        private final Map<String, double[]> factors = new LinkedHashMap<>();
+
+        public Multiplier(Map<String, double[]> base, Map<String, double[]> variant) {
+            this.base = base;
+            this.variant = variant;
+        }
+
+        @Override
+        public double getFactor(String fromZone, String toZone, int timeMin) {
+            double[] baseValues = base.getOrDefault(toZone, EMPTY);
+            double[] variantValues = variant.getOrDefault(toZone, EMPTY);
+
+            if (baseValues == EMPTY || variantValues == EMPTY) {
+                return 1.0; // No data available, return neutral factor
+            }
+
+            String cluster = computeCluster(fromZone, toZone);
+
+            double ax = Math.min(baseValues[UmlegoSkimCalculator.ADT_IDX], params.getAdtUB()) / 15;
+            double bx = baseValues[UmlegoSkimCalculator.JRT_IDX] / 45;
+
+            double eJRT = computeElasticity(entries.get(cluster).get(SkimType.JRT), ax, bx);
+            double FJRT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.JRT_IDX, eJRT);
+
+            double eADT = computeElasticity(entries.get(cluster).get(SkimType.ADT), ax, bx);
+            double FADT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.ADT_IDX, eADT);
+
+            double eNTR = computeElasticity(entries.get(cluster).get(SkimType.NTR), ax, bx);
+            double FNTR = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.NTR_IDX, eNTR);
+
+            factors.put(toZone, new double[]{FJRT, FADT, FNTR});
+
+            return FJRT * FADT * FNTR;
+        }
+
+        public BewertoWorkResult createResult(String fromZone) {
+            return new BewertoWorkResult(fromZone, factors);
+        }
+    }
 }

@@ -1,19 +1,18 @@
 package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -26,7 +25,6 @@ public class Umlego {
     private static final Logger LOG = LogManager.getLogger(Umlego.class);
 
     private final DemandMatrices demand;
-    private final Map<String, List<ConnectedStop>> stopsPerZone;
     private final WorkflowFactory workflowFactory;
 
     /**
@@ -41,21 +39,18 @@ public class Umlego {
      *
      * @param demand       demand matrices
      * @param scenario     MATSim object collecting all sort of data
-     * @param stopsPerZone stop per zone
      */
-    public Umlego(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone) {
-        this(demand, stopsPerZone, new UmlegoWorkflowFactory(demand, scenario));
+    public Umlego(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) {
+        this(demand,new UmlegoWorkflowFactory(demand, scenario, zoneConnectionsFile));
     }
 
     /**
      * Constructor.
      *
      * @param demand       demand matrices
-     * @param stopsPerZone stop per zone
      */
-    public Umlego(DemandMatrices demand, Map<String, List<ConnectedStop>> stopsPerZone, WorkflowFactory workflowFactory) {
+    public Umlego(DemandMatrices demand, WorkflowFactory workflowFactory) {
         this.demand = demand;
-        this.stopsPerZone = stopsPerZone;
         this.workflowFactory = workflowFactory;
     }
 
@@ -113,29 +108,8 @@ public class Umlego {
         destinationZoneIds.sort(String::compareTo);
 
         // detect relevant stops
-        List<ConnectedStop> emptyList = Collections.emptyList();
-        IntSet destinationStopIndices = new IntOpenHashSet();
-        for (String zoneId : destinationZoneIds) {
-            List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, emptyList).stream()
-                    .map(ConnectedStop::stopFacility).toList();
-            for (TransitStopFacility stop : stops) {
-                destinationStopIndices.add(stop.getId().index());
-            }
-        }
+        IntSet destinationStopIndices = workflowFactory.computeDestinationStopIndices(destinationZoneIds);
         LOG.info("Detected {} stops as potential destinations", destinationStopIndices.size());
-
-        Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination = new HashMap<>();
-        for (String destinationZoneId : destinationZoneIds) {
-            List<ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, emptyList);
-            Map<TransitStopFacility, ConnectedStop> destinationStopLookup = new HashMap<>();
-            for (ConnectedStop stop : stopsPerDestinationZone) {
-                destinationStopLookup.put(stop.stopFacility(), stop);
-            }
-            stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
-        }
-
-        // Default listeners which are always added
-        addListener(new UmlegoSkimCalculator());
 
         // prepare queues with work items
 		/* Writing might actually be slower than the computation, resulting in more and more
@@ -151,8 +125,7 @@ public class Umlego {
         Thread[] threads = new Thread[threadCount];
         for (int i = 0; i < threads.length; i++) {
             AbstractWorker worker = workflowFactory.createWorker(
-                    workerQueue, params, destinationZoneIds,
-                    this.stopsPerZone, stopLookupPerDestination, this.deltaTCalculator);
+                    workerQueue, params, destinationZoneIds, this.deltaTCalculator);
 
             threads[i] = new Thread(worker);
             threads[i].start();
@@ -160,7 +133,7 @@ public class Umlego {
 
         // start writer threads
         List<WorkResultHandler<?>> handler = workflowFactory.createResultHandler(params, outputFolder, destinationZoneIds, listeners);
-        UmlegoResultWorker writerManager = new UmlegoResultWorker(writerQueue, handler, originZoneIds);
+        ResultWorker writerManager = new ResultWorker(writerQueue, handler, originZoneIds);
         new Thread(writerManager).start();
 
         // submit work items into queues

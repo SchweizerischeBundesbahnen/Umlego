@@ -7,10 +7,16 @@ import java.util.Map;
 
 /**
  * WorkResult represents the result of processing a {@link WorkItem}.
+ *
+ * @param originZone               the zone from which the work was initiated
+ * @param routesPerDestinationZone a map of destination zones to lists of found routes
+ * @param skims                    a map of destination zones to arrays of skims (travel times, distances, etc.)
+ * @param unroutableDemand         the demand that could not be routed
  */
 public record UmlegoWorkResult(
         String originZone,
         Map<String, List<FoundRoute>> routesPerDestinationZone,
+        Map<String, double[]> skims,
         UnroutableDemand unroutableDemand
 ) implements WorkResult {
 }

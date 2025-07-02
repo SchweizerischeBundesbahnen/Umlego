@@ -19,18 +19,20 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.FoundRoute;
-import ch.sbb.matsim.umlego.UmlegoResultWorker;
-import com.opencsv.CSVWriter;
-import org.matsim.core.utils.misc.Time;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Locale;
 
+import org.matsim.core.utils.misc.Time;
+
+import com.opencsv.CSVWriter;
+
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
 import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
 
-public class UmlegoCsvWriter implements UmlegoWriter {
+public class UmlegoCsvWriter implements UmlegoListener {
 
     private static final String[] HEADER_ROW = new String[]{
         "ORIGZONENO",
@@ -50,9 +52,11 @@ public class UmlegoCsvWriter implements UmlegoWriter {
 
     private final boolean writeDetails;
     private final CSVWriter writer;
+    private final WriterParameters params;
 
-    public UmlegoCsvWriter(String filename, boolean writeDetails) {
+    public UmlegoCsvWriter(String filename, boolean writeDetails, WriterParameters params) {
         this.writeDetails = writeDetails;
+        this.params = params;
         try {
             this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
         } catch (IOException e) {
@@ -62,7 +66,11 @@ public class UmlegoCsvWriter implements UmlegoWriter {
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
+        if (route.demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
+
         this.writer.writeNext(new String[]{
             origZone,
             destZone,
@@ -81,7 +89,7 @@ public class UmlegoCsvWriter implements UmlegoWriter {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         this.writer.close();
     }
 }

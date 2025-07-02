@@ -20,6 +20,7 @@ import org.matsim.core.scenario.ScenarioUtils.ScenarioBuilder;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicles;
 
+import java.time.LocalTime;
 import java.util.*;
 
 /*package*/  public class UmlegoFixture {
@@ -50,8 +51,9 @@ import java.util.*;
         PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
         RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
         RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
-        WriterParameters writer = new WriterParameters(1e-5, Set.of());
-        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, writer);
+        SkimsParameters skims = new SkimsParameters(LocalTime.of(3, 0), LocalTime.of(22, 0));
+        WriterParameters writer = new WriterParameters(1e-5, CompressionType.NONE, Set.of());
+        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, skims, writer);
 
     }
 

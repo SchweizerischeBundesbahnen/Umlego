@@ -5,9 +5,12 @@ import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -21,13 +24,20 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
     private final DemandMatrices demand;
     private final Scenario scenario;
+    private final Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone;
+    private final Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination;
     private final RaptorParameters raptorParams;
     private final SwissRailRaptorData raptorData;
 
+    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) {
+        this(demand, scenario, UmlegoRunner.readConnections(zoneConnectionsFile, scenario.getTransitSchedule()));
+    }
 
-    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario) {
+    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone) {
         this.demand = demand;
         this.scenario = scenario;
+        this.stopsPerZone = stopsPerZone;
+        this.stopLookupPerDestination = new HashMap<>();
 
         // prepare SwissRailRaptor
         // TODO: these parameters could be added to a central location.
@@ -45,21 +55,41 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
     }
 
     @Override
-    public AbstractWorker<UmlegoWorkItem> createWorker(BlockingQueue<UmlegoWorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds,
-                                       Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone,
-                                       Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination,
-                                       DeltaTCalculator deltaTCalculator) {
+    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
+        IntSet destinationStopIndices = new IntOpenHashSet();
+        for (String zoneId : destinationZoneIds) {
+            List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, List.of()).stream()
+                    .map(ZoneConnections.ConnectedStop::stopFacility).toList();
+            for (TransitStopFacility stop : stops) {
+                destinationStopIndices.add(stop.getId().index());
+            }
+        }
 
-        SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
-        return new UmlegoWorker(workerQueue, params, demand, raptor, raptorParams,
-                destinationZoneIds, stopsPerZone, stopLookupPerDestination, deltaTCalculator);
+        // Build the destination stop lookup map
+        for (String destinationZoneId : destinationZoneIds) {
+            List<ZoneConnections.ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, List.of());
+            Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = new HashMap<>();
+            for (ZoneConnections.ConnectedStop stop : stopsPerDestinationZone) {
+                destinationStopLookup.put(stop.stopFacility(), stop);
+            }
+            stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
+        }
+
+        return destinationStopIndices;
     }
 
+    @Override
+    public AbstractWorker<UmlegoWorkItem> createWorker(BlockingQueue<UmlegoWorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
+        SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
+        RoutingContext ctx = new RoutingContext(raptor, raptorParams, stopsPerZone, stopLookupPerDestination);
+
+        return new UmlegoWorker(workerQueue, params, demand, ctx, destinationZoneIds, deltaTCalculator);
+    }
 
     @Override
     public UmlegoWorkItem createWorkItem(String originZone) {
-        CompletableFuture<WorkResult> future = new CompletableFuture<>();
-        return new UmlegoWorkItem(originZone, List.of(future));
+        CompletableFuture<UmlegoWorkResult> future = new CompletableFuture<>();
+        return new UmlegoWorkItem(originZone, future);
     }
 
     @Override

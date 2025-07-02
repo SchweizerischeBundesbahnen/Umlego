@@ -43,8 +43,8 @@ public class UmlegoRunner {
 
     private static final Logger LOG = LogManager.getLogger(UmlegoRunner.class);
     private final String outputFolder;
+    private final String zoneConnectionsFile;
     private final Scenario scenario;
-    private final Map<String, List<ConnectedStop>> stopsPerZone;
     private final DemandMatrices demand;
     private final UmlegoParameters params;
 
@@ -98,59 +98,10 @@ public class UmlegoRunner {
         UmlegoLogger.setOutputFolder(outputFolder);
         ensureDir(outputFolder);
         this.outputFolder = outputFolder;
+        this.zoneConnectionsFile = zoneConnectionsFile;
         this.scenario = loadScenario(scenarioParameters);
-        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
         this.demand = DemandManager.prepareDemand(zonesFile, demandMatricesPath, factorMatrix);
         this.params = umlegoParameters;
-    }
-
-    public UmlegoRunner(
-        String outputFolder,
-        String zonesFile,
-        String zoneConnectionsFile,
-        ScenarioParameters scenarioParameters,
-        UmlegoParameters umlegoParameters,
-        String... factorMatrix) throws IOException, ZoneNotFoundException {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-        this.outputFolder = outputFolder;
-        this.scenario = loadScenario(scenarioParameters);
-        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
-        this.demand = DemandManager.prepareDemand(zonesFile, factorMatrix);
-        this.params = umlegoParameters;
-    }
-
-    /**
-     * Constructor to re-use UmlegoRunner on a different scenario.
-     */
-    public UmlegoRunner(String outputFolder, String zoneConnectionsFile, ScenarioParameters scenarioParameters, UmlegoRunner other) {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-
-        this.outputFolder = outputFolder;
-        this.scenario = loadScenario(scenarioParameters);
-        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());;
-        this.demand = other.demand;
-        this.params = other.params;
-    }
-
-    /**
-     * Constructor to re-use UmlegoRunner on the same scenario with different demand.
-     */
-    public UmlegoRunner(String outputFolder, DemandMatrices updatedDemand, String zoneConnectionsFile, UmlegoRunner other) {
-        UmlegoLogger.setOutputFolder(outputFolder);
-        ensureDir(outputFolder);
-
-        this.outputFolder = outputFolder;
-        this.scenario = other.scenario;
-        // Connections cannot be re-used
-        this.stopsPerZone = readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
-        this.demand = updatedDemand;
-        this.params = other.params;
-    }
-
-    public DemandMatrices getDemand() {
-        return demand;
     }
 
     /**
@@ -165,7 +116,7 @@ public class UmlegoRunner {
         int threads = params.threads() < 0 ? Runtime.getRuntime().availableProcessors() : params.threads();
 
         // Run Umlego simulation
-        Umlego umlego = new Umlego(demand, scenario, stopsPerZone);
+        Umlego umlego = new Umlego(demand, scenario, zoneConnectionsFile);
 
         umlego.run(params, threads, outputFolder);
 
@@ -196,11 +147,16 @@ public class UmlegoRunner {
         return config;
     }
 
-    private Scenario loadScenario(ScenarioParameters scenarioParameters) {
+    /**
+     * Load the scenario based on the provided parameters.
+     *
+     */
+    public static Scenario loadScenario(ScenarioParameters scenarioParameters) {
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new TransitScheduleReader(scenario).readFile(scenarioParameters.getScheduleFile());
         new MatsimVehicleReader(scenario.getTransitVehicles()).readFile(scenarioParameters.getVehiclesFile());
         new MatsimNetworkReader(scenario.getNetwork()).readFile(scenarioParameters.getNetworkFile());
+        scenario.getConfig().controller().setRunId(scenarioParameters.getName());
         return scenario;
     }
 
@@ -209,7 +165,7 @@ public class UmlegoRunner {
      *
      * @return Map<String, List < ConnectedStop>>
      */
-    private static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {
+    public static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {
         BufferedReader reader = IOUtils.getBufferedReader(zoneConnectionsFilename);
         Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnections(reader, schedule);
         return zoneConnections.rowMap().entrySet().stream()

@@ -48,10 +48,16 @@ umlego:
       params:
         beta: 1.536
         tau: 0.5
-  
+
+  # Parameters for the computation of skim matrices
+  skims:
+    startTime: "5:00"
+    endTime: "22:00"
+
   # Writer parameters for output configuration
   writer:
     minimalDemandForWriting: "0.00001"
+    compression: gzip
     writerTypes:
       - CSV
       - PutSurvey

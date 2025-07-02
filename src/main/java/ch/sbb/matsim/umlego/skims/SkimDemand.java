@@ -1,16 +1,16 @@
-package ch.sbb.matsim.umlego.writers.types.skim;
+package ch.sbb.matsim.umlego.skims;
 
 import ch.sbb.matsim.umlego.FoundRoute;
 
-public class SkimNumberOfRoutes implements SkimCalculator {
+public class SkimDemand implements SkimCalculator {
 
     @Override
     public double aggregateRoute(double currentValue, String destZone, FoundRoute route) {
-        return currentValue + 1;
+        return currentValue + route.demand;
     }
 
     @Override
     public SkimColumn getSkimType() {
-        return SkimColumn.NUMBEROFROUTES;
+        return SkimColumn.DEMAND;
     }
 }

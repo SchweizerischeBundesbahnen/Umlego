@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego.writers.types.skim;
+package ch.sbb.matsim.umlego.skims;
 
 /**
  * Origin-Destination zone pair used i.e. in GROUPING operations.

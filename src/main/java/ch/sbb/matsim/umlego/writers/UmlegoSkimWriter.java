@@ -1,40 +1,36 @@
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.FoundRoute;
-import ch.sbb.matsim.umlego.UmlegoResultWorker;
-import ch.sbb.matsim.umlego.UmlegoSkimCalculator;
-import ch.sbb.matsim.umlego.writers.types.skim.ODPair;
-import ch.sbb.matsim.umlego.writers.types.skim.SkimCalculator;
-import com.opencsv.CSVWriter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.opencsv.CSVWriter;
+
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.config.WriterParameters;
+import ch.sbb.matsim.umlego.skims.SkimCalculator;
+import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
 
 /**
  * Writes skim matrices to a CSV file.
  */
-public final class UmlegoSkimWriter implements UmlegoWriter {
+public final class UmlegoSkimWriter implements UmlegoListener {
 
-    private static final Logger LOG = LogManager.getLogger(UmlegoSkimWriter.class);
-
-    private final UmlegoSkimCalculator skims;
     private final CSVWriter writer;
+    private final String[] row = new String[UmlegoSkimCalculator.INSTANCE.getCalculators().size() + 2];
 
-    public UmlegoSkimWriter(UmlegoSkimCalculator skims, String filename){
-        this.skims = skims;
-
+    public UmlegoSkimWriter(String filename, WriterParameters params) {
         try {
             this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        };
+        }
 
         writer.writeNext(createHeaderRow());
     }
@@ -44,25 +40,31 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
         headers.add("ORIGIN");
         headers.add("DESTINATION");
 
-        for (SkimCalculator skimType : this.skims.getCalculators()) {
+        for (SkimCalculator skimType : UmlegoSkimCalculator.INSTANCE.getCalculators()) {
             headers.add(skimType.getSkimType().toString());
         }
         return headers.toArray(new String[0]);
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
         // Nothing needs to be done here
     }
 
     @Override
-    public void writeODPair(String origZone, String destZone) {
+    public void processResult(WorkResult result, String destZone) {
 
-        String[] row = new String[this.skims.getCalculators().size() + 2];
+        if (!(result instanceof UmlegoWorkResult wr)) {
+            return;
+        }
 
-        row[0] = origZone;
+        row[0] = result.originZone();
         row[1] = destZone;
-        double[] values = skims.getSkims().get(new ODPair(origZone, destZone));
+
+        double[] values = wr.skims().get(destZone);
+        if (values == null) {
+            return;
+        }
 
         for (int i = 0; i < values.length; i++) {
             row[i + 2] = String.format(Locale.US, "%.5f", values[i]);
@@ -72,11 +74,8 @@ public final class UmlegoSkimWriter implements UmlegoWriter {
     }
 
     @Override
-    public void close() throws Exception {
-
+    public void finish() throws Exception {
         writer.close();
-
-        LOG.info("Done with skim matrices.");
     }
 
 }
