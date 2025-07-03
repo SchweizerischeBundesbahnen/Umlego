@@ -1,8 +1,11 @@
 package ch.sbb.matsim.umlego.it;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import ch.sbb.matsim.umlego.config.*;
+import org.github.gestalt.config.Gestalt;
+import org.github.gestalt.config.builder.GestaltBuilder;
+import org.github.gestalt.config.exceptions.GestaltException;
+import org.github.gestalt.config.source.ClassPathConfigSourceBuilder;
+import org.github.gestalt.config.yaml.YamlModuleConfigBuilder;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -14,14 +17,11 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils.ScenarioBuilder;
-import org.matsim.pt.transitSchedule.api.Departure;
-import org.matsim.pt.transitSchedule.api.TransitLine;
-import org.matsim.pt.transitSchedule.api.TransitRoute;
-import org.matsim.pt.transitSchedule.api.TransitRouteStop;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
-import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicles;
+
+import java.time.LocalTime;
+import java.util.*;
 
 /*package*/  public class UmlegoFixture {
 
@@ -43,6 +43,30 @@ import org.matsim.vehicles.Vehicles;
         this.schedule = this.scenario.getTransitSchedule();
         this.builder = this.schedule.getFactory();
         this.transitVehicles = this.scenario.getTransitVehicles();
+    }
+
+    public static UmlegoParameters createUmlegoParameters() {
+        SearchImpedanceParameters search = new SearchImpedanceParameters(1.0, 1.0, 1.0, 1.0, 1.0, 10.0);
+        PreselectionParameters preselection = new PreselectionParameters(2.0, 60.0);
+        PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
+        RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
+        RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
+        SkimsParameters skims = new SkimsParameters(LocalTime.of(3, 0), LocalTime.of(22, 0));
+        WriterParameters writer = new WriterParameters(1e-5, CompressionType.NONE, Set.of());
+        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, skims, writer);
+
+    }
+
+    public static UmlegoParameters loadTestConfig() throws GestaltException {
+        Gestalt config = new GestaltBuilder()
+                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build())
+                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/test.yaml").build())
+                .addModuleConfig(YamlModuleConfigBuilder.builder().build())
+                .build();
+
+        config.loadConfigs();
+
+        return config.getConfig("umlego", UmlegoParameters.class);
     }
 
     protected TransitStopFacility buildStop(String name, double x, double y) {

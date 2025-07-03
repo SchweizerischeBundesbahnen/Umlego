@@ -81,11 +81,19 @@ public final class UmlegoLogger {
             configurationBuilder.add(consoleAppenderBuilder);
 
             configurationBuilder
-                    .add(configurationBuilder.newRootLogger(Level.DEBUG)
-                    .add(configurationBuilder.newAppenderRef("logfile"))
-                    .add(configurationBuilder.newAppenderRef("stdout")));
+                    .add(configurationBuilder.newLogger("io.jhdf", Level.WARN)
+                            .addAttribute("additivity", false)
+                            .add(configurationBuilder.newAppenderRef("logfile"))
+                            .add(configurationBuilder.newAppenderRef("stdout")));
 
-            context.start(configurationBuilder.build());
+            configurationBuilder
+                    .add(configurationBuilder.newRootLogger(Level.DEBUG)
+                            .add(configurationBuilder.newAppenderRef("logfile"))
+                            .add(configurationBuilder.newAppenderRef("stdout")));
+
+            BuiltConfiguration config = configurationBuilder.build();
+
+            context.start(config);
 
             isLoggerInitialized = true;
 

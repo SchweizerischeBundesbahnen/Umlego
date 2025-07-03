@@ -20,14 +20,15 @@
 package ch.sbb.matsim.umlego.writers;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.writers.types.volume.Journey;
 import ch.sbb.matsim.umlego.writers.types.volume.JourneyItem;
 import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
 import com.opencsv.CSVWriter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,7 @@ import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-public class UmlegoBlpWriter implements UmlegoWriterInterface {
+public class UmlegoBlpWriter implements UmlegoListener {
 
     private static final Logger LOG = LogManager.getLogger(UmlegoBlpWriter.class);
 
@@ -66,6 +67,7 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
     };
 
     private final String filename;
+    private final WriterParameters params;
     private final Map<Id<TransitLine>, Map<Id<TransitRoute>, Map<Id<TransitStopFacility>, Map<Double, TrainNo>>>> trainNos;
     private final Map<TrainNo, Journey> journeyByTrainNo = new HashMap<>();
 
@@ -88,10 +90,12 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
      * - destinationAlighting
      *
      * @param filename the filename of the outputfile
+     * @param params
      * @param schedule the transitSchedule
      */
-    public UmlegoBlpWriter(String filename, TransitSchedule schedule) {
+    public UmlegoBlpWriter(String filename, WriterParameters params, TransitSchedule schedule) {
         this.filename = filename;
+        this.params = params;
 
         this.trainNos = new HashMap<>();
         for (TransitLine line : schedule.getTransitLines().values()) {
@@ -137,11 +141,15 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
-        double demand = route.demand.getDouble(destZone);
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
+        double demand = route.demand;
 
-        for (int i = 0; i<route.routeParts.size(); i++) {
-            RoutePart routePart = route.routeParts.get(i);
+        if (demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
+
+        for (int i = 0; i<route.stop2stopRoute.routeParts.size(); i++) {
+            RoutePart routePart = route.stop2stopRoute.routeParts.get(i);
             if (routePart.line != null && routePart.mode.equals("pt")) {
                 routePart.route.getAttributes();
 
@@ -163,7 +171,7 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
 
                     if (item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
                         item.addAlighting(demand);
-                        if (i == route.routeParts.size() - 1) {
+                        if (i == route.stop2stopRoute.routeParts.size() - 1) {
                             item.addDestinationAlighting(demand);
                         }
                         break;
@@ -179,7 +187,7 @@ public class UmlegoBlpWriter implements UmlegoWriterInterface {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         LOG.info("Writing BLP matrices...");
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
         CSVWriter writer = new CSVWriter(bufferedWriter, ',', '"', '\\', "\n");

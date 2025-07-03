@@ -19,14 +19,20 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
-import com.opencsv.CSVWriter;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Locale;
+
 import org.matsim.core.utils.misc.Time;
 
-public class UmlegoCsvWriter implements UmlegoWriterInterface {
+import com.opencsv.CSVWriter;
+
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
+import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
+
+public class UmlegoCsvWriter implements UmlegoListener {
 
     private static final String[] HEADER_ROW = new String[]{
         "ORIGZONENO",
@@ -46,34 +52,44 @@ public class UmlegoCsvWriter implements UmlegoWriterInterface {
 
     private final boolean writeDetails;
     private final CSVWriter writer;
+    private final WriterParameters params;
 
-    public UmlegoCsvWriter(String filename, boolean writeDetails) throws IOException {
+    public UmlegoCsvWriter(String filename, boolean writeDetails, WriterParameters params) {
         this.writeDetails = writeDetails;
-        this.writer = new CSVWriter( new BufferedWriter(new FileWriter(filename)) , ',', '"', '\\', "\n");
+        this.params = params;
+        try {
+            this.writer = new CSVWriter(newBufferedWriter(filename), ',', '"', '\\', "\n");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         this.writer.writeNext(HEADER_ROW);
     }
 
     @Override
-    public void writeRoute(String origZone, String destZone, FoundRoute route) {
+    public void processRoute(String origZone, String destZone, FoundRoute route) {
+        if (route.demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
+
         this.writer.writeNext(new String[]{
             origZone,
             destZone,
-            route.originStop.getName(),
-            route.destinationStop.getName(),
+            route.stop2stopRoute.originStop.getName(),
+            route.stop2stopRoute.destinationStop.getName(),
             Time.writeTime(route.originConnectedStop.walkTime()),
             Time.writeTime(route.destinationConnectedStop.walkTime()),
-            Time.writeTime(route.depTime),
-            Time.writeTime(route.arrTime),
-            Time.writeTime(route.travelTimeWithoutAccess),
-            Integer.toString(route.transfers),
-            String.format("%.2f", route.distance / 1000.0),
-            String.format("%.5f", route.demand.getDouble(destZone)),
-            this.writeDetails ? route.getRouteAsString() : ""
+            Time.writeTime(route.stop2stopRoute.depTime),
+            Time.writeTime(route.stop2stopRoute.arrTime),
+            Time.writeTime(route.stop2stopRoute.travelTimeWithoutAccess),
+            Integer.toString(route.stop2stopRoute.transfers),
+            String.format(Locale.US,"%.2f", route.stop2stopRoute.distance / 1000.0),
+            String.format(Locale.US,"%.5f", route.demand),
+            this.writeDetails ? route.stop2stopRoute.getRouteAsString() : ""
         });
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         this.writer.close();
     }
 }

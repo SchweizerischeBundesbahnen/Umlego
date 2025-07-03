@@ -5,6 +5,8 @@ import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -63,7 +65,11 @@ public final class DemandManager {
 
     private ZonesLookup loadZoneLookupFile(String zonesFile) {
         // Reading and parsing the file is done in the constructor of ZonesLookup :(
-        return new ZonesLookup(zonesFile);
+        try {
+            return new ZonesLookup(zonesFile);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private DemandMatrices loadDemandMatrices(String baseMatricesPath, ZonesLookup zonesLookup) throws IOException, ZoneNotFoundException {

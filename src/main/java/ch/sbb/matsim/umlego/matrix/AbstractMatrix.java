@@ -6,12 +6,19 @@ import java.util.stream.DoubleStream;
 public abstract class AbstractMatrix implements Matrix {
 
     private final String name;
-
     private final double[][] data;
 
     public AbstractMatrix(double[][] data, String name) {
         this.data = data;
         this.name = name;
+    }
+
+    /**
+     * Constructs a DemandMatrix object by copying the values from another
+     */
+    public AbstractMatrix(AbstractMatrix value) {
+        this.name = value.name;
+        this.data = Arrays.stream(value.data).map(double[]::clone).toArray(double[][]::new);
     }
 
     @Override

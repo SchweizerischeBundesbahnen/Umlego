@@ -1,11 +1,12 @@
 package ch.sbb.matsim.umlego.matrix;
 
 
+import it.unimi.dsi.fastutil.longs.LongLongPair;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.matrixNameToMinutes;
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.minutesToMatrixIndex;
+import static ch.sbb.matsim.umlego.matrix.MatrixUtil.*;
 
 /**
  * Represents a collection of DemandMatrix objects with associated operations.
@@ -16,15 +17,9 @@ public class DemandMatrices {
     private ZonesLookup zonalLookup;
     private final Map<Integer, DemandMatrix> matrices;
 
-    private final static DemandMatrices INSTANCE = new DemandMatrices();
-
     public DemandMatrices(ZonesLookup zonesLookup) {
         this.zonalLookup = zonesLookup;
         this.matrices = new HashMap<>();
-    }
-
-    public static DemandMatrices getInstance() {
-        return INSTANCE;
     }
 
     public DemandMatrices() {
@@ -38,12 +33,27 @@ public class DemandMatrices {
         this.matrices = matrices.stream().collect(Collectors.toMap(m -> minutesToMatrixIndex(m.getStartTimeInclusiveMin()), m -> m));
     }
 
+    /**
+     * Copy constructor for the demand, creates copies of the matrices.
+     */
+    public DemandMatrices(DemandMatrices demand) {
+        this.zonalLookup = demand.zonalLookup;
+        this.matrices = new HashMap<>();
+        for (Map.Entry<Integer, DemandMatrix> entry : demand.matrices.entrySet()) {
+            this.matrices.put(entry.getKey(), new DemandMatrix(entry.getValue()));
+        }
+    }
+
     public void setZonesLookup(ZonesLookup zonalLookup) {
         this.zonalLookup = zonalLookup;
     }
 
     public Map<Integer, DemandMatrix> getMatrices() {
         return matrices;
+    }
+
+    public Collection<String> getZoneIds() {
+        return this.zonalLookup.getAllLookupValues();
     }
 
     /**
@@ -85,7 +95,8 @@ public class DemandMatrices {
             .sorted(Comparator.comparingInt(DemandMatrix::getStartTimeInclusiveMin))
             .toList()
             .equals(matrices);
-        assert isSorted;
+
+        assert isSorted : "Demand matrices are not sorted by start time";
     }
 
     private int compareStartTime(DemandMatrix m1, DemandMatrix m2) {
@@ -108,11 +119,34 @@ public class DemandMatrices {
         return getMatrixValue(fromZoneId, toZoneId, matrixNameToMinutes(name));
     }
 
+    public void multiplyMatrixValues(DemandMatrixMultiplier multiplier) {
+        for (Map.Entry<Integer, DemandMatrix> entry : this.matrices.entrySet()) {
+
+            int timeMin = matrixIndexToMinutes(entry.getKey());
+            DemandMatrix matrix = entry.getValue();
+
+            double[][] data = matrix.getData();
+
+            for (int i = 0; i < data.length; i++) {
+                String fromZone = zonalLookup.getZone(i);
+                for (int j = 0; j < data[i].length; j++) {
+                    String toZone = zonalLookup.getZone(j);
+
+                    double value = data[i][j];
+                    if (value != 0) {
+                        double f = multiplier.getFactor(fromZone, toZone, timeMin);
+                        data[i][j] = value * f;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @return the sum of all the values in all the matrices
      */
     public double getSum() {
-        return this.matrices.values().stream().mapToDouble(AbstractMatrix::getSum).sum();
+        return this.matrices.values().parallelStream().mapToDouble(AbstractMatrix::getSum).sum();
     }
 
     /**
@@ -120,6 +154,31 @@ public class DemandMatrices {
      */
     public double getAverage() {
         return this.getSum() / (this.matrices.size() * Math.pow(this.zonalLookup.getAllLookupValues().size(), 2));
+    }
+
+    /**
+     * Percentage of non-zero elements in all matrices.
+     */
+    public double getLoadFactor() {
+
+        Optional<LongLongPair> result = this.matrices.values().parallelStream().map(m -> {
+            double[][] data = m.getData();
+            long nonZeroCount = 0;
+            long total = 0;
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    if (data[i][j] != 0) {
+                        nonZeroCount++;
+                    }
+                }
+
+                total += data[i].length;
+            }
+            return LongLongPair.of(total, nonZeroCount);
+        }).reduce((a, b) -> LongLongPair.of(a.leftLong() + b.leftLong(), a.rightLong() + b.rightLong()));
+
+        return result.map(longLongPair -> longLongPair.rightLong() / (double) longLongPair.leftLong()).orElse(Double.NaN);
+
     }
 
     /**
