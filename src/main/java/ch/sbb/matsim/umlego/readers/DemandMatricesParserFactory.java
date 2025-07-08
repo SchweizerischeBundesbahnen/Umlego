@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.readers;
 
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import java.io.File;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
@@ -16,18 +16,18 @@ public class DemandMatricesParserFactory {
     private DemandMatricesParserFactory() {
     }
 
-    public static DemandMatricesParser createParser(String filePath, ZonesLookup zonesLookup) throws IOException {
+    public static DemandMatricesParser createParser(String filePath, Zones zones) throws IOException {
         LOG.info("Reading demand matrices from files in {}", filePath);
-        return createParserForFile(filePath, zonesLookup);
+        return createParserForFile(filePath, zones);
     }
 
-    private static DemandMatricesParser createParserForFile(String filePath, ZonesLookup zonesLookup) throws IOException {
+    private static DemandMatricesParser createParserForFile(String filePath, Zones zones) throws IOException {
         if (filePath.endsWith(".csv")) {
-            return new CsvMultiMatrixDemandParser(filePath, zonesLookup, 1, ",");
+            return new CsvMultiMatrixDemandParser(filePath, zones, 1, ",");
         } else if (new File(filePath).isDirectory()) {
-            return new CsvDemandFolderMatrixParser(filePath, zonesLookup, 0, "\\s+");
+            return new CsvDemandFolderMatrixParser(filePath, zones, 0, "\\s+");
         } else if (filePath.endsWith(".omx")) {
-            return new OmxMatrixParser(filePath, zonesLookup);
+            return new OmxMatrixParser(filePath, zones);
         } else {
             throw new IOException("Unsupported file format: " + filePath);
         }

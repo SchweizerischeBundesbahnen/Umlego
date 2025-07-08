@@ -2,10 +2,10 @@ package ch.sbb.matsim.umlego.it;
 
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoWorkflowFactory;
-import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.Id;
@@ -55,7 +55,7 @@ public class UmlegoITTest {
         data.put(GENEVE, 0);
         data.put(LAUSANNE, 1);
 
-        final DemandMatrices demand = new DemandMatrices(List.of(matrix), new ZonesLookup(data));
+        final DemandMatrices demand = new DemandMatrices(List.of(matrix), new Zones(data));
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(
@@ -125,7 +125,7 @@ public class UmlegoITTest {
         zoneLookup.put(LAUSANNE, 1);
 
         // Create base demand matrices
-        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), new ZonesLookup(zoneLookup));
+        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), new Zones(zoneLookup));
 
         // Setup zone connections
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
@@ -149,7 +149,7 @@ public class UmlegoITTest {
         // Create the halved demand matrix
         double[][] halfMatrix = {{5, 5}, {5, 5}}; // Halved values
         var halfDemandMatrix = new DemandMatrix(23 * 60 + 50, 24 * 60, halfMatrix);
-        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), new ZonesLookup(zoneLookup));
+        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), new Zones(zoneLookup));
 
         // Run with half demand
         var halfUmlego = new Umlego(halfDemand, new UmlegoWorkflowFactory(halfDemand, scenario, stopsPerZone));

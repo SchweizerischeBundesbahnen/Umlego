@@ -6,15 +6,15 @@ import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.matsim.api.core.v01.Scenario;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Scenario;
 
 /**
  * @author mrieser / Simunto
@@ -37,17 +37,17 @@ public class Umlego {
     /**
      * Constructor.
      *
-     * @param demand       demand matrices
-     * @param scenario     MATSim object collecting all sort of data
+     * @param demand demand matrices
+     * @param scenario MATSim object collecting all sort of data
      */
-    public Umlego(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) {
-        this(demand,new UmlegoWorkflowFactory(demand, scenario, zoneConnectionsFile));
+    public Umlego(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) throws IOException {
+        this(demand, new UmlegoWorkflowFactory(demand, scenario, zoneConnectionsFile));
     }
 
     /**
      * Constructor.
      *
-     * @param demand       demand matrices
+     * @param demand demand matrices
      */
     public Umlego(DemandMatrices demand, WorkflowFactory workflowFactory) {
         this.demand = demand;
@@ -78,7 +78,7 @@ public class Umlego {
     /**
      * Retrieves the listener of the specified type from the collection of registered listeners.
      *
-     * @param <T>  the type of the listener to retrieve, which must extend {@code UmlegoListener}
+     * @param <T> the type of the listener to retrieve, which must extend {@code UmlegoListener}
      * @param type the {@code Class} object representing the type of listener to search for
      * @return an instance of the listener of the specified type
      * @throws IllegalArgumentException if no listener of the specified type is found
@@ -92,19 +92,19 @@ public class Umlego {
         throw new IllegalArgumentException("No listener of type " + type.getName() + " found.");
     }
 
-    public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
+    public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException, IOException {
         // TODO ?: Why null values and not just delete the param on the run method?
         run(null, null, params, threadCount, outputFolder);
     }
 
-    public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException {
+    public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException, IOException {
 
-        List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-                : new ArrayList<>(originZones);
+        List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllNos())
+            : new ArrayList<>(originZones);
         originZoneIds.sort(String::compareTo);
         List<String> destinationZoneIds =
-                destinationZones == null ? new ArrayList<>(demand.getLookup().getAllLookupValues())
-                        : new ArrayList<>(destinationZones);
+            destinationZones == null ? new ArrayList<>(demand.getLookup().getAllNos())
+                : new ArrayList<>(destinationZones);
         destinationZoneIds.sort(String::compareTo);
 
         // detect relevant stops
@@ -125,7 +125,7 @@ public class Umlego {
         Thread[] threads = new Thread[threadCount];
         for (int i = 0; i < threads.length; i++) {
             AbstractWorker worker = workflowFactory.createWorker(
-                    workerQueue, params, destinationZoneIds, this.deltaTCalculator);
+                workerQueue, params, destinationZoneIds, this.deltaTCalculator);
 
             threads[i] = new Thread(worker);
             threads[i].start();
@@ -144,7 +144,7 @@ public class Umlego {
 
                 if (workItem.results().size() != handler.size()) {
                     throw new IllegalArgumentException(String.format("The number of results in the work item (%d) must match the number of WorkResultHandler (%d).",
-                            workItem.results().size(), handler.size()));
+                        workItem.results().size(), handler.size()));
                 }
 
                 writerQueue.put(workItem);

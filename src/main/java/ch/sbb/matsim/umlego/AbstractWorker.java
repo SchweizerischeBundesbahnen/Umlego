@@ -70,14 +70,14 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
     protected final Map<String, List<FoundRoute>> calculateRoutesForZone(RoutingContext ctx, String originZone) throws ZoneNotFoundException {
         IntSet activeDestinationStopIndices = getActiveDestinationStopIndices(ctx, originZone);
         Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes = new HashMap<>();
-        for (ZoneConnections.ConnectedStop stop : ctx.stopsPerZone().getOrDefault(originZone, Collections.emptyList())) {
+        for (Connectors.ConnectedStop stop : ctx.stopsPerZone().getOrDefault(originZone, Collections.emptyList())) {
             calcRoutesFromStop(ctx, stop.stopFacility(), activeDestinationStopIndices, foundRoutes);
         }
         return aggregateOnZoneLevel(ctx, originZone, foundRoutes);
     }
 
     private IntSet getActiveDestinationStopIndices(RoutingContext ctx, String originZone) throws ZoneNotFoundException {
-        List<ZoneConnections.ConnectedStop> emptyList = Collections.emptyList();
+        List<Connectors.ConnectedStop> emptyList = Collections.emptyList();
         IntSet destinationStopIndices = new IntOpenHashSet();
 
         for (String destinationZone : this.destinationZoneIds) {
@@ -124,27 +124,27 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
      * leading from the originZoneId to the destination, over the whole day.
      */
     private Map<String, List<FoundRoute>> aggregateOnZoneLevel(RoutingContext ctx, String originZoneId, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutesPerStop) {
-        List<ZoneConnections.ConnectedStop> emptyList = Collections.emptyList();
+        List<Connectors.ConnectedStop> emptyList = Collections.emptyList();
         Map<String, List<FoundRoute>> foundRoutesPerZone = new HashMap<>();
 
-        List<ZoneConnections.ConnectedStop> stopsPerOriginZone = ctx.stopsPerZone().getOrDefault(originZoneId, emptyList);
-        Map<TransitStopFacility, ZoneConnections.ConnectedStop> originStopLookup = new HashMap<>();
-        for (ZoneConnections.ConnectedStop stop : stopsPerOriginZone) {
+        List<Connectors.ConnectedStop> stopsPerOriginZone = ctx.stopsPerZone().getOrDefault(originZoneId, emptyList);
+        Map<TransitStopFacility, Connectors.ConnectedStop> originStopLookup = new HashMap<>();
+        for (Connectors.ConnectedStop stop : stopsPerOriginZone) {
             originStopLookup.put(stop.stopFacility(), stop);
         }
 
         for (String destinationZoneId : destinationZoneIds) {
-            Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = ctx.stopLookupPerDestination().get(destinationZoneId);
+            Map<TransitStopFacility, Connectors.ConnectedStop> destinationStopLookup = ctx.stopLookupPerDestination().get(destinationZoneId);
             List<FoundRoute> allRoutesFromTo = new ArrayList<>();
-            for (ZoneConnections.ConnectedStop originStop : stopsPerOriginZone) {
+            for (Connectors.ConnectedStop originStop : stopsPerOriginZone) {
                 Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>> routesPerDestinationStop = foundRoutesPerStop.get(originStop.stopFacility());
                 if (routesPerDestinationStop != null) {
-                    for (ZoneConnections.ConnectedStop destinationStop : ctx.stopsPerZone().getOrDefault(destinationZoneId, emptyList)) {
+                    for (Connectors.ConnectedStop destinationStop : ctx.stopsPerZone().getOrDefault(destinationZoneId, emptyList)) {
                         Map<Stop2StopRoute, Boolean> routesPerOriginDestinationStop = routesPerDestinationStop.get(destinationStop.stopFacility());
                         if (routesPerOriginDestinationStop != null) {
                             for (Stop2StopRoute route : routesPerOriginDestinationStop.keySet()) {
-                                ZoneConnections.ConnectedStop originConnectedStop = originStopLookup.get(route.originStop);
-                                ZoneConnections.ConnectedStop destinationConnectedStop = destinationStopLookup.get(route.destinationStop);
+                                Connectors.ConnectedStop originConnectedStop = originStopLookup.get(route.originStop);
+                                Connectors.ConnectedStop destinationConnectedStop = destinationStopLookup.get(route.destinationStop);
 
                                 boolean invalidRoute =
                                         UmlegoRouteUtils.routeStartsWithTransferWithinSameZone(route, originStopLookup.keySet())

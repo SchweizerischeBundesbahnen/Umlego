@@ -3,7 +3,7 @@ package ch.sbb.matsim.bewerto.elasticities;
 import ch.sbb.matsim.bewerto.BewertoWorkResult;
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 class DemandFactorCalculatorTest {
 
     @Mock
-    private ZonesLookup mockLookup;
+    private Zones mockLookup;
 
     private ElasticitiesParameters params;
     private DemandFactorCalculator calculator;

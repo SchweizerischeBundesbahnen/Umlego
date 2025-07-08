@@ -3,7 +3,7 @@ package ch.sbb.matsim.umlego.readers;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import omx.OmxFile;
 import omx.OmxMatrix;
 import org.junit.jupiter.api.Disabled;
@@ -37,7 +37,7 @@ class OmxMatrixParserTest {
         for (int i = 0; i < externalNumbers.length; i++) {
             zoneMap.put(String.valueOf(externalNumbers[i]), i);
         }
-        ZonesLookup zonesLookup = new ZonesLookup(zoneMap);
+        Zones zones = new Zones(zoneMap);
         
         // Get all matrices from the official OMX implementation
         Map<Integer, double[][]> legacyMatrices = new HashMap<>();
@@ -50,7 +50,7 @@ class OmxMatrixParserTest {
         legacyOmxFile.close();
         
         // Parse using the new jhdf implementation
-        OmxMatrixParser parser = new OmxMatrixParser(TEST_OMX_FILE, zonesLookup);
+        OmxMatrixParser parser = new OmxMatrixParser(TEST_OMX_FILE, zones);
         DemandMatrices demandMatrices = parser.parse();
         Map<Integer, DemandMatrix> newMatrices = demandMatrices.getMatrices();
         

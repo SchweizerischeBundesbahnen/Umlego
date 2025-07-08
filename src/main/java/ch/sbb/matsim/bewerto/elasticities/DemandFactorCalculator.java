@@ -3,9 +3,8 @@ package ch.sbb.matsim.bewerto.elasticities;
 import ch.sbb.matsim.bewerto.BewertoWorkResult;
 import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
-
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,7 +23,7 @@ public final class DemandFactorCalculator {
     private final static double[] EMPTY = new double[0];
 
     private final ElasticitiesParameters params;
-    private final ZonesLookup lookup;
+    private final Zones zones;
 
     /**
      * Contains the entries for elasticity calculation. Mapped by {@link ElasticityEntry#cluster()} and {@link ElasticityEntry#skimType()}.
@@ -32,32 +31,32 @@ public final class DemandFactorCalculator {
     private final Map<String, Map<SkimType, ElasticityEntry>> entries = new LinkedHashMap<>();
 
     /**
-     * Constructs a {@code DemandFactorCalculator} used to calculate demand factors
-     * by comparing base and variant skim matrices for given origin-destination zones.
+     * Constructs a {@code DemandFactorCalculator} used to calculate demand factors by comparing base and variant skim matrices for given origin-destination zones.
      *
-     * @param params      elasticities parameters object containing elasticity parameters for the given segment
-     * @param lookup      zone lookup object
+     * @param params elasticities parameters object containing elasticity parameters for the given segment
+     * @param zones zone lookup object
      */
-    public DemandFactorCalculator(ElasticitiesParameters params, ZonesLookup lookup) {
+    public DemandFactorCalculator(ElasticitiesParameters params, Zones zones) {
         this.params = params;
-        this.lookup = lookup;
+        this.zones = zones;
 
         ElasticityEntry.readAllEntries(params.getFile()).stream()
-                .filter(e -> Objects.equals(e.segment(), params.getSegment()))
-                .forEach(entry -> {
-                    entries.computeIfAbsent(entry.cluster(), k -> new EnumMap<>(SkimType.class))
-                            .put(entry.skimType(), entry);
-                });
+            .filter(e -> Objects.equals(e.segment(), params.getSegment()))
+            .forEach(entry -> {
+                entries.computeIfAbsent(entry.cluster(), k -> new EnumMap<>(SkimType.class))
+                    .put(entry.skimType(), entry);
+            });
 
         if (entries.isEmpty()) {
             throw new IllegalArgumentException("No elasticity entries found for segment " + params.getSegment());
         }
     }
+
     /**
      * Creates a demand matrix multiplier based on the base and variant skim matrices.
      *
-     * @param base     the base skim matrix
-     * @param variant  the variant skim matrix
+     * @param base the base skim matrix
+     * @param variant the variant skim matrix
      * @return a {@link DemandMatrixMultiplier} that can be used to multiply demand matrices
      */
     public Multiplier createMultiplier(Map<String, double[]> base, Map<String, double[]> variant) {
@@ -67,10 +66,10 @@ public final class DemandFactorCalculator {
     /**
      * Compute the cluster, i.e. type of relation (international or national) based on the origin and destination zones.
      */
-    private String computeCluster(String fromZone, String toZone) {
+    private String computeCluster(String fromZoneNo, String toZoneNo) {
 
-        String a = lookup.getCluster(fromZone);
-        String b = lookup.getCluster(toZone);
+        String a = zones.getCluster(fromZoneNo);
+        String b = zones.getCluster(toZoneNo);
 
         // Only CH and CH are considered as domestic traffic
         // Others are international
@@ -117,15 +116,15 @@ public final class DemandFactorCalculator {
         }
 
         @Override
-        public double getFactor(String fromZone, String toZone, int timeMin) {
-            double[] baseValues = base.getOrDefault(toZone, EMPTY);
-            double[] variantValues = variant.getOrDefault(toZone, EMPTY);
+        public double getFactor(String fromZoneNo, String toZoneNo, int timeMin) {
+            double[] baseValues = base.getOrDefault(toZoneNo, EMPTY);
+            double[] variantValues = variant.getOrDefault(toZoneNo, EMPTY);
 
             if (baseValues == EMPTY || variantValues == EMPTY) {
                 return 1.0; // No data available, return neutral factor
             }
 
-            String cluster = computeCluster(fromZone, toZone);
+            String cluster = computeCluster(fromZoneNo, toZoneNo);
 
             double ax = Math.min(baseValues[UmlegoSkimCalculator.ADT_IDX], params.getAdtUB()) / 15;
             double bx = baseValues[UmlegoSkimCalculator.JRT_IDX] / 45;
@@ -139,13 +138,13 @@ public final class DemandFactorCalculator {
             double eNTR = computeElasticity(entries.get(cluster).get(SkimType.NTR), ax, bx);
             double FNTR = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.NTR_IDX, eNTR);
 
-            factors.put(toZone, new double[]{FJRT, FADT, FNTR});
+            factors.put(toZoneNo, new double[]{FJRT, FADT, FNTR});
 
             return FJRT * FADT * FNTR;
         }
 
-        public BewertoWorkResult createResult(String fromZone) {
-            return new BewertoWorkResult(fromZone, factors);
+        public BewertoWorkResult createResult(String fromZoneNo) {
+            return new BewertoWorkResult(fromZoneNo, factors);
         }
     }
 }

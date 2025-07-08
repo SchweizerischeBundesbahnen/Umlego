@@ -1,0 +1,112 @@
+package ch.sbb.matsim.umlego.matrix;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.matsim.application.options.CsvOptions;
+
+/**
+ * The ZonesLookup object is used as single source of truth in respect to which zones are considered in Umlego.
+ * TODO: this should be used as a Singleton.
+ */
+public class Zones {
+
+    /**
+     * Column for the market area (cluster) in the CSV file.
+     */
+    public static final String CLUSTER_COLUMN = "MARKTGEBIETVARELAST";
+
+    private final Map<String, String> nameByNo;
+
+    /**
+     * Lookup for zone names to a cluster id (or market area).
+     */
+    private final Map<String, String> clusterByNo = new HashMap<>();
+
+    /**
+     * Constructs a ZonesLookup object by parsing a CSV file containing zone information. Assumes semicolon as separator.
+     *
+     * @param zonesCsvFileName the path to the CSV file containing zone information
+     */
+    public Zones(String zonesCsvFileName) throws IOException {
+
+        nameByNo = new HashMap<>();
+        Character delimiter = CsvOptions.detectDelimiter(zonesCsvFileName);
+
+        CSVFormat format = CSVFormat.DEFAULT.builder().setDelimiter(delimiter).setHeader().setSkipHeaderRecord(true).build();
+        try (CSVParser parser = new CSVParser(new BufferedReader(new FileReader(zonesCsvFileName)), format)) {
+
+            if (!parser.getHeaderNames().contains("NAME")) {
+                throw new IllegalArgumentException("CSV file must contain 'NAME' column.");
+            }
+
+            if (!parser.getHeaderNames().contains("NO")) {
+                throw new IllegalArgumentException("CSV file must contain 'NO' column.");
+            }
+
+            for (CSVRecord r : parser) {
+
+                String name = r.get("NAME");
+                String no = r.get("NO");
+                nameByNo.put(no, name);
+
+                if (r.isMapped(CLUSTER_COLUMN)) {
+                    clusterByNo.put(no, r.get(CLUSTER_COLUMN));
+                }
+
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+    }
+
+    public Zones(Map<String, String> nameByNo) {
+        this.nameByNo = nameByNo;
+
+    }
+
+    /**
+     * @param zone the name of the zone whose index is to be retrieved
+     * @return the index of the specified zone
+     * @throws ZoneNotFoundException if the zone is not found in the lookup
+     */
+    public String getNo(String zone) throws ZoneNotFoundException {
+        String result = this.nameByNo.get(zone);
+        if (result == null) {
+            throw new ZoneNotFoundException(zone);
+        }
+        return result;
+    }
+
+    /**
+     * Retrieves the cluster ID for the specified zone.
+     */
+    public String getCluster(String zone) {
+        if (clusterByNo.isEmpty()) {
+            throw new IllegalStateException("Cluster lookup is not initialized. Ensure the CSV file contains '" + CLUSTER_COLUMN + "' column.");
+        }
+
+        String result = clusterByNo.get(zone);
+        if (result == null) {
+            throw new ZoneNotFoundException(zone);
+        }
+
+        return result;
+    }
+
+    public List<String> getAllNos() {
+        return this.nameByNo.keySet().stream().toList();
+    }
+
+    public int size() {
+        return this.nameByNo.size();
+    }
+}

@@ -13,7 +13,7 @@ import java.util.Map;
 public record RoutingContext(
         SwissRailRaptor raptor,
         RaptorParameters raptorParams,
-        Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone,
-        Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination
+        Map<String, List<Connectors.ConnectedStop>> stopsPerZone,
+        Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination
 ) {
 }

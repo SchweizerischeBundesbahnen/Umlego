@@ -1,12 +1,12 @@
 package ch.sbb.matsim.umlego.it;
 
 import ch.sbb.matsim.umlego.*;
-import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +47,7 @@ public class CustomWorkflowTest {
 
         double[][] m = {{10, 10}, {10, 10}};
         var matrix = new DemandMatrix(23 * 60 + 50, 24 * 60, m);
-        demand = new DemandMatrices(List.of(matrix), new ZonesLookup(data));
+        demand = new DemandMatrices(List.of(matrix), new Zones(data));
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(new ConnectedStop(GENEVE, 0, geneve)));

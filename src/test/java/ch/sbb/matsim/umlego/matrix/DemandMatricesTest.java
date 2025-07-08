@@ -21,7 +21,7 @@ class DemandMatricesTest {
     private final Path tempDir;
     private final String mtxPath;
     private final String multiMtxPath;
-    private final ZonesLookup zonesLookup;
+    private final Zones zones;
 
     public DemandMatricesTest() throws IOException {
         System.setProperty("LOCAL", "true");
@@ -29,12 +29,12 @@ class DemandMatricesTest {
         mtxPath = createCSVFile(tempDir.resolve("matrix000.mtx")).toString();
         createSparseCSVFile(tempDir.resolve("matrix001.mtx"));
         multiMtxPath = createCSVFileWithTypeCol(tempDir.resolve("multi_matrix.csv")).toString();
-        zonesLookup = new ZonesLookup(createZonesLookup(tempDir.resolve("lookup.csv")).toString());
+        zones = new Zones(createZonesLookup(tempDir.resolve("lookup.csv")).toString());
     }
 
     @Test
     void testOpenMatrix() throws ZoneNotFoundException {
-        CsvDemandFolderMatrixParser parser = new CsvDemandFolderMatrixParser(tempDir.toString(), zonesLookup, 0, "\\s+");
+        CsvDemandFolderMatrixParser parser = new CsvDemandFolderMatrixParser(tempDir.toString(), zones, 0, "\\s+");
         DemandMatrices demandMatrices = parser.parse();
 
         List<String> matrixNames = demandMatrices.getMatrixNames();
@@ -42,7 +42,7 @@ class DemandMatricesTest {
         assertTrue(matrixNames.contains("1"));
         assertTrue(matrixNames.contains("2"));
 
-        List<String> zoneIds = zonesLookup.getAllLookupValues();
+        List<String> zoneIds = zones.getAllNos();
         assertEquals(3, zoneIds.size());
         assertTrue(zoneIds.contains("zone1"));
         assertTrue(zoneIds.contains("zone2"));
@@ -52,19 +52,19 @@ class DemandMatricesTest {
 
     @Test
     void testGetMatrixValue() throws IOException, ZoneNotFoundException {
-        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zonesLookup, 1, "\\s+");
+        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+");
         FactorMatrix factorMatrix = parser.parseFactorMatrix();
 
-        double value = factorMatrix.getValue(zonesLookup.getIndex("zone1"), zonesLookup.getIndex("zone2"));
+        double value = factorMatrix.getValue(zones.getNo("zone1"), zones.getNo("zone2"));
         assertEquals(3.0, value, 0.0);
 
-        double value2 = factorMatrix.getValue(zonesLookup.getIndex("zone2"), zonesLookup.getIndex("zone1"));
+        double value2 = factorMatrix.getValue(zones.getNo("zone2"), zones.getNo("zone1"));
         assertEquals(2.0, value2, 0.0);
     }
 
     @Test
     void testOpenMatrixWithTypeCol() throws ZoneNotFoundException {
-        CsvMultiMatrixDemandParser parser = new CsvMultiMatrixDemandParser(multiMtxPath, zonesLookup, 1, ",");
+        CsvMultiMatrixDemandParser parser = new CsvMultiMatrixDemandParser(multiMtxPath, zones, 1, ",");
         DemandMatrices matrices = parser.parse();
 
         List<String> matrixNames = matrices.getMatrixNames();
@@ -76,10 +76,10 @@ class DemandMatricesTest {
 
     @Test
     void testMultiplyAllMatricesWithTarget() throws IOException, ZoneNotFoundException {
-        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zonesLookup, 1, "\\s+");
+        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+");
         FactorMatrix baseDemand = parser.parseFactorMatrix();
 
-        CsvMultiMatrixDemandParser parser2 = new CsvMultiMatrixDemandParser(multiMtxPath, zonesLookup, 0, ",", baseDemand);
+        CsvMultiMatrixDemandParser parser2 = new CsvMultiMatrixDemandParser(multiMtxPath, zones, 0, ",", baseDemand);
         DemandMatrices matrices = parser2.parse();
 
         // The zoneLookup has an additional zone, which is filled with defaultValue
