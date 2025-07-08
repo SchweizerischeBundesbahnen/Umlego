@@ -7,6 +7,7 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.io.IOException;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
@@ -24,16 +25,16 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
     private final DemandMatrices demand;
     private final Scenario scenario;
-    private final Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone;
-    private final Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination;
+    private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
+    private final Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination;
     private final RaptorParameters raptorParams;
     private final SwissRailRaptorData raptorData;
 
-    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) {
-        this(demand, scenario, UmlegoRunner.readConnections(zoneConnectionsFile, scenario.getTransitSchedule()));
+    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) throws IOException {
+        this(demand, scenario, UmlegoRunner.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule()));
     }
 
-    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone) {
+    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<Connectors.ConnectedStop>> stopsPerZone) {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;
@@ -59,7 +60,7 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
         IntSet destinationStopIndices = new IntOpenHashSet();
         for (String zoneId : destinationZoneIds) {
             List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, List.of()).stream()
-                    .map(ZoneConnections.ConnectedStop::stopFacility).toList();
+                    .map(Connectors.ConnectedStop::stopFacility).toList();
             for (TransitStopFacility stop : stops) {
                 destinationStopIndices.add(stop.getId().index());
             }
@@ -67,9 +68,9 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
         // Build the destination stop lookup map
         for (String destinationZoneId : destinationZoneIds) {
-            List<ZoneConnections.ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, List.of());
-            Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = new HashMap<>();
-            for (ZoneConnections.ConnectedStop stop : stopsPerDestinationZone) {
+            List<Connectors.ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, List.of());
+            Map<TransitStopFacility, Connectors.ConnectedStop> destinationStopLookup = new HashMap<>();
+            for (Connectors.ConnectedStop stop : stopsPerDestinationZone) {
                 destinationStopLookup.put(stop.stopFacility(), stop);
             }
             stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);

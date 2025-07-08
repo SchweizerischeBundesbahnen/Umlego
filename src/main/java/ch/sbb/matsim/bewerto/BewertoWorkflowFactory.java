@@ -10,6 +10,7 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.io.IOException;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
@@ -42,7 +43,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
                                   Scenario baseCase, List<Scenario> variants) {
         this.demand = demand;
         this.zoneConnectionsFile = zoneConnectionsFile;
-        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getLookup());
+        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getZones());
         this.scenarios = new ArrayList<>(variants);
         this.scenarios.addFirst(baseCase);
 
@@ -67,17 +68,17 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     }
 
     @Override
-    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
+    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) throws IOException {
 
         for (Scenario scenario : scenarios) {
-            Map<String, List<ZoneConnections.ConnectedStop>> stopsPerZone = UmlegoRunner.readConnections(zoneConnectionsFile, scenario.getTransitSchedule());
-            Map<String, Map<TransitStopFacility, ZoneConnections.ConnectedStop>> stopLookupPerDestination = new LinkedHashMap<>();
+            Map<String, List<Connectors.ConnectedStop>> stopsPerZone = UmlegoRunner.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule());
+            Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination = new LinkedHashMap<>();
 
             // Build the destination stop lookup map
             for (String destinationZoneId : destinationZoneIds) {
-                List<ZoneConnections.ConnectedStop> stopsPerDestinationZone = stopsPerZone.getOrDefault(destinationZoneId, List.of());
-                Map<TransitStopFacility, ZoneConnections.ConnectedStop> destinationStopLookup = new HashMap<>();
-                for (ZoneConnections.ConnectedStop stop : stopsPerDestinationZone) {
+                List<Connectors.ConnectedStop> stopsPerDestinationZone = stopsPerZone.getOrDefault(destinationZoneId, List.of());
+                Map<TransitStopFacility, Connectors.ConnectedStop> destinationStopLookup = new HashMap<>();
+                for (Connectors.ConnectedStop stop : stopsPerDestinationZone) {
                     destinationStopLookup.put(stop.stopFacility(), stop);
                 }
                 stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
@@ -90,7 +91,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
         IntSet destinationStopIndices = new IntOpenHashSet();
         for (String zoneId : destinationZoneIds) {
             List<TransitStopFacility> stops = ctxs.getFirst().stopsPerZone().getOrDefault(zoneId, List.of()).stream()
-                    .map(ZoneConnections.ConnectedStop::stopFacility).toList();
+                    .map(Connectors.ConnectedStop::stopFacility).toList();
             for (TransitStopFacility stop : stops) {
                 destinationStopIndices.add(stop.getId().index());
             }

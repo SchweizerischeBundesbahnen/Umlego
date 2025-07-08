@@ -3,6 +3,7 @@ package ch.sbb.matsim.umlego;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.io.IOException;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public interface WorkflowFactory<T extends WorkItem> {
     /**
      * Called before the workflow starts to create all possible destination stop indices.
      */
-    IntSet computeDestinationStopIndices(List<String> destinationZoneIds);
+    IntSet computeDestinationStopIndices(List<String> destinationZoneIds) throws IOException;
 
     /**
      * Creates a worker that processes work items from the provided queue.

@@ -1,15 +1,16 @@
 package ch.sbb.matsim.umlego;
 
-import static ch.sbb.matsim.umlego.ZoneConnections.readZoneConnections;
+import static ch.sbb.matsim.umlego.Connectors.readZoneConnectors;
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
-import ch.sbb.matsim.umlego.config.*;
-import ch.sbb.matsim.umlego.ZoneConnections.ConnectedStop;
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
+import ch.sbb.matsim.umlego.config.ScenarioParameters;
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.readers.DemandManager;
 import com.google.common.collect.Table;
-import java.io.BufferedReader;
+import jakarta.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,8 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import jakarta.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.github.gestalt.config.Gestalt;
@@ -33,7 +32,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
@@ -107,7 +105,7 @@ public class UmlegoRunner {
     /**
      * Run Umlego and return the created Umlego object.
      */
-    public Umlego run() throws ZoneNotFoundException {
+    public Umlego run() throws ZoneNotFoundException, IOException {
         long startTime = System.currentTimeMillis();
 
         LOG.info("Starting Umlego with the following parameters:");
@@ -128,19 +126,20 @@ public class UmlegoRunner {
 
     /**
      * Load the parameters from the configuration file.
+     *
      * @param configPath optional path to configuration
      */
     public static Gestalt loadConfig(@Nullable Path configPath) throws GestaltException {
         GestaltBuilder builder = new GestaltBuilder()
-                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build());
+            .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build());
 
         if (configPath != null) {
-          builder.addSource(FileConfigSourceBuilder.builder().setPath(configPath).build());
+            builder.addSource(FileConfigSourceBuilder.builder().setPath(configPath).build());
         }
 
         Gestalt config = builder.addSource(SystemPropertiesConfigSourceBuilder.builder().build())
-                .addModuleConfig(YamlModuleConfigBuilder.builder().build())
-                .build();
+            .addModuleConfig(YamlModuleConfigBuilder.builder().build())
+            .build();
 
         config.loadConfigs();
 
@@ -149,7 +148,6 @@ public class UmlegoRunner {
 
     /**
      * Load the scenario based on the provided parameters.
-     *
      */
     public static Scenario loadScenario(ScenarioParameters scenarioParameters) {
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -165,9 +163,8 @@ public class UmlegoRunner {
      *
      * @return Map<String, List < ConnectedStop>>
      */
-    public static Map<String, List<ConnectedStop>> readConnections(String zoneConnectionsFilename, TransitSchedule schedule) {
-        BufferedReader reader = IOUtils.getBufferedReader(zoneConnectionsFilename);
-        Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnections(reader, schedule);
+    public static Map<String, List<ConnectedStop>> readConnectors(String zoneConnectionsFilename, TransitSchedule schedule) throws IOException {
+        Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnectors(zoneConnectionsFilename, schedule);
         return zoneConnections.rowMap().entrySet().stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,

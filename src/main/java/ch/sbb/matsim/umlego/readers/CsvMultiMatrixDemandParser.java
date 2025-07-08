@@ -3,10 +3,9 @@ package ch.sbb.matsim.umlego.readers;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,14 +18,14 @@ public class CsvMultiMatrixDemandParser extends AbstractCsvMatrixParser implemen
     private final String separator;
     private final FactorMatrix baseDemand;
 
-    public CsvMultiMatrixDemandParser(String path, ZonesLookup zonesLookup, double defaultValue, String separator, FactorMatrix baseDemand) {
-        super(path, zonesLookup, defaultValue);
+    public CsvMultiMatrixDemandParser(String path, Zones zones, double defaultValue, String separator, FactorMatrix baseDemand) {
+        super(path, zones, defaultValue);
         this.separator = separator;
         this.baseDemand = baseDemand;
     }
 
-    public CsvMultiMatrixDemandParser(String path, ZonesLookup zonesLookup, double defaultValue, String separator) {
-        this(path, zonesLookup, defaultValue, separator, null);
+    public CsvMultiMatrixDemandParser(String path, Zones zones, double defaultValue, String separator) {
+        this(path, zones, defaultValue, separator, null);
     }
 
     /**

@@ -2,8 +2,8 @@ package ch.sbb.matsim.umlego;
 
 public class FoundRoute {
     public final Stop2StopRoute stop2stopRoute;
-    public final ZoneConnections.ConnectedStop originConnectedStop;
-    public final ZoneConnections.ConnectedStop destinationConnectedStop;
+    public final Connectors.ConnectedStop originConnectedStop;
+    public final Connectors.ConnectedStop destinationConnectedStop;
     public final double travelTimeWithAccess;
 
     public double searchImpedance = Double.NaN; // Suchwiderstand
@@ -12,7 +12,7 @@ public class FoundRoute {
     public double adaptationTime = 0;
     public double originality = 0; // Eigenständigkeit
 
-    public FoundRoute(Stop2StopRoute stop2stopRoute, ZoneConnections.ConnectedStop originConnectedStop, ZoneConnections.ConnectedStop destinationConnectedStop) {
+    public FoundRoute(Stop2StopRoute stop2stopRoute, Connectors.ConnectedStop originConnectedStop, Connectors.ConnectedStop destinationConnectedStop) {
         this.stop2stopRoute = stop2stopRoute;
         this.originConnectedStop = originConnectedStop;
         this.destinationConnectedStop = destinationConnectedStop;

@@ -18,5 +18,4 @@ public interface WorkItem {
      */
     List<CompletableFuture<? extends WorkResult>> results();
 
-
 }

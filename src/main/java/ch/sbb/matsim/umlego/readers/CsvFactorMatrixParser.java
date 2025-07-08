@@ -2,6 +2,7 @@ package ch.sbb.matsim.umlego.readers;
 
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import com.google.common.io.Files;
 import java.io.BufferedReader;
@@ -16,10 +17,12 @@ public class CsvFactorMatrixParser extends AbstractCsvMatrixParser {
     private static final Logger LOG = LogManager.getLogger(CsvFactorMatrixParser.class);
 
     private final String separator;
+    private ZonesLookup zonesLookup;
 
-    public CsvFactorMatrixParser(String filename, ZonesLookup zonesLookup, double defaultValue, String separator) {
-        super(filename, zonesLookup, defaultValue);
+    public CsvFactorMatrixParser(String filename, Zones zones, double defaultValue, String separator, ZonesLookup zonesLookup) {
+        super(filename, zones, defaultValue);
         this.separator = separator;
+        this.zonesLookup = zonesLookup;
     }
 
     /**
@@ -33,7 +36,7 @@ public class CsvFactorMatrixParser extends AbstractCsvMatrixParser {
         LOG.info("Parsing matrix file " + getPath());
         BufferedReader bufferedReader = new BufferedReader(new FileReader(getPath()));
         List<CSVEntry> csvEntries = parseCsvMatrix(bufferedReader, this.separator);
-        double[][] data = convertToDataArray(csvEntries, true);
+        double[][] data = convertToDataArray(csvEntries, true, this.zonesLookup);
         String name = Files.getNameWithoutExtension(getPath());
         return new FactorMatrix(data, name);
     }

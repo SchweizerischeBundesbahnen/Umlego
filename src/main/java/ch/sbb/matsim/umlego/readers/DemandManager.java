@@ -3,10 +3,9 @@ package ch.sbb.matsim.umlego.readers;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,7 +38,6 @@ public final class DemandManager {
 
     /**
      * Same as above, but with params:
-     *
      */
     public static DemandMatrices prepareDemand(String zonesFile, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         DemandManager demandManager = new DemandManager();
@@ -57,23 +55,23 @@ public final class DemandManager {
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
     private DemandMatrices execute(String zonesFile, String demandMatricesPath, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
-        ZonesLookup zonesLookup = loadZoneLookupFile(zonesFile);
-        DemandMatrices demandMatrices = loadDemandMatrices(demandMatricesPath, zonesLookup);
+        Zones zones = loadZoneLookupFile(zonesFile);
+        DemandMatrices demandMatrices = loadDemandMatrices(demandMatricesPath, zones);
         loadAndApplyCorrectionFactors(demandMatrices, factorMatriceFilenames);
         return demandMatrices;
     }
 
-    private ZonesLookup loadZoneLookupFile(String zonesFile) {
+    private Zones loadZoneLookupFile(String zonesFile) {
         // Reading and parsing the file is done in the constructor of ZonesLookup :(
         try {
-            return new ZonesLookup(zonesFile);
+            return new Zones(zonesFile);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private DemandMatrices loadDemandMatrices(String baseMatricesPath, ZonesLookup zonesLookup) throws IOException, ZoneNotFoundException {
-        DemandMatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zonesLookup);
+    private DemandMatrices loadDemandMatrices(String baseMatricesPath, Zones zones) throws IOException, ZoneNotFoundException {
+        DemandMatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zones);
         return parser.parse();
     }
 
@@ -88,7 +86,7 @@ public final class DemandManager {
     private void loadAndApplyCorrectionFactors(DemandMatrices demandMatrices, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         for (String filename : factorMatriceFilenames) {
             LOG.info("Applying correction factors from {}", filename);
-            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, demandMatrices.getLookup(), 1, "\\s+");
+            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, demandMatrices.getZones(), 1, "\\s+", demandMatrices.getZonesLookup());
             FactorMatrix factorMatrix = parser.parseFactorMatrix();
             demandMatrices.multiplyWith(factorMatrix);
         }

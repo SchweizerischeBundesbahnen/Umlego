@@ -2,7 +2,7 @@ package ch.sbb.matsim.umlego.readers;
 
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
-import ch.sbb.matsim.umlego.matrix.ZonesLookup;
+import ch.sbb.matsim.umlego.matrix.Zones;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,8 +18,8 @@ public class CsvDemandFolderMatrixParser extends AbstractCsvMatrixParser impleme
 
     private final String separator;
 
-    public CsvDemandFolderMatrixParser(String path, ZonesLookup zonesLookup, double defaultValue, String separator) {
-        super(path, zonesLookup, defaultValue);
+    public CsvDemandFolderMatrixParser(String path, Zones zones, double defaultValue, String separator) {
+        super(path, zones, defaultValue);
         this.separator = separator;
     }
 
