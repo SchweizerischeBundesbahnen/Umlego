@@ -80,7 +80,7 @@ public class DemandMatrices {
         return m1.getStartTimeInclusiveMin() - m2.getStartTimeInclusiveMin();
     }
 
-    public Zones getLookup() {
+    public Zones getZones() {
         return this.zones;
     }
 

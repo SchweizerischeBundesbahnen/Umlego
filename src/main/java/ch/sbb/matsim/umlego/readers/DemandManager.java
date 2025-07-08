@@ -86,7 +86,7 @@ public final class DemandManager {
     private void loadAndApplyCorrectionFactors(DemandMatrices demandMatrices, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         for (String filename : factorMatriceFilenames) {
             LOG.info("Applying correction factors from {}", filename);
-            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, demandMatrices.getLookup(), 1, "\\s+", demandMatrices.getZonesLookup());
+            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, demandMatrices.getZones(), 1, "\\s+", demandMatrices.getZonesLookup());
             FactorMatrix factorMatrix = parser.parseFactorMatrix();
             demandMatrices.multiplyWith(factorMatrix);
         }

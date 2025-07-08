@@ -43,7 +43,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
                                   Scenario baseCase, List<Scenario> variants) {
         this.demand = demand;
         this.zoneConnectionsFile = zoneConnectionsFile;
-        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getLookup());
+        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getZones());
         this.scenarios = new ArrayList<>(variants);
         this.scenarios.addFirst(baseCase);
 
@@ -170,7 +170,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
             );
 
             handler.add(writer2);
-            handler.add(new BewertoResultWriter(out));
+            handler.add(new BewertoResultWriter(out, params.writer().compression(), demand.getZones()));
         }
 
         return handler;
