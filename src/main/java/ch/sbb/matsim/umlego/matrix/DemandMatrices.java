@@ -111,7 +111,7 @@ public class DemandMatrices {
      * @return the average of all the values in all the matrices
      */
     public double getAverage() {
-        return this.getSum() / (this.matrices.size() * Math.pow(this.zones.getAllNos().size(), 2));
+        return this.getSum() / (this.matrices.size() * Math.pow(this.zones.getAllZoneNos().size(), 2));
     }
 
     /**

@@ -12,7 +12,7 @@ public class Zone {
         this.cluster = cluster;
     }
 
-    public String getCluster() {
+    public String getElasticityCluster() {
         return cluster;
     }
 
