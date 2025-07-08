@@ -27,7 +27,7 @@ public class Zones {
     private final Map<String, Zone> zoneByNo;
 
     /**
-     * Constructs a ZonesLookup object by parsing a CSV file containing zone information. Assumes semicolon as separator.
+     * Constructs a Zones object by parsing a CSV file containing zone information.
      *
      * @param zonesCsvFileName the path to the CSV file containing zone information
      */
@@ -92,10 +92,10 @@ public class Zones {
             throw new ZoneNotFoundException(zone);
         }
 
-        return result.getCluster();
+        return result.getElasticityCluster();
     }
 
-    public List<String> getAllNos() {
+    public List<String> getAllZoneNos() {
         return this.zoneByNo.keySet().stream().toList();
     }
 
@@ -105,7 +105,7 @@ public class Zones {
 
     public ZonesLookup createDefaultZonesLookup() {
         Map<String, Integer> indexByNo = new HashMap<>();
-        List<String> zoneNos = this.getAllNos().stream().sorted().toList();
+        List<String> zoneNos = this.getAllZoneNos().stream().sorted().toList();
         for (int i = 0; i < zoneNos.size(); i++) {
             indexByNo.put(zoneNos.get(i), i);
         }

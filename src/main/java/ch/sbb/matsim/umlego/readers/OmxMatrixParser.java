@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -103,12 +104,26 @@ public class OmxMatrixParser implements DemandMatricesParser {
                 if (lookupValues.length != this.zones.size()) {
                     throw new AssertionError("OMX lookup size does not match zonal lookup size");
                 }
+
             } else {
                 throw new RuntimeException("Unsupported lookup type: " + t.getName());
             }
         }
 
-        return new DemandMatrices(matrices.values().stream().toList(), this.zones, new ZonesLookup(indexLookup));
+        var zoneNos = new HashSet<>(this.zones.getAllZoneNos());
+        var omxZoneNos = indexLookup.keySet();
+
+        if (!omxZoneNos.containsAll(zoneNos)) {
+            throw new ZoneNotFoundException("OMX lookup does not contain all zones. Following Zone Nos are missing: " + zoneNos.removeAll(omxZoneNos));
+        }
+
+        if (!zoneNos.containsAll(omxZoneNos)) {
+            throw new ZoneNotFoundException("OMX contains additional zones with Nos: " + omxZoneNos.removeAll(zoneNos));
+        }
+
+        var zonesLookup = new ZonesLookup(indexLookup);
+
+        return new DemandMatrices(matrices.values().stream().toList(), this.zones, zonesLookup);
     }
 
 }

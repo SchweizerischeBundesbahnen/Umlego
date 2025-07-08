@@ -35,9 +35,9 @@ class ZonesTest {
     }
 
     @Test
-    void testGetAllNos() {
+    void testGetAllZoneNos() {
         // Test getting all lookup values
-        List<String> values = zones.getAllNos();
+        List<String> values = zones.getAllZoneNos();
         assertNotNull(values);
         assertFalse(values.isEmpty());
         assertTrue(values.contains("1"));
@@ -45,7 +45,7 @@ class ZonesTest {
     }
 
     @Test
-    void testGetCluster() throws ZoneNotFoundException {
+    void testGetElasticityCluster() throws ZoneNotFoundException {
         // Test cluster lookup
         assertEquals("CH", extendedZones.getCluster("2377"));
         assertEquals("Ausland", extendedZones.getCluster("2372"));
@@ -61,7 +61,7 @@ class ZonesTest {
         Zones customLookup = new Zones(List.of(zone1, zone2));
 
         assertEquals(2, customLookup.size());
-        assertTrue(customLookup.getAllNos().contains("Zone1"));
-        assertTrue(customLookup.getAllNos().contains("Zone2"));
+        assertTrue(customLookup.getAllZoneNos().contains("Zone1"));
+        assertTrue(customLookup.getAllZoneNos().contains("Zone2"));
     }
 }

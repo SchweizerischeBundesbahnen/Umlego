@@ -46,7 +46,7 @@ public class UnroutableDemandStats {
     Map<String, Double> getDemandForOrigin() throws ZoneNotFoundException {
 
         Map<String, Double> demand = new HashMap<>();
-        for (String zone : this.demandMatrices.getLookup().getAllNos()) {
+        for (String zone : this.demandMatrices.getZones().getAllZoneNos()) {
             demand.put(zone, this.demandMatrices.getOriginSum(zone));
         }
 

@@ -41,7 +41,7 @@ class DemandMatricesTest {
         assertTrue(matrixNames.contains("1"));
         assertTrue(matrixNames.contains("2"));
 
-        List<String> zoneIds = zones.getAllNos();
+        List<String> zoneIds = zones.getAllZoneNos();
         assertEquals(3, zoneIds.size());
         assertTrue(zoneIds.contains("1"));
         assertTrue(zoneIds.contains("2"));

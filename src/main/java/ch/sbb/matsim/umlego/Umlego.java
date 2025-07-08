@@ -99,11 +99,11 @@ public class Umlego {
 
     public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException, IOException {
 
-        List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getLookup().getAllNos())
+        List<String> originZoneIds = originZones == null ? new ArrayList<>(demand.getZones().getAllZoneNos())
             : new ArrayList<>(originZones);
         originZoneIds.sort(String::compareTo);
         List<String> destinationZoneIds =
-            destinationZones == null ? new ArrayList<>(demand.getLookup().getAllNos())
+            destinationZones == null ? new ArrayList<>(demand.getZones().getAllZoneNos())
                 : new ArrayList<>(destinationZones);
         destinationZoneIds.sort(String::compareTo);
 
