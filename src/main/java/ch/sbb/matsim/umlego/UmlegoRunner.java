@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego;
 
-import static ch.sbb.matsim.umlego.Connectors.readZoneConnections;
+import static ch.sbb.matsim.umlego.Connectors.readZoneConnectors;
 import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
 
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
@@ -164,7 +164,7 @@ public class UmlegoRunner {
      * @return Map<String, List < ConnectedStop>>
      */
     public static Map<String, List<ConnectedStop>> readConnectors(String zoneConnectionsFilename, TransitSchedule schedule) throws IOException {
-        Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnections(zoneConnectionsFilename, schedule);
+        Table<String, Id<TransitStopFacility>, ConnectedStop> zoneConnections = readZoneConnectors(zoneConnectionsFilename, schedule);
         return zoneConnections.rowMap().entrySet().stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,

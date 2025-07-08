@@ -44,11 +44,10 @@ public final class Connectors {
      * Reads zone connections from a CSV file and populates a table with zone IDs, stop facility IDs and walk time. If a stop facility cannot be found in the schedule, a warning is logged. If multiple
      * connections between a stop and a zone are found, they are skipped.
      *
-     * @param bufferedReader reader for the CSV file containing zone connections.
      * @param schedule the transit schedule containing stop facilities.
      * @return a table mapping zone IDs and stop facility IDs to connected stop information.
      */
-    public static Table<String, Id<TransitStopFacility>, ConnectedStop> readZoneConnections(String file, TransitSchedule schedule) throws IOException {
+    public static Table<String, Id<TransitStopFacility>, ConnectedStop> readZoneConnectors(String file, TransitSchedule schedule) throws IOException {
         Table<String, Id<TransitStopFacility>, ConnectedStop> connectionsPerZoneStopPair = HashBasedTable.create();
 
         Map<Id<TransitStopFacility>, TransitStopFacility> stops = schedule.getFacilities();

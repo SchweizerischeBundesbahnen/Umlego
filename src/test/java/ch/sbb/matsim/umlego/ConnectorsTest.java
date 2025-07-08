@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -75,12 +74,12 @@ class ConnectorsTest {
     }
 
     @Test
-    void readZoneConnections() throws IOException, URISyntaxException {
+    void readZoneConnectors() throws IOException, URISyntaxException {
         String connectionsFile = Paths.get(getClass().getClassLoader().getResource("filledConnections.csv").toURI()).toString();
 
         TransitSchedule schedule = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getTransitSchedule();
 
-        Table<String, Id<TransitStopFacility>, ConnectedStop> connectionTable = Connectors.readZoneConnections(connectionsFile, schedule);
+        Table<String, Id<TransitStopFacility>, ConnectedStop> connectionTable = Connectors.readZoneConnectors(connectionsFile, schedule);
 
         // no stop point in transit schedule that matches!
         assertThat(connectionTable.rowKeySet()).hasSize(0);
