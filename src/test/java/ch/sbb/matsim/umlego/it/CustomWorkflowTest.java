@@ -1,24 +1,34 @@
 package ch.sbb.matsim.umlego.it;
 
-import ch.sbb.matsim.umlego.*;
+import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
+
+import ch.sbb.matsim.umlego.AbstractWorker;
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.Umlego;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.WorkItem;
+import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.WorkResultHandler;
+import ch.sbb.matsim.umlego.WorkflowFactory;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
+import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.mockito.Mockito;
-
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-
-import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 /**
  * Test for the new architecture with generalized workflow.
@@ -41,13 +51,15 @@ public class CustomWorkflowTest {
         LAUSANNE = "Lausanne";
         GENEVE = "Geneve";
 
-        var data = new HashMap<String, Integer>();
-        data.put(GENEVE, 0);
-        data.put(LAUSANNE, 1);
+        var geneveZone = new Zone("1", GENEVE, "CH");
+        var lausanneZone = new Zone("2", LAUSANNE, "CH");
 
         double[][] m = {{10, 10}, {10, 10}};
         var matrix = new DemandMatrix(23 * 60 + 50, 24 * 60, m);
-        demand = new DemandMatrices(List.of(matrix), new Zones(data));
+        var zones = new Zones(List.of(geneveZone, lausanneZone));
+        var zonesLookup = zones.createDefaultZonesLookup();
+
+        demand = new DemandMatrices(List.of(matrix), zones, zonesLookup);
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(new ConnectedStop(GENEVE, 0, geneve)));
@@ -80,21 +92,22 @@ public class CustomWorkflowTest {
         List<MockWorkResult> results = listener.getResults();
         Assertions.assertEquals(2, results.size(), "Should have two results");
         Assertions.assertTrue(results.stream().allMatch(r -> LAUSANNE.equals(r.originZone())),
-                "All results should be from Lausanne");
+            "All results should be from Lausanne");
         Assertions.assertTrue(results.stream().anyMatch(r -> "result1".equals(r.resultType())),
-                "Should have a result of type 'result1'");
+            "Should have a result of type 'result1'");
         Assertions.assertTrue(results.stream().anyMatch(r -> "result2".equals(r.resultType())),
-                "Should have a result of type 'result2'");
+            "Should have a result of type 'result2'");
 
         // Verify the work item was processed
         Assertions.assertTrue(mockWorkflowFactory.workItemProcessed,
-                "Work item should have been processed by the worker");
+            "Work item should have been processed by the worker");
     }
 
     /**
      * Mock implementation of WorkflowFactory for testing purposes.
      */
     private static class MockWorkflowFactory implements WorkflowFactory<MockWorkItem> {
+
         boolean createWorkerCalled = false;
         boolean createWorkItemCalled = false;
         boolean createResultHandlerCalled = false;
@@ -107,7 +120,7 @@ public class CustomWorkflowTest {
 
         @Override
         public AbstractWorker<MockWorkItem> createWorker(BlockingQueue<MockWorkItem> workerQueue, UmlegoParameters params,
-                                                         List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
+            List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
             createWorkerCalled = true;
             return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(DemandMatrices.class), null, null, deltaTCalculator) {
                 @Override
@@ -134,8 +147,8 @@ public class CustomWorkflowTest {
 
         @Override
         public List<WorkResultHandler<?>> createResultHandler(UmlegoParameters params, String outputFolder,
-                                                              List<String> destinationZoneIds,
-                                                              List<UmlegoListener> listeners) {
+            List<String> destinationZoneIds,
+            List<UmlegoListener> listeners) {
             createResultHandlerCalled = true;
             return List.of(new MockResultHandler(listeners), new MockResultHandler(listeners));
         }
@@ -143,12 +156,14 @@ public class CustomWorkflowTest {
 
     private record MockWorkItem(String originZone,
                                 List<CompletableFuture<? extends WorkResult>> results) implements WorkItem {
+
     }
 
     /**
      * Mock implementation of WorkResult for testing purposes.
      */
     private record MockWorkResult(String originZone, String resultType) implements WorkResult {
+
     }
 
     /**
@@ -170,6 +185,7 @@ public class CustomWorkflowTest {
      * Test listener to verify the workflow results.
      */
     private static class TestResultListener implements UmlegoListener {
+
         private final List<MockWorkResult> results = new ArrayList<>();
 
         public void receiveResult(MockWorkResult result) {

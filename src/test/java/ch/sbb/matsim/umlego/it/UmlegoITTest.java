@@ -1,24 +1,24 @@
 package ch.sbb.matsim.umlego.it;
 
+import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
+
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoWorkflowFactory;
-import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
+import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 public class UmlegoITTest {
 
@@ -51,18 +51,20 @@ public class UmlegoITTest {
         String LAUSANNE = "Lausanne";
         String GENEVE = "Geneve";
 
-        var data = new HashMap<String, Integer>();
-        data.put(GENEVE, 0);
-        data.put(LAUSANNE, 1);
+        var geneveZone = new Zone("1", "Geneve", "CH");
+        var lausanneZone = new Zone("2", "Lausanne", "CH");
 
-        final DemandMatrices demand = new DemandMatrices(List.of(matrix), new Zones(data));
+        var zones = new Zones(List.of(geneveZone, lausanneZone));
+        var zonesLookup = zones.createDefaultZonesLookup();
+
+        final DemandMatrices demand = new DemandMatrices(List.of(matrix), zones, zonesLookup);
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(
-            new ConnectedStop(GENEVE,0, geneve)
+            new ConnectedStop(GENEVE, 0, geneve)
             //new ConnectedStop(0, geneveSP)
         ));
-        stopsPerZone.put(LAUSANNE, List.of(new ConnectedStop(LAUSANNE,0, lausanne)));
+        stopsPerZone.put(LAUSANNE, List.of(new ConnectedStop(LAUSANNE, 0, lausanne)));
 
         scenario.getTransitSchedule().getMinimalTransferTimes().set(geneve.getId(), geneveSP.getId(), 0 * 60);
         scenario.getTransitSchedule().getMinimalTransferTimes().set(geneveSP.getId(), geneve.getId(), 0 * 60);
@@ -92,9 +94,8 @@ public class UmlegoITTest {
     }
 
     /**
-     * Test similar to Bewerto's functionality, where a scenario is run first with a base demand
-     * and then with an updated demand (in this case halved).
-     * Verifies that when the demand is halved, the resulting routes have half the demand.
+     * Test similar to Bewerto's functionality, where a scenario is run first with a base demand and then with an updated demand (in this case halved). Verifies that when the demand is halved, the
+     * resulting routes have half the demand.
      */
     @Test
     void testRunWithUpdatedDemand() throws Exception {
@@ -119,13 +120,14 @@ public class UmlegoITTest {
         String LAUSANNE = "Lausanne";
         String GENEVE = "Geneve";
 
-        // Set up zone lookups
-        var zoneLookup = new HashMap<String, Integer>();
-        zoneLookup.put(GENEVE, 0);
-        zoneLookup.put(LAUSANNE, 1);
+        var geneveZone = new Zone("1", "Geneve", "CH");
+        var lausanneZone = new Zone("2", "Lausanne", "CH");
+
+        var zones = new Zones(List.of(geneveZone, lausanneZone));
+        var zonesLookup = zones.createDefaultZonesLookup();
 
         // Create base demand matrices
-        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), new Zones(zoneLookup));
+        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), zones, zonesLookup);
 
         // Setup zone connections
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
@@ -149,7 +151,7 @@ public class UmlegoITTest {
         // Create the halved demand matrix
         double[][] halfMatrix = {{5, 5}, {5, 5}}; // Halved values
         var halfDemandMatrix = new DemandMatrix(23 * 60 + 50, 24 * 60, halfMatrix);
-        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), new Zones(zoneLookup));
+        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), zones, zonesLookup);
 
         // Run with half demand
         var halfUmlego = new Umlego(halfDemand, new UmlegoWorkflowFactory(halfDemand, scenario, stopsPerZone));
@@ -159,7 +161,6 @@ public class UmlegoITTest {
 
         // Calculate total demand for the halved case
         double halfDemandTotal = halfListener.routes.stream().mapToDouble(r -> r.demand).sum();
-
 
         // Verify that the total demand is halved
         Assertions.assertEquals(totalDemand / 2, halfDemandTotal, 1e-5);

@@ -20,4 +20,8 @@ public class Zone {
         return name;
     }
 
+    public String getNo() {
+        return no;
+    }
+
 }

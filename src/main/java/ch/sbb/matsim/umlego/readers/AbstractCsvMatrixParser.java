@@ -120,7 +120,7 @@ public abstract class AbstractCsvMatrixParser {
 
     protected DemandMatrices csvEntriesToDemandMatrices(Map<Integer, List<CSVEntry>> csvEntries) throws ZoneNotFoundException {
 
-        var defaultIndexByNo = createDefaultZonesLookup();
+        var defaultIndexByNo = this.zones.createDefaultZonesLookup();
 
         List<DemandMatrix> matrices = new ArrayList<>();
         for (Entry<Integer, List<CSVEntry>> entry : csvEntries.entrySet()) {
@@ -133,13 +133,5 @@ public abstract class AbstractCsvMatrixParser {
         return new DemandMatrices(matrices, getZones(), defaultIndexByNo);
     }
 
-    public ZonesLookup createDefaultZonesLookup() {
-        Map<String, Integer> indexByNo = new HashMap<>();
-        List<String> zoneNos = this.zones.getAllNos().stream().sorted().toList();
-        for (int i = 0; i < zoneNos.size(); i++) {
-            indexByNo.put(zoneNos.get(i), i);
-        }
 
-        return new ZonesLookup(indexByNo);
-    }
 }

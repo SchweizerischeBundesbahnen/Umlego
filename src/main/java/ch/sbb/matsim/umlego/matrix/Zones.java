@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -66,8 +67,15 @@ public class Zones {
 
     }
 
-    public Zones(Map<String, Zone> zoneByNo) {
-        this.zoneByNo = zoneByNo;
+    public Zone getZone(String no) {
+        if (!zoneByNo.containsKey(no)) {
+            throw new ZoneNotFoundException(no);
+        }
+        return zoneByNo.get(no);
+    }
+
+    public Zones(List<Zone> zones) {
+        this.zoneByNo = zones.stream().collect(Collectors.toMap(Zone::getNo, z -> z));
 
     }
 
@@ -93,5 +101,15 @@ public class Zones {
 
     public int size() {
         return this.zoneByNo.size();
+    }
+
+    public ZonesLookup createDefaultZonesLookup() {
+        Map<String, Integer> indexByNo = new HashMap<>();
+        List<String> zoneNos = this.getAllNos().stream().sorted().toList();
+        for (int i = 0; i < zoneNos.size(); i++) {
+            indexByNo.put(zoneNos.get(i), i);
+        }
+
+        return new ZonesLookup(indexByNo);
     }
 }

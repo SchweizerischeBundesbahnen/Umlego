@@ -1,20 +1,19 @@
 package ch.sbb.matsim.umlego.matrix;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+
 import ch.sbb.matsim.umlego.readers.CsvDemandFolderMatrixParser;
 import ch.sbb.matsim.umlego.readers.CsvFactorMatrixParser;
 import ch.sbb.matsim.umlego.readers.CsvMultiMatrixDemandParser;
-import org.junit.jupiter.api.Test;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import org.junit.jupiter.api.Test;
 
 class DemandMatricesTest {
 
@@ -44,21 +43,22 @@ class DemandMatricesTest {
 
         List<String> zoneIds = zones.getAllNos();
         assertEquals(3, zoneIds.size());
-        assertTrue(zoneIds.contains("zone1"));
-        assertTrue(zoneIds.contains("zone2"));
-        assertTrue(zoneIds.contains("zone3"));
+        assertTrue(zoneIds.contains("1"));
+        assertTrue(zoneIds.contains("2"));
+        assertTrue(zoneIds.contains("3"));
         assertEquals(1, demandMatrices.getMatrices().values().stream().map(m -> m.getData().length).distinct().count());
     }
 
     @Test
     void testGetMatrixValue() throws IOException, ZoneNotFoundException {
-        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+");
+        var lookup = zones.createDefaultZonesLookup();
+        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+", lookup);
         FactorMatrix factorMatrix = parser.parseFactorMatrix();
 
-        double value = factorMatrix.getValue(zones.getNo("zone1"), zones.getNo("zone2"));
+        double value = factorMatrix.getValue(lookup.getIndex("1"), lookup.getIndex("2"));
         assertEquals(3.0, value, 0.0);
 
-        double value2 = factorMatrix.getValue(zones.getNo("zone2"), zones.getNo("zone1"));
+        double value2 = factorMatrix.getValue(lookup.getIndex("2"), lookup.getIndex("1"));
         assertEquals(2.0, value2, 0.0);
     }
 
@@ -70,13 +70,14 @@ class DemandMatricesTest {
         List<String> matrixNames = matrices.getMatrixNames();
         assertEquals(2, matrixNames.size());
 
-        double value = matrices.getMatrixValue("zone1", "zone2", "3");
+        double value = matrices.getMatrixValue("1", "2", "3");
         assertEquals(0.3, value, 0.0);
     }
 
     @Test
     void testMultiplyAllMatricesWithTarget() throws IOException, ZoneNotFoundException {
-        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+");
+        var lookup = zones.createDefaultZonesLookup();
+        CsvFactorMatrixParser parser = new CsvFactorMatrixParser(mtxPath, zones, 1, "\\s+", lookup);
         FactorMatrix baseDemand = parser.parseFactorMatrix();
 
         CsvMultiMatrixDemandParser parser2 = new CsvMultiMatrixDemandParser(multiMtxPath, zones, 0, ",", baseDemand);
@@ -93,10 +94,10 @@ class DemandMatricesTest {
     private static Path createCSVFile(Path filePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath.toFile()))) {
             writer.println("from,to,value");
-            writer.println("zone1 zone1 1.0");
-            writer.println("zone1 zone2 3.0");
-            writer.println("zone2 zone1 2.0");
-            writer.println("zone2 zone2 4.0");
+            writer.println("1 1 1.0");
+            writer.println("1 2 3.0");
+            writer.println("2 1 2.0");
+            writer.println("2 2 4.0");
         }
 
         return filePath;
@@ -105,7 +106,7 @@ class DemandMatricesTest {
     private static Path createSparseCSVFile(Path filePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath.toFile()))) {
             writer.println("from,to,value");
-            writer.println("zone3 zone3 0.0");
+            writer.println("3 3 0.0");
         }
         return filePath;
     }
@@ -113,14 +114,14 @@ class DemandMatricesTest {
     private Path createCSVFileWithTypeCol(Path filePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath.toFile()))) {
             writer.println("from,to,name,value");
-            writer.println("zone1,zone1,1,0.1");
-            writer.println("zone2,zone2,1,0.1");
-            writer.println("zone1,zone2,1,0.2");
-            writer.println("zone2,zone1,1,0.2");
-            writer.println("zone1,zone1,2,0.4");
-            writer.println("zone2,zone2,2,0.4");
-            writer.println("zone1,zone2,2,0.3");
-            writer.println("zone2,zone1,2,0.3");
+            writer.println("1,1,1,0.1");
+            writer.println("2,2,1,0.1");
+            writer.println("1,2,1,0.2");
+            writer.println("2,1,1,0.2");
+            writer.println("1,1,2,0.4");
+            writer.println("2,2,2,0.4");
+            writer.println("1,2,2,0.3");
+            writer.println("2,1,2,0.3");
         }
         return filePath;
     }
@@ -128,9 +129,9 @@ class DemandMatricesTest {
     private static Path createZonesLookup(Path filePath) throws IOException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath.toFile()))) {
             writer.println("NAME;NO");
-            writer.println("zone1;0");
-            writer.println("zone2;1");
-            writer.println("zone3;2");
+            writer.println("1;1");
+            writer.println("2;2");
+            writer.println("3;3");
         }
         return filePath;
     }
