@@ -1,16 +1,19 @@
 package ch.sbb.matsim.umlego.readers;
 
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.matrixNameToMinutes;
-
 import ch.sbb.matsim.umlego.matrix.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import omx.OmxFile;
-import omx.OmxLookup;
-import omx.OmxMatrix;
+import io.jhdf.HdfFile;
+import io.jhdf.api.Dataset;
+import io.jhdf.api.Group;
+import io.jhdf.api.Node;
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.nio.file.Paths;
+import java.util.Map;
+
+import static ch.sbb.matsim.umlego.matrix.MatrixUtil.matrixNameToMinutes;
 
 public class OmxMatrixParser implements DemandMatricesParser {
 
@@ -33,25 +36,68 @@ public class OmxMatrixParser implements DemandMatricesParser {
     @Override
     public DemandMatrices parse() throws ZoneNotFoundException {
         LOG.info("OMX File: {}", path);
-        List<DemandMatrix> matrices = new ArrayList<>();
-        try (OmxFile omxFile = new OmxFile(path)) {
-            omxFile.openReadOnly();
-            LOG.info("Found the following matrices: {}", omxFile.getMatrixNames());
-            for (String m : omxFile.getMatrixNames()) {
-                OmxMatrix.OmxDoubleMatrix omxMatrix = (OmxMatrix.OmxDoubleMatrix) omxFile.getMatrix(m);
-                int startTimeMin = matrixNameToMinutes(m);
-                matrices.add(new DemandMatrix(startTimeMin, startTimeMin + MatrixUtil.TIME_SLICE_MIN, omxMatrix.getData()));
+        Int2ObjectMap<DemandMatrix> matrices = new Int2ObjectAVLTreeMap<>();
+
+        try (HdfFile hdfFile = new HdfFile(Paths.get(path))) {
+
+            Group data = (Group) hdfFile.getChild("data");
+
+            for (Node node : data) {
+                if (node instanceof Dataset matrix) {
+
+                    Class<?> javaType = matrix.getJavaType();
+                    if (javaType != double.class) {
+                        throw new RuntimeException("Only double[][] matrices are supported");
+                    }
+
+                    int[] dim = matrix.getDimensions();
+                    if (dim.length != 2) {
+                        throw new RuntimeException("Only 2D matrices are supported");
+                    }
+
+                    String name = matrix.getName();
+                    int startTimeMin = matrixNameToMinutes(name);
+
+                    double[][] d = (double[][]) matrix.getData();
+
+                    matrices.put(startTimeMin, new DemandMatrix(startTimeMin, startTimeMin + MatrixUtil.TIME_SLICE_MIN, d));
+                }
             }
+
+            Group lookups = (Group) hdfFile.getChild("lookup");
+            Map<String, Node> indexes = lookups.getChildren();
+
+            if (indexes.size() != 1) throw new AssertionError("Requires one lookup index");
+
+            Dataset lookup = (Dataset) indexes.values().stream().findFirst().orElseThrow();
+
             // Validate OMX's lookup with own
-            assert omxFile.getLookupNames().size() == 1;
-            String lookupName = omxFile.getLookupNames().iterator().next();
-            OmxLookup.OmxIntLookup lookup = (OmxLookup.OmxIntLookup) omxFile.getLookup(lookupName);
-            int[] lookupValues = lookup.getLookup();
-            for (int i = 0; i < lookupValues.length; i++) {
-                assert i == this.zonalLookup.getIndex(String.valueOf(lookupValues[i]));
-            }
+            Class<?> t = lookup.getJavaType();
+            if (t == long.class) {
+                long[] lookupValues = (long[]) lookup.getData();
+                for (int i = 0; i < lookupValues.length; i++) {
+                    if (i != this.zonalLookup.getIndex(String.valueOf(lookupValues[i])))
+                        throw new AssertionError("OMX lookup index does not match zonal lookup index for value: " + lookupValues[i]);
+                }
+
+                if (lookupValues.length != this.zonalLookup.size()) {
+                    throw new AssertionError("OMX lookup size does not match zonal lookup size");
+                }
+            } else if (t == int.class) {
+                int[] lookupValues = (int[]) lookup.getData();
+                for (int i = 0; i < lookupValues.length; i++) {
+                    if (i != this.zonalLookup.getIndex(String.valueOf(lookupValues[i])))
+                        throw new AssertionError("OMX lookup index does not match zonal lookup index for value: " + lookupValues[i]);
+                }
+
+                if (lookupValues.length != this.zonalLookup.size()) {
+                    throw new AssertionError("OMX lookup size does not match zonal lookup size");
+                }
+            } else
+                throw new RuntimeException("Unsupported lookup type: " + t.getName());
         }
-        return new DemandMatrices(matrices, this.zonalLookup);
+
+        return new DemandMatrices(matrices.values().stream().toList(), this.zonalLookup);
     }
 
 }

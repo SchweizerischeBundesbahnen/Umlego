@@ -19,16 +19,20 @@
 
 package ch.sbb.matsim.umlego.writers;
 
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
-import ch.sbb.matsim.umlego.Umlego.FoundRoute;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.config.WriterParameters;
 
-public class PutSurveyWriter implements UmlegoWriterInterface {
+public class PutSurveyWriter implements UmlegoListener {
 
     private static final String COL_PATH_ID = "$OEVTEILWEG:DATENSATZNR";
     private static final String COL_LEG_ID = "TWEGIND";
@@ -59,27 +63,37 @@ public class PutSurveyWriter implements UmlegoWriterInterface {
     public static final String FZPNAME = "05_Name";
     private final VisumTabularFileWriter writer;
     private final AtomicInteger teilwegNr = new AtomicInteger();
+    private final WriterParameters params;
 
     /**
      * The PutSurveyWriter writes the routes in a format that be later imported into Visum.
      * TODO: combine with UmlegoCsvWriter.
      *
      * @param filename the name of the file to write the CSV data to
-     * @throws IOException if an I/O error occurs during file creation
+     * @param params the writer parameters
      */
-    public PutSurveyWriter(String filename) throws IOException {
-        this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
+    public PutSurveyWriter(String filename, WriterParameters params) {
+        this.params = params;
+        try {
+            this.writer = new VisumTabularFileWriter(HEADER, COLUMNS, filename);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override
-    public void writeRoute(String fromZone, String toZone, FoundRoute route) {
+    public void processRoute(String fromZone, String toZone, FoundRoute route) {
+        if (route.demand < this.params.minimalDemandForWriting()) {
+            return;
+        }
+
         String pathId = String.valueOf(this.teilwegNr.incrementAndGet());
         int legId = 0;
         String teilweg_kennung = "E"; // first teilweg should have E, all later ones N
 
-        double demand = route.demand.get(toZone);
+        double demand = route.demand;
 
-        for (RaptorRoute.RoutePart routePart : route.routeParts) {
+        for (RaptorRoute.RoutePart routePart : route.stop2stopRoute.routeParts) {
             if (routePart.line != null) {
                 legId++;
                 writeRow(routePart, legId, pathId, teilweg_kennung, fromZone, toZone, demand);
@@ -130,7 +144,7 @@ public class PutSurveyWriter implements UmlegoWriterInterface {
     }
 
     @Override
-    public void close() throws Exception {
+    public void finish() throws Exception {
         this.writer.close();
     }
 

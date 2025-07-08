@@ -1,0 +1,11 @@
+umlego:
+  # Overridden parameters for testing
+  maxTransfers: 3
+  threads: 4
+  
+  # Overridden search parameters
+  search:
+    betaInVehicleTime: 2.0
+    betaAccessTime: 2.0
+    
+  # Other parameters remain default

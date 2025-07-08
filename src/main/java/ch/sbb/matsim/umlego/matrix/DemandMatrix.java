@@ -9,8 +9,8 @@ public class DemandMatrix extends AbstractMatrix {
 
     private static final Logger LOG = LogManager.getLogger(DemandMatrix.class);
 
-    private int startTimeInclusiveMin;
-    private int endTimeExclusiveMin;
+    private final int startTimeInclusiveMin;
+    private final int endTimeExclusiveMin;
 
     /**
      * Constructs a DemandMatrix object for the specified start and end times.
@@ -24,6 +24,15 @@ public class DemandMatrix extends AbstractMatrix {
         assert startTimeInclusiveMin < endTimeExclusiveMin;
         this.startTimeInclusiveMin = startTimeInclusiveMin;
         this.endTimeExclusiveMin = endTimeExclusiveMin;
+    }
+
+    /**
+     * Constructs a DemandMatrix object by copying the values from another
+     */
+    public DemandMatrix(DemandMatrix value) {
+        super(value);
+        this.startTimeInclusiveMin = value.startTimeInclusiveMin;
+        this.endTimeExclusiveMin = value.endTimeExclusiveMin;
     }
 
     /**
