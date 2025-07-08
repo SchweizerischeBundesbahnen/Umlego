@@ -17,13 +17,13 @@ import java.util.stream.Collectors;
  */
 public class DemandMatrices {
 
-    private Map<String, Integer> indexByNo;
+    private ZonesLookup zonesLookup;
     private Zones zones;
     private final Map<Integer, DemandMatrix> matrices;
 
-    public DemandMatrices(List<DemandMatrix> matrices, Zones zones, Map<String, Integer> indexLookup) {
+    public DemandMatrices(List<DemandMatrix> matrices, Zones zones, ZonesLookup zonesLookup) {
         this.zones = zones;
-        this.indexByNo = indexLookup;
+        this.zonesLookup = zonesLookup;
         validateMatrices(matrices);
         this.matrices = matrices.stream().collect(Collectors.toMap(m -> minutesToMatrixIndex(m.getStartTimeInclusiveMin()), m -> m));
     }
@@ -84,14 +84,14 @@ public class DemandMatrices {
         return this.zones;
     }
 
-    public Map<String, Integer> getIndexByNo() {
-        return this.indexByNo;
+    public ZonesLookup getZonesLookup() {
+        return this.zonesLookup;
     }
 
     public double getMatrixValue(String fromZoneNo, String toZoneNo, int timeMin) throws ZoneNotFoundException {
         Matrix matrix = getMatrix(timeMin);
-        int fromIndex = this.indexByNo.get(fromZoneNo);
-        int toIndex = this.indexByNo.get(toZoneNo);
+        int fromIndex = this.zonesLookup.getIndex(fromZoneNo);
+        int toIndex = this.zonesLookup.getIndex(toZoneNo);
         return matrix.getValue(fromIndex, toIndex);
 
     }
@@ -147,7 +147,7 @@ public class DemandMatrices {
     }
 
     public double getOriginSum(String zoneNo) throws ZoneNotFoundException {
-        int originIndex = indexByNo.get(zoneNo);
+        int originIndex = zonesLookup.getIndex(zoneNo);
         return matrices.values().stream()
             .mapToDouble(matrix -> matrix.getOriginSum(originIndex))
             .sum();

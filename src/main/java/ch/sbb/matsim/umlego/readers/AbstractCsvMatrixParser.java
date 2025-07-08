@@ -7,6 +7,7 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.MatrixUtil;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -84,7 +85,7 @@ public abstract class AbstractCsvMatrixParser {
      * @return a 2-dimensional array where each cell [i][j] contains the value for the matrix entry from zone i to zone j
      * @throws ZoneNotFoundException if a zone ID in the CSV entries is not found and ignoreExcessZones is false
      */
-    protected double[][] convertToDataArray(List<CSVEntry> csvEntries, boolean ignoreExcessZones, Map<String, Integer> indexByNo) throws ZoneNotFoundException {
+    protected double[][] convertToDataArray(List<CSVEntry> csvEntries, boolean ignoreExcessZones, ZonesLookup zonesLookup) throws ZoneNotFoundException {
         double[][] data = createData(getZones().size(), getDefaultValue());
 
         Set<String> invalidZoneIds = new HashSet<>();
@@ -92,7 +93,7 @@ public abstract class AbstractCsvMatrixParser {
             int fromIndex = -1;
             int toIndex = -1;
             try {
-                fromIndex = indexByNo.get(csvRow.from);
+                fromIndex = zonesLookup.getIndex(csvRow.from);
             } catch (ZoneNotFoundException e) {
                 if (!ignoreExcessZones) {
                     throw e;
@@ -100,7 +101,7 @@ public abstract class AbstractCsvMatrixParser {
                 invalidZoneIds.add(csvRow.from());
             }
             try {
-                toIndex = indexByNo.get(csvRow.to);
+                toIndex = zonesLookup.getIndex(csvRow.to);
             } catch (ZoneNotFoundException e) {
                 if (!ignoreExcessZones) {
                     throw e;
@@ -119,7 +120,7 @@ public abstract class AbstractCsvMatrixParser {
 
     protected DemandMatrices csvEntriesToDemandMatrices(Map<Integer, List<CSVEntry>> csvEntries) throws ZoneNotFoundException {
 
-        var defaultIndexByNo = createDefaultIndexByNo();
+        var defaultIndexByNo = createDefaultZonesLookup();
 
         List<DemandMatrix> matrices = new ArrayList<>();
         for (Entry<Integer, List<CSVEntry>> entry : csvEntries.entrySet()) {
@@ -132,12 +133,13 @@ public abstract class AbstractCsvMatrixParser {
         return new DemandMatrices(matrices, getZones(), defaultIndexByNo);
     }
 
-    public Map<String, Integer> createDefaultIndexByNo() {
+    public ZonesLookup createDefaultZonesLookup() {
         Map<String, Integer> indexByNo = new HashMap<>();
         List<String> zoneNos = this.zones.getAllNos().stream().sorted().toList();
         for (int i = 0; i < zoneNos.size(); i++) {
             indexByNo.put(zoneNos.get(i), i);
         }
-        return indexByNo;
+
+        return new ZonesLookup(indexByNo);
     }
 }

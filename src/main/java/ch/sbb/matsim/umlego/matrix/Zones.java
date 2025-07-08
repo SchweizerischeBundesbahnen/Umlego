@@ -23,12 +23,7 @@ public class Zones {
      */
     public static final String CLUSTER_COLUMN = "MARKTGEBIETVARELAST";
 
-    private final Map<String, String> nameByNo;
-
-    /**
-     * Lookup for zone names to a cluster id (or market area).
-     */
-    private final Map<String, String> clusterByNo = new HashMap<>();
+    private final Map<String, Zone> zoneByNo;
 
     /**
      * Constructs a ZonesLookup object by parsing a CSV file containing zone information. Assumes semicolon as separator.
@@ -37,7 +32,7 @@ public class Zones {
      */
     public Zones(String zonesCsvFileName) throws IOException {
 
-        nameByNo = new HashMap<>();
+        zoneByNo = new HashMap<>();
         Character delimiter = CsvOptions.detectDelimiter(zonesCsvFileName);
 
         CSVFormat format = CSVFormat.DEFAULT.builder().setDelimiter(delimiter).setHeader().setSkipHeaderRecord(true).build();
@@ -55,11 +50,14 @@ public class Zones {
 
                 String name = r.get("NAME");
                 String no = r.get("NO");
-                nameByNo.put(no, name);
 
+                String cluster = null;
                 if (r.isMapped(CLUSTER_COLUMN)) {
-                    clusterByNo.put(no, r.get(CLUSTER_COLUMN));
+                    cluster = r.get(CLUSTER_COLUMN);
                 }
+
+                var zone = new Zone(name, no, cluster);
+                this.zoneByNo.put(no, zone);
 
             }
         } catch (IOException e) {
@@ -68,45 +66,32 @@ public class Zones {
 
     }
 
-    public Zones(Map<String, String> nameByNo) {
-        this.nameByNo = nameByNo;
+    public Zones(Map<String, Zone> zoneByNo) {
+        this.zoneByNo = zoneByNo;
 
-    }
-
-    /**
-     * @param zone the name of the zone whose index is to be retrieved
-     * @return the index of the specified zone
-     * @throws ZoneNotFoundException if the zone is not found in the lookup
-     */
-    public String getNo(String zone) throws ZoneNotFoundException {
-        String result = this.nameByNo.get(zone);
-        if (result == null) {
-            throw new ZoneNotFoundException(zone);
-        }
-        return result;
     }
 
     /**
      * Retrieves the cluster ID for the specified zone.
      */
     public String getCluster(String zone) {
-        if (clusterByNo.isEmpty()) {
+        if (zoneByNo.isEmpty()) {
             throw new IllegalStateException("Cluster lookup is not initialized. Ensure the CSV file contains '" + CLUSTER_COLUMN + "' column.");
         }
 
-        String result = clusterByNo.get(zone);
+        Zone result = zoneByNo.get(zone);
         if (result == null) {
             throw new ZoneNotFoundException(zone);
         }
 
-        return result;
+        return result.getCluster();
     }
 
     public List<String> getAllNos() {
-        return this.nameByNo.keySet().stream().toList();
+        return this.zoneByNo.keySet().stream().toList();
     }
 
     public int size() {
-        return this.nameByNo.size();
+        return this.zoneByNo.size();
     }
 }

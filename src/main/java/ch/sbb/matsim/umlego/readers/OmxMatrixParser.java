@@ -7,6 +7,7 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.MatrixUtil;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import io.jhdf.HdfFile;
 import io.jhdf.api.Dataset;
 import io.jhdf.api.Group;
@@ -107,7 +108,7 @@ public class OmxMatrixParser implements DemandMatricesParser {
             }
         }
 
-        return new DemandMatrices(matrices.values().stream().toList(), this.zones, indexLookup);
+        return new DemandMatrices(matrices.values().stream().toList(), this.zones, new ZonesLookup(indexLookup));
     }
 
 }
