@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.0.0...v2.1.0) (2025-07-10)
+
+
+### Features
+
+* fix PR comment ([0e7110f](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/0e7110f88722547a525ffeae06eaeaadcd3609b0))
+* fix tests after refactoring ([c88e364](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/c88e364421f4d72e5770598b669c36638af69042))
+* fix tests after refactoring ([dcb55d4](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/dcb55d42243b836bf6a4a0180f9107aecbfac42d))
+* fix tests after refactoring ([290baad](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/290baade570fadae515563fcc24d7b10bfbff7c0))
+* split the zone and index mapping logic ([27fda46](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/27fda46a210a5f97ad541f3c4e199a390c7b3bf6))
+* split the zone and index mapping logic ([7b85d65](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/7b85d6527b11bce86455798d4cf1e9bf2b38b498))
+* write more data to factors csv ([8a6811c](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/8a6811cb744410da4d0d5d5c33ebf7ec1126e9f9))
+
 ## [2.0.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v1.0.0...v2.0.0) (2025-05-14)
 
 
