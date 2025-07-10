@@ -144,7 +144,7 @@ public final class DemandFactorCalculator {
         }
 
         public BewertoWorkResult createResult(String fromZoneNo) {
-            return new BewertoWorkResult(fromZoneNo, factors);
+            return new BewertoWorkResult(fromZoneNo, factors, this.base, this.variant);
         }
     }
 }

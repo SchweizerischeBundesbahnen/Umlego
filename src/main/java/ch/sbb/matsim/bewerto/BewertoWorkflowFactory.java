@@ -170,7 +170,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
             );
 
             handler.add(writer2);
-            handler.add(new BewertoResultWriter(out));
+            handler.add(new BewertoResultWriter(out, params.writer().compression(), demand.getZones()));
         }
 
         return handler;

@@ -3,6 +3,8 @@ umlego:
   # Maximum number of transfers allowed in route finding
   maxTransfers: 5
 
+  zones: [] # List of zones to be used in the model
+
   # Number of threads to use (-1 for all available)
   threads: -1
 
@@ -58,10 +60,10 @@ umlego:
   writer:
     minimalDemandForWriting: "0.00001"
     compression: gzip
-    writerTypes:
-      - CSV
-      - PutSurvey
-      - SKIM
+    writerTypes: []
+      #- CSV
+      #- PutSurvey
+      #- SKIM
 
 
 

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class Zones {
      */
     public Zones(String zonesCsvFileName) throws IOException {
 
-        zoneByNo = new HashMap<>();
+        List<Zone> data = new ArrayList<>();
         Character delimiter = CsvOptions.detectDelimiter(zonesCsvFileName);
 
         CSVFormat format = CSVFormat.DEFAULT.builder().setDelimiter(delimiter).setHeader().setSkipHeaderRecord(true).build();
@@ -57,13 +58,15 @@ public class Zones {
                     cluster = r.get(CLUSTER_COLUMN);
                 }
 
-                var zone = new Zone(name, no, cluster);
-                this.zoneByNo.put(no, zone);
+                var zone = new Zone(no, name, cluster);
+                data.add(zone);
 
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        this.zoneByNo = data.stream().collect(Collectors.toMap(Zone::getNo, z -> z));
 
     }
 

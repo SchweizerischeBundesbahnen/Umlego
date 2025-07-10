@@ -94,7 +94,8 @@ public class Umlego {
 
     public void run(UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException, IOException {
         // TODO ?: Why null values and not just delete the param on the run method?
-        run(null, null, params, threadCount, outputFolder);
+        var zones = !params.zones().isEmpty() ? params.zones() : null;
+        run(zones, zones, params, threadCount, outputFolder);
     }
 
     public void run(List<String> originZones, List<String> destinationZones, UmlegoParameters params, int threadCount, String outputFolder) throws ZoneNotFoundException, IOException {

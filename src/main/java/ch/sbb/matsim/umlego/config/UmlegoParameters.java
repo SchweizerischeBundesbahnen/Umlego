@@ -1,5 +1,7 @@
 package ch.sbb.matsim.umlego.config;
 
+import java.util.List;
+
 public record UmlegoParameters(
         int maxTransfers,
         int threads,
@@ -9,7 +11,8 @@ public record UmlegoParameters(
         RouteImpedanceParameters impedance,
         RouteSelectionParameters routeSelection,
         SkimsParameters skims,
-        WriterParameters writer
+        WriterParameters writer,
+        List<String> zones
 ) {
 
 }
