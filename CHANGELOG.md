@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.1.0...v2.2.0) (2025-07-17)
+
+
+### Miscellaneous Chores
+
+* release 2.2.0 ([9e15136](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/9e1513616401170e20f18aefba73595a86362e72))
+
 ## [2.1.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.1.0...v2.1.0) (2025-07-17)
 
 
