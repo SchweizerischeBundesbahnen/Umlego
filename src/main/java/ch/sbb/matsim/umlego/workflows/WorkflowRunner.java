@@ -4,6 +4,8 @@ import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.workflows.assignment.Assignment;
 import ch.sbb.matsim.umlego.workflows.assignment.AssignmentParameters;
+import ch.sbb.matsim.umlego.workflows.bewerto.Bewerto;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.BewertoParameters;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import org.github.gestalt.config.Gestalt;
@@ -16,7 +18,6 @@ import picocli.CommandLine;
 )
 public final class WorkflowRunner implements Callable<Integer> {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WorkflowRunner.class);
     @CommandLine.Option(
         names = {"-c", "--config"},
         description = "Path to the configuration file",
@@ -37,12 +38,17 @@ public final class WorkflowRunner implements Callable<Integer> {
 
         UmlegoParameters umlegoParameters = config.getConfig("umlego", UmlegoParameters.class);
 
-        log.
-
-        AssignmentParameters assignmentParameters = config.getConfig(umlegoParameters.workflow().name(), AssignmentParameters.class);
-
-        Assignment assignment = new Assignment(assignmentParameters, umlegoParameters);
-        assignment.run();
+        if (umlegoParameters.workflow().equals(WorkflowEnum.assignment)) {
+            AssignmentParameters assignmentParameters = config.getConfig(umlegoParameters.workflow().name(), AssignmentParameters.class);
+            Assignment assignment = new Assignment(assignmentParameters, umlegoParameters);
+            assignment.run();
+        } else if (umlegoParameters.workflow().equals(WorkflowEnum.bewerto)) {
+            BewertoParameters bewertoParameters = config.getConfig(umlegoParameters.workflow().name(), BewertoParameters.class);
+            Bewerto bewerto = new Bewerto(bewertoParameters, umlegoParameters);
+            bewerto.run();
+        } else {
+            throw new IllegalArgumentException("Unknown workflow: " + umlegoParameters.workflow());
+        }
 
         return 0;
     }
