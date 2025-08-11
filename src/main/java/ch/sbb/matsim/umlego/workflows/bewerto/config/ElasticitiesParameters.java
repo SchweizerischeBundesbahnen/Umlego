@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.config;
+package ch.sbb.matsim.umlego.workflows.bewerto.config;
 
 /**
  * The {@code ElasticitiesParameters} class represents configuration for elasticity calculations.

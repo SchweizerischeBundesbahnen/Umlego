@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.config;
+package ch.sbb.matsim.umlego.workflows.bewerto.config;
 
 import ch.sbb.matsim.umlego.config.ScenarioParameters;
 

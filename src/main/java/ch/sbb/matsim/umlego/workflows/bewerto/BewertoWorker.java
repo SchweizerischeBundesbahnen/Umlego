@@ -1,6 +1,6 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
+import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;

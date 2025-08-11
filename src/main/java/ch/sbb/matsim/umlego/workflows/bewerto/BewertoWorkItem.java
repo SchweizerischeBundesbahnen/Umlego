@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.umlego.workflows.bewerto;
 
 import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.WorkItem;

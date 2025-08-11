@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego.config;
 
+import ch.sbb.matsim.umlego.workflows.WorkflowEnum;
 import java.util.List;
 
 public record UmlegoParameters(
@@ -12,7 +13,8 @@ public record UmlegoParameters(
         RouteSelectionParameters routeSelection,
         SkimsParameters skims,
         WriterParameters writer,
-        List<String> zones
+        List<String> zones,
+        WorkflowEnum workflow
 ) {
 
 }

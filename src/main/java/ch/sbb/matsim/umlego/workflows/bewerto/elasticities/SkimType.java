@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.elasticities;
+package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
 /**
  * Enum representing different types of skims used in the elasticity calculations.

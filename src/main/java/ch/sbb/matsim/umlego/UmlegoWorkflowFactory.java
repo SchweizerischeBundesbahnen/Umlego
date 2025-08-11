@@ -31,7 +31,7 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
     private final SwissRailRaptorData raptorData;
 
     public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) throws IOException {
-        this(demand, scenario, UmlegoRunner.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule()));
+        this(demand, scenario, UmlegoUtils.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule()));
     }
 
     public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<Connectors.ConnectedStop>> stopsPerZone) {

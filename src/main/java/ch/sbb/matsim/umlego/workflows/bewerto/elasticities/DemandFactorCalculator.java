@@ -1,7 +1,7 @@
-package ch.sbb.matsim.bewerto.elasticities;
+package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
-import ch.sbb.matsim.bewerto.BewertoWorkResult;
-import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
+import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;

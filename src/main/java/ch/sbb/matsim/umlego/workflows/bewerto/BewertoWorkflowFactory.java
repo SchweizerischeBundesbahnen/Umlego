@@ -1,7 +1,7 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.bewerto.config.BewertoParameters;
-import ch.sbb.matsim.bewerto.elasticities.DemandFactorCalculator;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.routing.pt.raptor.*;
 import ch.sbb.matsim.umlego.*;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
@@ -71,7 +71,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) throws IOException {
 
         for (Scenario scenario : scenarios) {
-            Map<String, List<Connectors.ConnectedStop>> stopsPerZone = UmlegoRunner.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule());
+            Map<String, List<Connectors.ConnectedStop>> stopsPerZone = UmlegoUtils.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule());
             Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination = new LinkedHashMap<>();
 
             // Build the destination stop lookup map

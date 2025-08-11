@@ -1,9 +1,9 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.BewertoParameters;
 import ch.sbb.matsim.umlego.Umlego;
 import ch.sbb.matsim.umlego.UmlegoLogger;
-import ch.sbb.matsim.umlego.UmlegoRunner;
+import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.readers.DemandManager;
@@ -47,12 +47,12 @@ public final class Bewerto {
 
         LOG.info("Starting Bewerto with parameters: {}", bewertoParameters);
 
-        Scenario scenario = UmlegoRunner.loadScenario(bewertoParameters.getRef());
+        Scenario scenario = UmlegoUtils.loadScenario(bewertoParameters.getRef());
 
         DemandMatrices demand = DemandManager.prepareDemand(bewertoParameters.getZoneNamesFile(), bewertoParameters.getDemandFile(), new String[0]);
 
         BewertoWorkflowFactory workflow = new BewertoWorkflowFactory(bewertoParameters, demand, bewertoParameters.getZoneConnectionsFile(), scenario,
-                bewertoParameters.getVariants().stream().map(UmlegoRunner::loadScenario).toList());
+                bewertoParameters.getVariants().stream().map(UmlegoUtils::loadScenario).toList());
 
         Umlego umlego = new Umlego(demand, workflow);
 

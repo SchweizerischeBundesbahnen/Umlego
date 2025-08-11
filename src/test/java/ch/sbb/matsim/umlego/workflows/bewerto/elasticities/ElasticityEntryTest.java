@@ -1,4 +1,4 @@
-package ch.sbb.matsim.bewerto.elasticities;
+package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
 import java.io.IOException;
 import java.util.List;

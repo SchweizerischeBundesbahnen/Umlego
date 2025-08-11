@@ -1,7 +1,7 @@
-package ch.sbb.matsim.bewerto;
+package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.bewerto.config.BewertoParameters;
-import ch.sbb.matsim.umlego.UmlegoRunner;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.BewertoParameters;
+import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import org.github.gestalt.config.Gestalt;
 import picocli.CommandLine;
@@ -32,7 +32,7 @@ public final class BewertoRunner implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        Gestalt config = UmlegoRunner.loadConfig(configPath);
+        Gestalt config = UmlegoUtils.loadConfig(configPath);
 
         BewertoParameters bewertoParameters = config.getConfig("bewerto", BewertoParameters.class);
         UmlegoParameters umlegoParameters = config.getConfig("umlego", UmlegoParameters.class);
