@@ -1,6 +1,5 @@
-package ch.sbb.matsim.umlego.workflows.umlego;
+package ch.sbb.matsim.umlego;
 
-import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;

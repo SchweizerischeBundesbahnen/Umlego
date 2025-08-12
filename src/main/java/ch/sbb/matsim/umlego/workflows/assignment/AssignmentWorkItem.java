@@ -1,8 +1,8 @@
 package ch.sbb.matsim.umlego.workflows.assignment;
 
-import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -14,14 +14,14 @@ import java.util.concurrent.CompletableFuture;
  */
 public record AssignmentWorkItem(
     String originZone,
-    CompletableFuture<UmlegoWorkResult> baseCase
+    CompletableFuture<UmlegoWorkResult> result
 ) implements WorkItem {
 
     @Override
     public List<CompletableFuture<? extends WorkResult>> results() {
 
         List<CompletableFuture<? extends WorkResult>> all = new ArrayList<>();
-        all.add(baseCase);
+        all.add(result);
         return all;
     }
 }

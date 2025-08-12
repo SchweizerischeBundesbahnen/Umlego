@@ -8,7 +8,7 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 
-import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;

@@ -10,11 +10,11 @@ import ch.sbb.matsim.umlego.Connectors;
 import ch.sbb.matsim.umlego.RoutingContext;
 import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoUtils;
-import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
-import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -37,7 +37,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWorkItem> {
 
     private final DemandMatrices demand;
-    private final String zoneConnectionsFile;
+    private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
 
     private final RaptorParameters raptorParams;
     private final Scenario scenario;
@@ -48,10 +48,15 @@ public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWork
     private RoutingContext ctx;
     private SwissRailRaptorData raptorData;
 
-    public AssignmentWorkflowFactory(DemandMatrices demand, String zoneConnectionsFile, Scenario baseCase) {
+    public AssignmentWorkflowFactory(DemandMatrices demand, String zoneConnectionsFile, Scenario baseCase) throws IOException {
+        this(demand, UmlegoUtils.readConnectors(zoneConnectionsFile, baseCase.getTransitSchedule()), baseCase);
+
+    }
+
+    public AssignmentWorkflowFactory(DemandMatrices demand, Map<String, List<Connectors.ConnectedStop>> stopsPerZone, Scenario baseCase) throws IOException {
         this.demand = demand;
-        this.zoneConnectionsFile = zoneConnectionsFile;
         this.scenario = baseCase;
+        this.stopsPerZone = stopsPerZone;
 
         // prepare SwissRailRaptor
         // TODO: these parameters could be added to a central location.
@@ -71,14 +76,13 @@ public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWork
     }
 
     @Override
-    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) throws IOException {
+    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
 
-        Map<String, List<Connectors.ConnectedStop>> stopsPerZone = UmlegoUtils.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule());
         Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination = new LinkedHashMap<>();
 
         // Build the destination stop lookup map
         for (String destinationZoneId : destinationZoneIds) {
-            List<Connectors.ConnectedStop> stopsPerDestinationZone = stopsPerZone.getOrDefault(destinationZoneId, List.of());
+            List<Connectors.ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, List.of());
             Map<TransitStopFacility, Connectors.ConnectedStop> destinationStopLookup = new HashMap<>();
             for (Connectors.ConnectedStop stop : stopsPerDestinationZone) {
                 destinationStopLookup.put(stop.stopFacility(), stop);

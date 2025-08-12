@@ -20,8 +20,8 @@
 package ch.sbb.matsim.umlego.skims;
 
 import ch.sbb.matsim.umlego.FoundRoute;
-import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
 
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.util.List;
 import java.util.Map;
 

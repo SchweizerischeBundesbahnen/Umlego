@@ -8,8 +8,6 @@ import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
-import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkItem;
-import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkflowFactory;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +17,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.api.core.v01.Scenario;
 
 /**
  * @author mrieser / Simunto
@@ -38,16 +35,6 @@ public class Umlego {
     private final List<UmlegoListener> listeners = new LinkedList<>();
 
     private DeltaTCalculator deltaTCalculator = new IntervalBoundaries();
-
-    /**
-     * Constructor.
-     *
-     * @param demand demand matrices
-     * @param scenario MATSim object collecting all sort of data
-     */
-    public Umlego(DemandMatrices demand, Scenario scenario, String zoneConnectionsFile) throws IOException {
-        this(demand, new UmlegoWorkflowFactory(demand, scenario, zoneConnectionsFile));
-    }
 
     /**
      * Constructor.
@@ -122,7 +109,7 @@ public class Umlego {
 		   memory being used for the found routes until they get written. To prevent
 		   OutOfMemoryErrors, we use a blocking queue for the writer with a limited capacity.
 		 */
-        UmlegoWorkItem workEndMarker = new UmlegoWorkItem(null, null);
+        UmlegoWorkItemEndMarker workEndMarker = new UmlegoWorkItemEndMarker(null);
 
         BlockingQueue<WorkItem> workerQueue = new LinkedBlockingQueue<>(5 * threadCount);
         BlockingQueue<WorkItem> writerQueue = new LinkedBlockingQueue<>(4 * threadCount);
