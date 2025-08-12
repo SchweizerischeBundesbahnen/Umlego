@@ -53,7 +53,7 @@ import java.util.*;
         RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
         SkimsParameters skims = new SkimsParameters(LocalTime.of(3, 0), LocalTime.of(22, 0));
         WriterParameters writer = new WriterParameters(1e-5, CompressionType.NONE, Set.of());
-        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, skims, writer, List.of());
+        return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, skims, writer, List.of(), null);
 
     }
 
