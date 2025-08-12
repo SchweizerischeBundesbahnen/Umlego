@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.umlego.WorkResultHandler;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import ch.sbb.matsim.umlego.config.CompressionType;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;

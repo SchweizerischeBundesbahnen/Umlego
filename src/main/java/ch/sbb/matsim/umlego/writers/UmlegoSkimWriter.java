@@ -10,8 +10,8 @@ import com.opencsv.CSVWriter;
 
 import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoListener;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
-import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
 import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.skims.SkimCalculator;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;

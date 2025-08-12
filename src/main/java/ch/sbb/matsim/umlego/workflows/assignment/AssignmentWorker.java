@@ -4,7 +4,7 @@ import ch.sbb.matsim.umlego.AbstractWorker;
 import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.RoutingContext;
 import ch.sbb.matsim.umlego.UmlegoRouteUtils;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;

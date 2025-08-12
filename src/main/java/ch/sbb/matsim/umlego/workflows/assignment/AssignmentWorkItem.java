@@ -1,8 +1,8 @@
 package ch.sbb.matsim.umlego.workflows.assignment;
 
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
-import ch.sbb.matsim.umlego.WorkItem;
-import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

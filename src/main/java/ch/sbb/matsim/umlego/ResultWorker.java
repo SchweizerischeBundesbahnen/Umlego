@@ -1,5 +1,8 @@
 package ch.sbb.matsim.umlego;
 
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,9 +1,17 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.umlego;
 
 import ch.sbb.matsim.routing.pt.raptor.*;
+import ch.sbb.matsim.umlego.AbstractWorker;
+import ch.sbb.matsim.umlego.Connectors;
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
+import ch.sbb.matsim.umlego.RoutingContext;
+import ch.sbb.matsim.umlego.UmlegoListener;
+import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -25,8 +33,8 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
 
     private final DemandMatrices demand;
     private final Scenario scenario;
-    private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
-    private final Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination;
+    private final Map<String, List<ConnectedStop>> stopsPerZone;
+    private final Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination;
     private final RaptorParameters raptorParams;
     private final SwissRailRaptorData raptorData;
 
@@ -34,7 +42,7 @@ public class UmlegoWorkflowFactory implements WorkflowFactory<UmlegoWorkItem> {
         this(demand, scenario, UmlegoUtils.readConnectors(zoneConnectionsFile, scenario.getTransitSchedule()));
     }
 
-    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<Connectors.ConnectedStop>> stopsPerZone) {
+    public UmlegoWorkflowFactory(DemandMatrices demand, Scenario scenario, Map<String, List<ConnectedStop>> stopsPerZone) {
         this.demand = demand;
         this.scenario = scenario;
         this.stopsPerZone = stopsPerZone;

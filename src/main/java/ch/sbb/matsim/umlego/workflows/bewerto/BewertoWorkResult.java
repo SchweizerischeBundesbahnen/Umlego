@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
 
 import java.util.Map;
 

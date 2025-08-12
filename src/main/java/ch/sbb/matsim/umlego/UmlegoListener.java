@@ -1,5 +1,7 @@
 package ch.sbb.matsim.umlego;
 
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
+
 /**
  * Interface representing a listener for processing found routes.
  */

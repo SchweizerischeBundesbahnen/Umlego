@@ -1,5 +1,6 @@
 
 umlego:
+  workflow: "assignment"
   # Maximum number of transfers allowed in route finding
   maxTransfers: 5
 

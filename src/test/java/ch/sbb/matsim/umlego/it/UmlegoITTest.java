@@ -4,7 +4,7 @@ import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.Umlego;
-import ch.sbb.matsim.umlego.UmlegoWorkflowFactory;
+import ch.sbb.matsim.umlego.workflows.umlego.UmlegoWorkflowFactory;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.Zone;
