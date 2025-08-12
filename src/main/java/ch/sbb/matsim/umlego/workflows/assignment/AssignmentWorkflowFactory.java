@@ -1,12 +1,11 @@
 package ch.sbb.matsim.umlego.workflows.assignment;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
-import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
-import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 import ch.sbb.matsim.umlego.AbstractWorker;
 import ch.sbb.matsim.umlego.Connectors;
+import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.RoutingContext;
 import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoUtils;
@@ -21,7 +20,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -37,87 +35,33 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWorkItem> {
 
     private final DemandMatrices demand;
-    private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
-
-    private final RaptorParameters raptorParams;
     private final Scenario scenario;
+    private final RaptorParameters raptorParams;
+    private final SwissRailRaptorData raptorData;
+    private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
+    private Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination;
 
-    /**
-     * Save prepared routing contexts for each scenario.
-     */
-    private RoutingContext ctx;
-    private SwissRailRaptorData raptorData;
+    public AssignmentWorkflowFactory(DemandMatrices demand, Map<String, List<Connectors.ConnectedStop>> stopsPerZone, Scenario baseCase) {
+        this.demand = demand;
+        this.raptorParams = UmlegoUtils.getRaptorParameters(baseCase);
+        this.raptorData = UmlegoUtils.getRaptorData(baseCase);
+        this.stopsPerZone = stopsPerZone;
+        this.stopLookupPerDestination = new HashMap<>();
+        this.scenario = baseCase;
+
+    }
 
     public AssignmentWorkflowFactory(DemandMatrices demand, String zoneConnectionsFile, Scenario baseCase) throws IOException {
         this(demand, UmlegoUtils.readConnectors(zoneConnectionsFile, baseCase.getTransitSchedule()), baseCase);
-
-    }
-
-    public AssignmentWorkflowFactory(DemandMatrices demand, Map<String, List<Connectors.ConnectedStop>> stopsPerZone, Scenario baseCase) throws IOException {
-        this.demand = demand;
-        this.scenario = baseCase;
-        this.stopsPerZone = stopsPerZone;
-
-        // prepare SwissRailRaptor
-        // TODO: these parameters could be added to a central location.
-        raptorParams = RaptorUtils.createParameters(this.scenario.getConfig());
-        raptorParams.setTransferPenaltyFixCostPerTransfer(0.01);
-        raptorParams.setTransferPenaltyMinimum(0.01);
-        raptorParams.setTransferPenaltyMaximum(0.01);
-
-        RaptorStaticConfig raptorConfig = RaptorUtils.createStaticConfig(scenario.getConfig());
-        raptorConfig.setOptimization(RaptorStaticConfig.RaptorOptimization.OneToAllRouting);
-        // make sure SwissRailRaptor does not add any more transfers than what is specified in minimal transfer times:
-        raptorConfig.setBeelineWalkConnectionDistance(10.0);
-
-        this.raptorData = SwissRailRaptorData.create(scenario.getTransitSchedule(), scenario.getTransitVehicles(),
-            raptorConfig, scenario.getNetwork(), null);
-
-    }
-
-    @Override
-    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
-
-        Map<String, Map<TransitStopFacility, Connectors.ConnectedStop>> stopLookupPerDestination = new LinkedHashMap<>();
-
-        // Build the destination stop lookup map
-        for (String destinationZoneId : destinationZoneIds) {
-            List<Connectors.ConnectedStop> stopsPerDestinationZone = this.stopsPerZone.getOrDefault(destinationZoneId, List.of());
-            Map<TransitStopFacility, Connectors.ConnectedStop> destinationStopLookup = new HashMap<>();
-            for (Connectors.ConnectedStop stop : stopsPerDestinationZone) {
-                destinationStopLookup.put(stop.stopFacility(), stop);
-            }
-            stopLookupPerDestination.put(destinationZoneId, destinationStopLookup);
-        }
-
-        ctx = new RoutingContext(null, null, stopsPerZone, stopLookupPerDestination);
-
-        // Use stop indices from the first scenario
-        IntSet destinationStopIndices = new IntOpenHashSet();
-        for (String zoneId : destinationZoneIds) {
-            List<TransitStopFacility> stops = ctx.stopsPerZone().getOrDefault(zoneId, List.of()).stream()
-                .map(Connectors.ConnectedStop::stopFacility).toList();
-            for (TransitStopFacility stop : stops) {
-                destinationStopIndices.add(stop.getId().index());
-            }
-        }
-
-        return destinationStopIndices;
     }
 
     @Override
     public AbstractWorker<AssignmentWorkItem> createWorker(BlockingQueue<AssignmentWorkItem> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
+        SwissRailRaptor raptor = new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build();
+        RoutingContext ctx = new RoutingContext(raptor, raptorParams, stopsPerZone, stopLookupPerDestination);
 
-        RoutingContext routingContext = new RoutingContext(
-            new SwissRailRaptor.Builder(raptorData, this.scenario.getConfig()).build(),
-            raptorParams,
-            ctx.stopsPerZone(),
-            ctx.stopLookupPerDestination()
-        );
+        return new AssignmentWorker(workerQueue, params, demand, ctx, destinationZoneIds, deltaTCalculator);
 
-        return new AssignmentWorker(
-            workerQueue, params, demand, routingContext, destinationZoneIds, deltaTCalculator
-        );
     }
 
     @Override
@@ -142,5 +86,22 @@ public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWork
         ));
 
         return handler;
+    }
+
+    @Override
+    public IntSet computeDestinationStopIndices(List<String> destinationZoneIds) {
+
+        IntSet destinationStopIndices = new IntOpenHashSet();
+        for (String zoneId : destinationZoneIds) {
+            List<TransitStopFacility> stops = this.stopsPerZone.getOrDefault(zoneId, List.of()).stream()
+                .map(Connectors.ConnectedStop::stopFacility).toList();
+            for (TransitStopFacility stop : stops) {
+                destinationStopIndices.add(stop.getId().index());
+            }
+        }
+
+        this.stopLookupPerDestination = UmlegoUtils.getStopLookupPerDestination(destinationZoneIds, this.stopsPerZone);
+
+        return destinationStopIndices;
     }
 }
