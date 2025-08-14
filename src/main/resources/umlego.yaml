@@ -95,7 +95,7 @@ matrices:
   matrixFile: "matrices.omx"
   zoneNamesFile: ""
   zoneConnectionsFile: ""
-
+  shareMatrices: [ ]
   demandMatrices:
     - no: 1
       startTimeInclusiveMin: 0
