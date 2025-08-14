@@ -1,10 +1,7 @@
 package ch.sbb.matsim.umlego.readers;
 
-import static ch.sbb.matsim.umlego.matrix.MatrixUtil.matrixNameToMinutes;
-
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
-import ch.sbb.matsim.umlego.matrix.DemandMatrix;
-import ch.sbb.matsim.umlego.matrix.MatrixUtil;
+import ch.sbb.matsim.umlego.matrix.AbstractMatrix;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.matrix.ZonesLookup;
@@ -12,24 +9,26 @@ import io.jhdf.HdfFile;
 import io.jhdf.api.Dataset;
 import io.jhdf.api.Group;
 import io.jhdf.api.Node;
-import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class OmxMatrixParser implements DemandMatricesParser {
+public class OmxMatrixParser implements MatricesParser {
 
     private static final Logger LOG = LogManager.getLogger(OmxMatrixParser.class);
     private final Zones zones;
     private final String path;
+    private final MatrixFactory matrixFactory;
 
-    public OmxMatrixParser(String path, Zones zones) {
+    public OmxMatrixParser(String path, Zones zones, MatrixFactory matrixFactory) {
         this.zones = zones;
         this.path = path;
+        this.matrixFactory = matrixFactory;
     }
 
     /**
@@ -39,16 +38,20 @@ public class OmxMatrixParser implements DemandMatricesParser {
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
     @Override
-    public DemandMatrices parse() throws ZoneNotFoundException {
+    public Matrices parse() throws ZoneNotFoundException {
+
         LOG.info("OMX File: {}", path);
-        Int2ObjectMap<DemandMatrix> matrices = new Int2ObjectAVLTreeMap<>();
+        List<AbstractMatrix> matrices = new ArrayList<>();
         Map<String, Integer> indexLookup = new HashMap<>();
 
         try (HdfFile hdfFile = new HdfFile(Paths.get(path))) {
 
             Group data = (Group) hdfFile.getChild("data");
 
-            for (Node node : data) {
+            for (Integer no : this.matrixFactory.getNos()) {
+                String name = String.valueOf(no);
+                Node node = data.getChild(name);
+
                 if (node instanceof Dataset matrix) {
 
                     Class<?> javaType = matrix.getJavaType();
@@ -61,12 +64,12 @@ public class OmxMatrixParser implements DemandMatricesParser {
                         throw new RuntimeException("Only 2D matrices are supported");
                     }
 
-                    String name = matrix.getName();
-                    int startTimeMin = matrixNameToMinutes(name);
-
                     double[][] d = (double[][]) matrix.getData();
 
-                    matrices.put(startTimeMin, new DemandMatrix(startTimeMin, startTimeMin + MatrixUtil.TIME_SLICE_MIN, d));
+                    AbstractMatrix m = matrixFactory.createMatrix(no, d);
+                    if (m != null) {
+                        matrices.add(m);
+                    }
                 }
             }
 
@@ -123,7 +126,7 @@ public class OmxMatrixParser implements DemandMatricesParser {
 
         var zonesLookup = new ZonesLookup(indexLookup);
 
-        return new DemandMatrices(matrices.values().stream().toList(), this.zones, zonesLookup);
+        return new Matrices(matrices, this.zones, zonesLookup);
     }
 
 }

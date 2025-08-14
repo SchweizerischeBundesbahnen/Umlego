@@ -4,7 +4,7 @@ import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.Umlego;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.Zones;
@@ -57,7 +57,7 @@ public class UmlegoITTest {
         var zones = new Zones(List.of(geneveZone, lausanneZone));
         var zonesLookup = zones.createDefaultZonesLookup();
 
-        final DemandMatrices demand = new DemandMatrices(List.of(matrix), zones, zonesLookup);
+        final Matrices demand = new Matrices(List.of(matrix), zones, zonesLookup);
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(
@@ -127,7 +127,7 @@ public class UmlegoITTest {
         var zonesLookup = zones.createDefaultZonesLookup();
 
         // Create base demand matrices
-        final DemandMatrices baseDemand = new DemandMatrices(List.of(baseDemandMatrix), zones, zonesLookup);
+        final Matrices baseDemand = new Matrices(List.of(baseDemandMatrix), zones, zonesLookup);
 
         // Setup zone connections
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
@@ -151,7 +151,7 @@ public class UmlegoITTest {
         // Create the halved demand matrix
         double[][] halfMatrix = {{5, 5}, {5, 5}}; // Halved values
         var halfDemandMatrix = new DemandMatrix(23 * 60 + 50, 24 * 60, halfMatrix);
-        final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), zones, zonesLookup);
+        final Matrices halfDemand = new Matrices(List.of(halfDemandMatrix), zones, zonesLookup);
 
         // Run with half demand
         var halfUmlego = new Umlego(halfDemand, new AssignmentWorkflowFactory(halfDemand, stopsPerZone, scenario));

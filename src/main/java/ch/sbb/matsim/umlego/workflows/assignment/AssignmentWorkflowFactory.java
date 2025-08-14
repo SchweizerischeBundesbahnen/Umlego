@@ -11,7 +11,7 @@ import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
 import ch.sbb.matsim.umlego.writers.ResultWriter;
@@ -34,14 +34,14 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
  */
 public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWorkItem> {
 
-    private final DemandMatrices demand;
+    private final Matrices demand;
     private final Scenario scenario;
     private final RaptorParameters raptorParams;
     private final SwissRailRaptorData raptorData;
     private final Map<String, List<Connectors.ConnectedStop>> stopsPerZone;
     private Map<String, Map<TransitStopFacility, ConnectedStop>> stopLookupPerDestination;
 
-    public AssignmentWorkflowFactory(DemandMatrices demand, Map<String, List<Connectors.ConnectedStop>> stopsPerZone, Scenario baseCase) {
+    public AssignmentWorkflowFactory(Matrices demand, Map<String, List<Connectors.ConnectedStop>> stopsPerZone, Scenario baseCase) {
         this.demand = demand;
         this.raptorParams = UmlegoUtils.getRaptorParameters(baseCase);
         this.raptorData = UmlegoUtils.getRaptorData(baseCase);
@@ -51,7 +51,7 @@ public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWork
 
     }
 
-    public AssignmentWorkflowFactory(DemandMatrices demand, String zoneConnectionsFile, Scenario baseCase) throws IOException {
+    public AssignmentWorkflowFactory(Matrices demand, String zoneConnectionsFile, Scenario baseCase) throws IOException {
         this(demand, UmlegoUtils.readConnectors(zoneConnectionsFile, baseCase.getTransitSchedule()), baseCase);
     }
 

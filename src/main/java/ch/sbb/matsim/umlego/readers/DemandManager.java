@@ -1,7 +1,7 @@
 package ch.sbb.matsim.umlego.readers;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import java.io.IOException;
@@ -31,17 +31,9 @@ public final class DemandManager {
      * @throws IOException if an I/O error occurs during loading or applying correction factors
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
-    public static DemandMatrices prepareDemand(String zonesFile, String demandMatricesPath, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    public static Matrices prepareDemand(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, demandMatricesPath, factorMatriceFilenames);
-    }
-
-    /**
-     * Same as above, but with params:
-     */
-    public static DemandMatrices prepareDemand(String zonesFile, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
-        DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, null, factorMatriceFilenames);
+        return demandManager.execute(zonesFile, demandMatricesPath, matrixFactory, factorMatriceFilenames);
     }
 
     /**
@@ -54,11 +46,11 @@ public final class DemandManager {
      * @throws IOException if an I/O error occurs during loading or applying correction factors
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
-    private DemandMatrices execute(String zonesFile, String demandMatricesPath, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    private Matrices execute(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         Zones zones = loadZoneLookupFile(zonesFile);
-        DemandMatrices demandMatrices = loadDemandMatrices(demandMatricesPath, zones);
-        loadAndApplyCorrectionFactors(demandMatrices, factorMatriceFilenames);
-        return demandMatrices;
+        Matrices matrices = loadDemandMatrices(demandMatricesPath, zones, matrixFactory);
+        loadAndApplyCorrectionFactors(matrices, factorMatriceFilenames);
+        return matrices;
     }
 
     private Zones loadZoneLookupFile(String zonesFile) {
@@ -70,25 +62,25 @@ public final class DemandManager {
         }
     }
 
-    private DemandMatrices loadDemandMatrices(String baseMatricesPath, Zones zones) throws IOException, ZoneNotFoundException {
-        DemandMatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zones);
+    private Matrices loadDemandMatrices(String baseMatricesPath, Zones zones, MatrixFactory matrixFactory) throws IOException, ZoneNotFoundException {
+        MatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zones, matrixFactory);
         return parser.parse();
     }
 
     /**
      * Applies correction factors to the demand matrices by parsing each factor matrix file and multiplying the demand matrices with the parsed factors.
      *
-     * @param demandMatrices the demand matrices to which correction factors are applied
+     * @param matrices the demand matrices to which correction factors are applied
      * @param factorMatriceFilenames paths to the correction factor matrix files
      * @throws IOException if an I/O error occurs during parsing
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
-    private void loadAndApplyCorrectionFactors(DemandMatrices demandMatrices, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    private void loadAndApplyCorrectionFactors(Matrices matrices, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         for (String filename : factorMatriceFilenames) {
             LOG.info("Applying correction factors from {}", filename);
-            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, demandMatrices.getZones(), 1, "\\s+", demandMatrices.getZonesLookup());
+            CsvFactorMatrixParser parser = new CsvFactorMatrixParser(filename, matrices.getZones(), 1, "\\s+", matrices.getZonesLookup());
             FactorMatrix factorMatrix = parser.parseFactorMatrix();
-            demandMatrices.multiplyWith(factorMatrix);
+            matrices.multiplyWith(factorMatrix);
         }
     }
 }

@@ -1,14 +1,16 @@
 package ch.sbb.matsim.umlego.workflows.bewerto;
 
-import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
-import ch.sbb.matsim.umlego.*;
+import ch.sbb.matsim.umlego.AbstractWorker;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.RoutingContext;
+import ch.sbb.matsim.umlego.UmlegoRouteUtils;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
-
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
+import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -29,11 +31,11 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
      */
     private final DemandFactorCalculator factorCalculator;
 
-    public BewertoWorker(BlockingQueue<BewertoWorkItem> workerQueue, UmlegoParameters params, DemandMatrices demand,
-                         List<RoutingContext> scenarios, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator,
-                         DemandFactorCalculator factorCalculator) {
-        super(workerQueue, params, destinationZoneIds, demand, demand.getMatrixNames(),
-                params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
+    public BewertoWorker(BlockingQueue<BewertoWorkItem> workerQueue, UmlegoParameters params, Matrices demand,
+        List<RoutingContext> scenarios, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator,
+        DemandFactorCalculator factorCalculator) {
+        super(workerQueue, params, destinationZoneIds, demand,
+            params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
         this.scenarios = scenarios;
         this.factorCalculator = factorCalculator;
     }
@@ -48,8 +50,8 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
         // Reassign the demand for the filtered interval
         UmlegoWorkResult filteredDemand = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(baseRoutes),
-                params.skims().startTime(), params.skims().endTime(),
-                DemandMatrixMultiplier.IDENTITY);
+            params.skims().startTime(), params.skims().endTime(),
+            DemandMatrixMultiplier.IDENTITY);
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, baseResult.skims());
 
@@ -65,8 +67,8 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
             // Reassign the demand for the filtered interval
             UmlegoWorkResult filtered = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-                    params.skims().startTime(), params.skims().endTime(),
-                    DemandMatrixMultiplier.IDENTITY);
+                params.skims().startTime(), params.skims().endTime(),
+                DemandMatrixMultiplier.IDENTITY);
 
             UmlegoSkimCalculator.INSTANCE.calculateSkims(filtered, result.skims());
 
@@ -76,7 +78,7 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
             // Induced demand calculation
             UmlegoWorkResult induced = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-                    LocalTime.MIN, LocalTime.MAX, f);
+                LocalTime.MIN, LocalTime.MAX, f);
 
             item.induced().get(i - 1).complete(induced);
             item.factors().get(i - 1).complete(f.createResult(item.originZone()));

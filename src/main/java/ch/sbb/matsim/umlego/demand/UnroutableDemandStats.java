@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.demand;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +16,7 @@ public class UnroutableDemandStats {
     private static final double SHARE_LIMIT = 0.95;
 
     private final UnroutableDemand unroutableDemand;
-    private final DemandMatrices demandMatrices;
+    private final Matrices matrices;
 
     private Map<String, Double> originUnroutableDemandMap;
 
@@ -26,11 +26,11 @@ public class UnroutableDemandStats {
      * Constructor.
      *
      * @param unroutableDemand
-     * @param demandMatrices
+     * @param matrices
      */
-    public UnroutableDemandStats(UnroutableDemand unroutableDemand, DemandMatrices demandMatrices) {
+    public UnroutableDemandStats(UnroutableDemand unroutableDemand, Matrices matrices) {
         this.unroutableDemand = unroutableDemand;
-        this.demandMatrices = demandMatrices;
+        this.matrices = matrices;
     }
 
     private Map<String, Double> getUnroutableDemandForOrigin() {
@@ -46,8 +46,8 @@ public class UnroutableDemandStats {
     Map<String, Double> getDemandForOrigin() throws ZoneNotFoundException {
 
         Map<String, Double> demand = new HashMap<>();
-        for (String zone : this.demandMatrices.getZones().getAllZoneNos()) {
-            demand.put(zone, this.demandMatrices.getOriginSum(zone));
+        for (String zone : this.matrices.getZones().getAllZoneNos()) {
+            demand.put(zone, this.matrices.getOriginSum(zone));
         }
 
         return demand;
@@ -130,7 +130,7 @@ public class UnroutableDemandStats {
      */
     public double percentUnroutableDemand() {
         double totalUnroutableDemand = totalUnroutableDemand();
-        double totalDemand = demandMatrices.getSum();
+        double totalDemand = matrices.getSum();
         return totalDemand == 0 ? 0 : totalUnroutableDemand / totalDemand;
     }
 }

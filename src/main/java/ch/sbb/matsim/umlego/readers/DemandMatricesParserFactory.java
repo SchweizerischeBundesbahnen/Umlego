@@ -16,18 +16,18 @@ public class DemandMatricesParserFactory {
     private DemandMatricesParserFactory() {
     }
 
-    public static DemandMatricesParser createParser(String filePath, Zones zones) throws IOException {
+    public static MatricesParser createParser(String filePath, Zones zones, MatrixFactory matrixFactory) throws IOException {
         LOG.info("Reading demand matrices from files in {}", filePath);
-        return createParserForFile(filePath, zones);
+        return createParserForFile(filePath, zones, matrixFactory);
     }
 
-    private static DemandMatricesParser createParserForFile(String filePath, Zones zones) throws IOException {
+    private static MatricesParser createParserForFile(String filePath, Zones zones, MatrixFactory matrixFactory) throws IOException {
         if (filePath.endsWith(".csv")) {
-            return new CsvMultiMatrixDemandParser(filePath, zones, 1, ",");
+            return new CsvMultiMatrixParser(filePath, zones, 1, ",");
         } else if (new File(filePath).isDirectory()) {
-            return new CsvDemandFolderMatrixParser(filePath, zones, 0, "\\s+");
+            return new CsvFolderMatrixParser(filePath, zones, 0, "\\s+");
         } else if (filePath.endsWith(".omx")) {
-            return new OmxMatrixParser(filePath, zones);
+            return new OmxMatrixParser(filePath, zones, matrixFactory);
         } else {
             throw new IOException("Unsupported file format: " + filePath);
         }

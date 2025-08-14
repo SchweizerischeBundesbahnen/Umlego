@@ -1,10 +1,9 @@
-
 umlego:
   workflow: "assignment"
   # Maximum number of transfers allowed in route finding
   maxTransfers: 5
 
-  zones: [] # List of zones to be used in the model
+  zones: [ ] # List of zones to be used in the model
 
   # Number of threads to use (-1 for all available)
   threads: -1
@@ -61,19 +60,20 @@ umlego:
   writer:
     minimalDemandForWriting: "0.00001"
     compression: gzip
-    writerTypes: []
-      #- CSV
-      #- PutSurvey
-      #- SKIM
+    writerTypes: [ ]
+    #- CSV
+    #- PutSurvey
+    #- SKIM
 
+
+  shareMatrices: [ ]
+  #- no: 1
+  #  segment: "Fr"
 
 
 # Bewerto configuration, needs to be filled with actual values
 bewerto:
 
-  demandFile: ""
-  zoneNamesFile: ""
-  zoneConnectionsFile: ""
   outputDir: "output-bewerto"
 
   elasticities:
@@ -89,3 +89,444 @@ bewerto:
     networkFile: ""
 
   variants: [ ]
+
+
+matrices:
+  matrixFile: "matrices.omx"
+  zoneNamesFile: ""
+  zoneConnectionsFile: ""
+
+  demandMatrices:
+    - no: 1
+      startTimeInclusiveMin: 0
+      endTimeExclusiveMin: 10
+    - no: 2
+      startTimeInclusiveMin: 10
+      endTimeExclusiveMin: 20
+    - no: 3
+      startTimeInclusiveMin: 20
+      endTimeExclusiveMin: 30
+    - no: 4
+      startTimeInclusiveMin: 30
+      endTimeExclusiveMin: 40
+    - no: 5
+      startTimeInclusiveMin: 40
+      endTimeExclusiveMin: 50
+    - no: 6
+      startTimeInclusiveMin: 50
+      endTimeExclusiveMin: 60
+    - no: 7
+      startTimeInclusiveMin: 60
+      endTimeExclusiveMin: 70
+    - no: 8
+      startTimeInclusiveMin: 70
+      endTimeExclusiveMin: 80
+    - no: 9
+      startTimeInclusiveMin: 80
+      endTimeExclusiveMin: 90
+    - no: 10
+      startTimeInclusiveMin: 90
+      endTimeExclusiveMin: 100
+    - no: 11
+      startTimeInclusiveMin: 100
+      endTimeExclusiveMin: 110
+    - no: 12
+      startTimeInclusiveMin: 110
+      endTimeExclusiveMin: 120
+    - no: 13
+      startTimeInclusiveMin: 120
+      endTimeExclusiveMin: 130
+    - no: 14
+      startTimeInclusiveMin: 130
+      endTimeExclusiveMin: 140
+    - no: 15
+      startTimeInclusiveMin: 140
+      endTimeExclusiveMin: 150
+    - no: 16
+      startTimeInclusiveMin: 150
+      endTimeExclusiveMin: 160
+    - no: 17
+      startTimeInclusiveMin: 160
+      endTimeExclusiveMin: 170
+    - no: 18
+      startTimeInclusiveMin: 170
+      endTimeExclusiveMin: 180
+    - no: 19
+      startTimeInclusiveMin: 180
+      endTimeExclusiveMin: 190
+    - no: 20
+      startTimeInclusiveMin: 190
+      endTimeExclusiveMin: 200
+    - no: 21
+      startTimeInclusiveMin: 200
+      endTimeExclusiveMin: 210
+    - no: 22
+      startTimeInclusiveMin: 210
+      endTimeExclusiveMin: 220
+    - no: 23
+      startTimeInclusiveMin: 220
+      endTimeExclusiveMin: 230
+    - no: 24
+      startTimeInclusiveMin: 230
+      endTimeExclusiveMin: 240
+    - no: 25
+      startTimeInclusiveMin: 240
+      endTimeExclusiveMin: 250
+    - no: 26
+      startTimeInclusiveMin: 250
+      endTimeExclusiveMin: 260
+    - no: 27
+      startTimeInclusiveMin: 260
+      endTimeExclusiveMin: 270
+    - no: 28
+      startTimeInclusiveMin: 270
+      endTimeExclusiveMin: 280
+    - no: 29
+      startTimeInclusiveMin: 280
+      endTimeExclusiveMin: 290
+    - no: 30
+      startTimeInclusiveMin: 290
+      endTimeExclusiveMin: 300
+    - no: 31
+      startTimeInclusiveMin: 300
+      endTimeExclusiveMin: 310
+    - no: 32
+      startTimeInclusiveMin: 310
+      endTimeExclusiveMin: 320
+    - no: 33
+      startTimeInclusiveMin: 320
+      endTimeExclusiveMin: 330
+    - no: 34
+      startTimeInclusiveMin: 330
+      endTimeExclusiveMin: 340
+    - no: 35
+      startTimeInclusiveMin: 340
+      endTimeExclusiveMin: 350
+    - no: 36
+      startTimeInclusiveMin: 350
+      endTimeExclusiveMin: 360
+    - no: 37
+      startTimeInclusiveMin: 360
+      endTimeExclusiveMin: 370
+    - no: 38
+      startTimeInclusiveMin: 370
+      endTimeExclusiveMin: 380
+    - no: 39
+      startTimeInclusiveMin: 380
+      endTimeExclusiveMin: 390
+    - no: 40
+      startTimeInclusiveMin: 390
+      endTimeExclusiveMin: 400
+    - no: 41
+      startTimeInclusiveMin: 400
+      endTimeExclusiveMin: 410
+    - no: 42
+      startTimeInclusiveMin: 410
+      endTimeExclusiveMin: 420
+    - no: 43
+      startTimeInclusiveMin: 420
+      endTimeExclusiveMin: 430
+    - no: 44
+      startTimeInclusiveMin: 430
+      endTimeExclusiveMin: 440
+    - no: 45
+      startTimeInclusiveMin: 440
+      endTimeExclusiveMin: 450
+    - no: 46
+      startTimeInclusiveMin: 450
+      endTimeExclusiveMin: 460
+    - no: 47
+      startTimeInclusiveMin: 460
+      endTimeExclusiveMin: 470
+    - no: 48
+      startTimeInclusiveMin: 470
+      endTimeExclusiveMin: 480
+    - no: 49
+      startTimeInclusiveMin: 480
+      endTimeExclusiveMin: 490
+    - no: 50
+      startTimeInclusiveMin: 490
+      endTimeExclusiveMin: 500
+    - no: 51
+      startTimeInclusiveMin: 500
+      endTimeExclusiveMin: 510
+    - no: 52
+      startTimeInclusiveMin: 510
+      endTimeExclusiveMin: 520
+    - no: 53
+      startTimeInclusiveMin: 520
+      endTimeExclusiveMin: 530
+    - no: 54
+      startTimeInclusiveMin: 530
+      endTimeExclusiveMin: 540
+    - no: 55
+      startTimeInclusiveMin: 540
+      endTimeExclusiveMin: 550
+    - no: 56
+      startTimeInclusiveMin: 550
+      endTimeExclusiveMin: 560
+    - no: 57
+      startTimeInclusiveMin: 560
+      endTimeExclusiveMin: 570
+    - no: 58
+      startTimeInclusiveMin: 570
+      endTimeExclusiveMin: 580
+    - no: 59
+      startTimeInclusiveMin: 580
+      endTimeExclusiveMin: 590
+    - no: 60
+      startTimeInclusiveMin: 590
+      endTimeExclusiveMin: 600
+    - no: 61
+      startTimeInclusiveMin: 600
+      endTimeExclusiveMin: 610
+    - no: 62
+      startTimeInclusiveMin: 610
+      endTimeExclusiveMin: 620
+    - no: 63
+      startTimeInclusiveMin: 620
+      endTimeExclusiveMin: 630
+    - no: 64
+      startTimeInclusiveMin: 630
+      endTimeExclusiveMin: 640
+    - no: 65
+      startTimeInclusiveMin: 640
+      endTimeExclusiveMin: 650
+    - no: 66
+      startTimeInclusiveMin: 650
+      endTimeExclusiveMin: 660
+    - no: 67
+      startTimeInclusiveMin: 660
+      endTimeExclusiveMin: 670
+    - no: 68
+      startTimeInclusiveMin: 670
+      endTimeExclusiveMin: 680
+    - no: 69
+      startTimeInclusiveMin: 680
+      endTimeExclusiveMin: 690
+    - no: 70
+      startTimeInclusiveMin: 690
+      endTimeExclusiveMin: 700
+    - no: 71
+      startTimeInclusiveMin: 700
+      endTimeExclusiveMin: 710
+    - no: 72
+      startTimeInclusiveMin: 710
+      endTimeExclusiveMin: 720
+    - no: 73
+      startTimeInclusiveMin: 720
+      endTimeExclusiveMin: 730
+    - no: 74
+      startTimeInclusiveMin: 730
+      endTimeExclusiveMin: 740
+    - no: 75
+      startTimeInclusiveMin: 740
+      endTimeExclusiveMin: 750
+    - no: 76
+      startTimeInclusiveMin: 750
+      endTimeExclusiveMin: 760
+    - no: 77
+      startTimeInclusiveMin: 760
+      endTimeExclusiveMin: 770
+    - no: 78
+      startTimeInclusiveMin: 770
+      endTimeExclusiveMin: 780
+    - no: 79
+      startTimeInclusiveMin: 780
+      endTimeExclusiveMin: 790
+    - no: 80
+      startTimeInclusiveMin: 790
+      endTimeExclusiveMin: 800
+    - no: 81
+      startTimeInclusiveMin: 800
+      endTimeExclusiveMin: 810
+    - no: 82
+      startTimeInclusiveMin: 810
+      endTimeExclusiveMin: 820
+    - no: 83
+      startTimeInclusiveMin: 820
+      endTimeExclusiveMin: 830
+    - no: 84
+      startTimeInclusiveMin: 830
+      endTimeExclusiveMin: 840
+    - no: 85
+      startTimeInclusiveMin: 840
+      endTimeExclusiveMin: 850
+    - no: 86
+      startTimeInclusiveMin: 850
+      endTimeExclusiveMin: 860
+    - no: 87
+      startTimeInclusiveMin: 860
+      endTimeExclusiveMin: 870
+    - no: 88
+      startTimeInclusiveMin: 870
+      endTimeExclusiveMin: 880
+    - no: 89
+      startTimeInclusiveMin: 880
+      endTimeExclusiveMin: 890
+    - no: 90
+      startTimeInclusiveMin: 890
+      endTimeExclusiveMin: 900
+    - no: 91
+      startTimeInclusiveMin: 900
+      endTimeExclusiveMin: 910
+    - no: 92
+      startTimeInclusiveMin: 910
+      endTimeExclusiveMin: 920
+    - no: 93
+      startTimeInclusiveMin: 920
+      endTimeExclusiveMin: 930
+    - no: 94
+      startTimeInclusiveMin: 930
+      endTimeExclusiveMin: 940
+    - no: 95
+      startTimeInclusiveMin: 940
+      endTimeExclusiveMin: 950
+    - no: 96
+      startTimeInclusiveMin: 950
+      endTimeExclusiveMin: 960
+    - no: 97
+      startTimeInclusiveMin: 960
+      endTimeExclusiveMin: 970
+    - no: 98
+      startTimeInclusiveMin: 970
+      endTimeExclusiveMin: 980
+    - no: 99
+      startTimeInclusiveMin: 980
+      endTimeExclusiveMin: 990
+    - no: 100
+      startTimeInclusiveMin: 990
+      endTimeExclusiveMin: 1000
+    - no: 101
+      startTimeInclusiveMin: 1000
+      endTimeExclusiveMin: 1010
+    - no: 102
+      startTimeInclusiveMin: 1010
+      endTimeExclusiveMin: 1020
+    - no: 103
+      startTimeInclusiveMin: 1020
+      endTimeExclusiveMin: 1030
+    - no: 104
+      startTimeInclusiveMin: 1030
+      endTimeExclusiveMin: 1040
+    - no: 105
+      startTimeInclusiveMin: 1040
+      endTimeExclusiveMin: 1050
+    - no: 106
+      startTimeInclusiveMin: 1050
+      endTimeExclusiveMin: 1060
+    - no: 107
+      startTimeInclusiveMin: 1060
+      endTimeExclusiveMin: 1070
+    - no: 108
+      startTimeInclusiveMin: 1070
+      endTimeExclusiveMin: 1080
+    - no: 109
+      startTimeInclusiveMin: 1080
+      endTimeExclusiveMin: 1090
+    - no: 110
+      startTimeInclusiveMin: 1090
+      endTimeExclusiveMin: 1100
+    - no: 111
+      startTimeInclusiveMin: 1100
+      endTimeExclusiveMin: 1110
+    - no: 112
+      startTimeInclusiveMin: 1110
+      endTimeExclusiveMin: 1120
+    - no: 113
+      startTimeInclusiveMin: 1120
+      endTimeExclusiveMin: 1130
+    - no: 114
+      startTimeInclusiveMin: 1130
+      endTimeExclusiveMin: 1140
+    - no: 115
+      startTimeInclusiveMin: 1140
+      endTimeExclusiveMin: 1150
+    - no: 116
+      startTimeInclusiveMin: 1150
+      endTimeExclusiveMin: 1160
+    - no: 117
+      startTimeInclusiveMin: 1160
+      endTimeExclusiveMin: 1170
+    - no: 118
+      startTimeInclusiveMin: 1170
+      endTimeExclusiveMin: 1180
+    - no: 119
+      startTimeInclusiveMin: 1180
+      endTimeExclusiveMin: 1190
+    - no: 120
+      startTimeInclusiveMin: 1190
+      endTimeExclusiveMin: 1200
+    - no: 121
+      startTimeInclusiveMin: 1200
+      endTimeExclusiveMin: 1210
+    - no: 122
+      startTimeInclusiveMin: 1210
+      endTimeExclusiveMin: 1220
+    - no: 123
+      startTimeInclusiveMin: 1220
+      endTimeExclusiveMin: 1230
+    - no: 124
+      startTimeInclusiveMin: 1230
+      endTimeExclusiveMin: 1240
+    - no: 125
+      startTimeInclusiveMin: 1240
+      endTimeExclusiveMin: 1250
+    - no: 126
+      startTimeInclusiveMin: 1250
+      endTimeExclusiveMin: 1260
+    - no: 127
+      startTimeInclusiveMin: 1260
+      endTimeExclusiveMin: 1270
+    - no: 128
+      startTimeInclusiveMin: 1270
+      endTimeExclusiveMin: 1280
+    - no: 129
+      startTimeInclusiveMin: 1280
+      endTimeExclusiveMin: 1290
+    - no: 130
+      startTimeInclusiveMin: 1290
+      endTimeExclusiveMin: 1300
+    - no: 131
+      startTimeInclusiveMin: 1300
+      endTimeExclusiveMin: 1310
+    - no: 132
+      startTimeInclusiveMin: 1310
+      endTimeExclusiveMin: 1320
+    - no: 133
+      startTimeInclusiveMin: 1320
+      endTimeExclusiveMin: 1330
+    - no: 134
+      startTimeInclusiveMin: 1330
+      endTimeExclusiveMin: 1340
+    - no: 135
+      startTimeInclusiveMin: 1340
+      endTimeExclusiveMin: 1350
+    - no: 136
+      startTimeInclusiveMin: 1350
+      endTimeExclusiveMin: 1360
+    - no: 137
+      startTimeInclusiveMin: 1360
+      endTimeExclusiveMin: 1370
+    - no: 138
+      startTimeInclusiveMin: 1370
+      endTimeExclusiveMin: 1380
+    - no: 139
+      startTimeInclusiveMin: 1380
+      endTimeExclusiveMin: 1390
+    - no: 140
+      startTimeInclusiveMin: 1390
+      endTimeExclusiveMin: 1400
+    - no: 141
+      startTimeInclusiveMin: 1400
+      endTimeExclusiveMin: 1410
+    - no: 142
+      startTimeInclusiveMin: 1410
+      endTimeExclusiveMin: 1420
+    - no: 143
+      startTimeInclusiveMin: 1420
+      endTimeExclusiveMin: 1430
+    - no: 144
+      startTimeInclusiveMin: 1430
+      endTimeExclusiveMin: 1440
+

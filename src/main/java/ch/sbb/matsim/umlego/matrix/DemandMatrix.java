@@ -9,8 +9,7 @@ public class DemandMatrix extends AbstractMatrix {
 
     private static final Logger LOG = LogManager.getLogger(DemandMatrix.class);
 
-    private final int startTimeInclusiveMin;
-    private final int endTimeExclusiveMin;
+    private final TimeWindow timeWindow;
 
     /**
      * Constructs a DemandMatrix object for the specified start and end times.
@@ -22,8 +21,7 @@ public class DemandMatrix extends AbstractMatrix {
     public DemandMatrix(int startTimeInclusiveMin, int endTimeExclusiveMin, double[][] data) {
         super(data, minutesToMatrixName(startTimeInclusiveMin));
         assert startTimeInclusiveMin < endTimeExclusiveMin;
-        this.startTimeInclusiveMin = startTimeInclusiveMin;
-        this.endTimeExclusiveMin = endTimeExclusiveMin;
+        this.timeWindow = new TimeWindow(startTimeInclusiveMin, endTimeExclusiveMin);
     }
 
     /**
@@ -31,22 +29,11 @@ public class DemandMatrix extends AbstractMatrix {
      */
     public DemandMatrix(DemandMatrix value) {
         super(value);
-        this.startTimeInclusiveMin = value.startTimeInclusiveMin;
-        this.endTimeExclusiveMin = value.endTimeExclusiveMin;
+        this.timeWindow = new TimeWindow(value.timeWindow.startTimeInclusiveMin(), value.timeWindow.endTimeExclusiveMin());
     }
 
-    /**
-     * @return start time in minutes, inclusive, for which this matrix is defined
-     */
-    public int getStartTimeInclusiveMin() {
-        return startTimeInclusiveMin;
-    }
-
-    /**
-     * @return end time in minutes, exclusive, for which this matrix is defined
-     */
-    public int getEndTimeExclusiveMin() {
-        return endTimeExclusiveMin;
+    public TimeWindow getTimeWindow() {
+        return timeWindow;
     }
 
 }
