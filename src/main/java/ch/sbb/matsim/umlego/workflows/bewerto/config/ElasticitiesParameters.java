@@ -1,8 +1,13 @@
 package ch.sbb.matsim.umlego.workflows.bewerto.config;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * The {@code ElasticitiesParameters} class represents configuration for elasticity calculations.
  */
+@Getter
+@Setter
 public final class ElasticitiesParameters {
 
     /**
@@ -15,6 +20,8 @@ public final class ElasticitiesParameters {
      */
     private String segment;
 
+    private String sharesFile;
+
     /**
      * Offset for transfer elasticity calculations. Needs to be larger than 0.0.
      */
@@ -25,50 +32,13 @@ public final class ElasticitiesParameters {
      */
     private double adtUB = 90.0;
 
-    public String getFile() {
-        return file;
-    }
-
-    public ElasticitiesParameters setFile(String file) {
-        this.file = file;
-        return this;
-    }
-
-    public String getSegment() {
-        return segment;
-    }
-
-    public ElasticitiesParameters setSegment(String segment) {
-        this.segment = segment;
-        return this;
-    }
-
-    public ElasticitiesParameters setTransferOffset(double transferOffset) {
-        this.transferOffset = transferOffset;
-        return this;
-    }
-
-    public double getTransferOffset() {
-        return transferOffset;
-    }
-
-    public ElasticitiesParameters setAdtUB(double adtUB) {
-        this.adtUB = adtUB;
-        return this;
-    }
-
-    public double getAdtUB() {
-        return adtUB;
-    }
-
-
     @Override
     public String toString() {
         return "ElasticitiesParameters{" +
-                "file='" + file + '\'' +
-                ", segment='" + segment + '\'' +
-                ", transferOffset=" + transferOffset +
-                ", adtUB=" + adtUB +
-                '}';
+            "file='" + file + '\'' +
+            ", segment='" + segment + '\'' +
+            ", transferOffset=" + transferOffset +
+            ", adtUB=" + adtUB +
+            '}';
     }
 }
