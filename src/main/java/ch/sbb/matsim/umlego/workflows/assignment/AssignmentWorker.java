@@ -1,36 +1,41 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.assignment;
 
+import ch.sbb.matsim.umlego.AbstractWorker;
+import ch.sbb.matsim.umlego.FoundRoute;
+import ch.sbb.matsim.umlego.RoutingContext;
+import ch.sbb.matsim.umlego.UmlegoRouteUtils;
+import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
-import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
-
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Umlego workflow with routing and demand assignment for a single origin zone.
+ * Worker for the Bewerto workflow.
  */
-public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
+public class AssignmentWorker extends AbstractWorker<AssignmentWorkItem> {
 
+    /**
+     * List of SwissRailRaptor instances, one for each scenario.
+     */
     private final RoutingContext ctx;
 
-    public UmlegoWorker(BlockingQueue<UmlegoWorkItem> workerQueue,
-                        UmlegoParameters params,
-                        DemandMatrices demand,
-                        RoutingContext ctx,
-                        List<String> destinationZoneIds,
-                        DeltaTCalculator deltaTCalculator) {
+    public AssignmentWorker(BlockingQueue<AssignmentWorkItem> workerQueue, UmlegoParameters params, DemandMatrices demand,
+        RoutingContext scenario, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
         super(workerQueue, params, destinationZoneIds, demand, demand.getMatrixNames(),
-                params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
-        this.ctx = ctx;
+            params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
+        this.ctx = scenario;
     }
 
+
+
     @Override
-    protected void processOriginZone(UmlegoWorkItem workItem) throws ZoneNotFoundException {
+    protected void processOriginZone(AssignmentWorkItem workItem) throws ZoneNotFoundException {
         Map<String, List<FoundRoute>> foundRoutes = calculateRoutesForZone(ctx, workItem.originZone());
         calculateRouteCharacteristics(foundRoutes);
         filterRoutes(foundRoutes);
@@ -40,8 +45,8 @@ public class UmlegoWorker extends AbstractWorker<UmlegoWorkItem> {
 
         // Reassign the demand for the filtered interval
         UmlegoWorkResult filteredDemand = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-                params.skims().startTime(), params.skims().endTime(),
-                DemandMatrixMultiplier.IDENTITY);
+            params.skims().startTime(), params.skims().endTime(),
+            DemandMatrixMultiplier.IDENTITY);
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, result.skims());
 

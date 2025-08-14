@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.interfaces;
 
 /**
  * Interface representing a (partial) result of a work item processed by a worker.

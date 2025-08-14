@@ -10,6 +10,7 @@ import ch.sbb.matsim.umlego.demand.UnroutableDemandPart;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.apache.logging.log4j.LogManager;

@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.interfaces;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

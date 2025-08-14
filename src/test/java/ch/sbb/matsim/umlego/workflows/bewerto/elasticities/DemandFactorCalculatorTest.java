@@ -1,19 +1,23 @@
-package ch.sbb.matsim.bewerto.elasticities;
+package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
-import ch.sbb.matsim.bewerto.BewertoWorkResult;
-import ch.sbb.matsim.bewerto.config.ElasticitiesParameters;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class DemandFactorCalculatorTest {
 
@@ -35,9 +39,10 @@ class DemandFactorCalculatorTest {
         // Set up the mock behavior
         baseSkims = new HashMap<>();
         variantSkims = new HashMap<>();
-        params = new ElasticitiesParameters()
-                .setFile(testElasticitiesFile)
-                .setSegment("Fr");
+        params = ElasticitiesParameters.builder()
+            .file(testElasticitiesFile)
+            .segment("Fr")
+            .build();
 
         // Sample data for testing
         setupTestData();
@@ -80,18 +85,34 @@ class DemandFactorCalculatorTest {
     void constructor_shouldInitializeCorrectly() {
         // Test with segments that exist in the test file
         assertThatCode(() -> new DemandFactorCalculator(params, mockLookup))
-                .doesNotThrowAnyException();
+            .doesNotThrowAnyException();
 
-        assertThatCode(() -> new DemandFactorCalculator(params.setSegment("FrK"), mockLookup))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> new DemandFactorCalculator(
+            ElasticitiesParameters.builder()
+                .file(params.getFile())
+                .segment("FrK")
+                .build()
+            , mockLookup))
+            .doesNotThrowAnyException();
 
-        assertThatCode(() -> new DemandFactorCalculator(params.setSegment("Pe"), mockLookup))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> new DemandFactorCalculator(
+            ElasticitiesParameters.builder()
+                .file(params.getFile())
+                .segment("Pe")
+                .build()
+
+            , mockLookup))
+            .doesNotThrowAnyException();
 
         // Test with non-existent segment
-        assertThatThrownBy(() -> new DemandFactorCalculator(params.setSegment("NonExistent"), mockLookup))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("No elasticity entries found for segment");
+        assertThatThrownBy(() -> new DemandFactorCalculator(
+            ElasticitiesParameters.builder()
+                .file(params.getFile())
+                .segment("NonExistentSegment")
+                .build()
+            , mockLookup))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("No elasticity entries found for segment");
     }
 
     @Test
@@ -104,10 +125,10 @@ class DemandFactorCalculatorTest {
 
         // We expect a reasonable factor based on our test data and the values in test_Elastizitaeten.csv
         assertThat(factor)
-                .as("Factor should be positive")
-                .isPositive()
-                .as("Factor should not be the default value")
-                .isNotEqualTo(1.0);
+            .as("Factor should be positive")
+            .isPositive()
+            .as("Factor should not be the default value")
+            .isNotEqualTo(1.0);
 
         // Verify that lookups were performed
         verify(mockLookup).getCluster("zone1");
@@ -118,8 +139,8 @@ class DemandFactorCalculatorTest {
         double expectedMaxFactor = 10.0; // Based on the highest f_max value in the file
 
         assertThat(factor)
-                .as("Factor should be within bounds defined by elasticity parameters")
-                .isBetween(expectedMinFactor, expectedMaxFactor);
+            .as("Factor should be within bounds defined by elasticity parameters")
+            .isBetween(expectedMinFactor, expectedMaxFactor);
     }
 
     @Test
@@ -160,13 +181,13 @@ class DemandFactorCalculatorTest {
         // 2. Check the factors map contains the expected destination zones
         Map<String, double[]> zone1Factors = zone1Result.factors();
         assertThat(zone1Factors)
-                .as("Result should contain factors for zone2 and zone3")
-                .containsKeys("zone2", "zone3");
+            .as("Result should contain factors for zone2 and zone3")
+            .containsKeys("zone2", "zone3");
 
         Map<String, double[]> zone2Factors = zone2Result.factors();
         assertThat(zone2Factors)
-                .as("Result should contain factors for zone3")
-                .containsKey("zone3");
+            .as("Result should contain factors for zone3")
+            .containsKey("zone3");
 
         // 3. Check the individual factors (JRT, ADT, NTR) for each zone pair
         double[] zone1ToZone2Factors = zone1Factors.get("zone2");
@@ -175,25 +196,24 @@ class DemandFactorCalculatorTest {
 
         // Verify zone1 -> zone2 factors
         assertThat(zone1ToZone2Factors)
-                .as("Factors for zone1->zone2 should not be null")
-                .isNotNull()
-                .as("Should have 3 factor values (JRT, ADT, NTR)")
-                .hasSize(3);
-
+            .as("Factors for zone1->zone2 should not be null")
+            .isNotNull()
+            .as("Should have 3 factor values (JRT, ADT, NTR)")
+            .hasSize(3);
 
         // Verify zone1 -> zone3 factors
         assertThat(zone1ToZone3Factors)
-                .as("Factors for zone1->zone3 should not be null")
-                .isNotNull()
-                .as("Should have 3 factor values")
-                .hasSize(3);
+            .as("Factors for zone1->zone3 should not be null")
+            .isNotNull()
+            .as("Should have 3 factor values")
+            .hasSize(3);
 
         // Verify zone2 -> zone3 factors (only JRT improved)
         assertThat(zone2ToZone3Factors)
-                .as("Factors for zone2->zone3 should not be null")
-                .isNotNull()
-                .as("Should have 3 factor values")
-                .hasSize(3);
+            .as("Factors for zone2->zone3 should not be null")
+            .isNotNull()
+            .as("Should have 3 factor values")
+            .hasSize(3);
 
     }
 }

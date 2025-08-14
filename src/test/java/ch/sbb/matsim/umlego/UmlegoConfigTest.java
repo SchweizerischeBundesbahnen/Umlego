@@ -19,7 +19,7 @@ public class UmlegoConfigTest {
         Path testConfigPath = Paths.get("src/test/resources/test.yaml");
         
         // Load config with overrides from test.yaml
-        Gestalt config = UmlegoRunner.loadConfig(testConfigPath);
+        Gestalt config = UmlegoUtils.loadConfig(testConfigPath);
         UmlegoParameters params = config.getConfig("umlego", UmlegoParameters.class);
         
         // Verify overridden values

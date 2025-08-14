@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego.writers;
 
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -10,8 +11,7 @@ import com.opencsv.CSVWriter;
 
 import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoListener;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
-import ch.sbb.matsim.umlego.WorkResult;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResult;
 import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.skims.SkimCalculator;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;

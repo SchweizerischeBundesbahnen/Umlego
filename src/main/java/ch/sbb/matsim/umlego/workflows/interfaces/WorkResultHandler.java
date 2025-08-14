@@ -1,4 +1,4 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.interfaces;
 
 /**
  * Class for handling finished {@link WorkResult}s of {@link WorkItem}s.

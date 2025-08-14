@@ -4,11 +4,11 @@ import static ch.sbb.matsim.umlego.it.UmlegoFixture.createUmlegoParameters;
 
 import ch.sbb.matsim.umlego.Connectors.ConnectedStop;
 import ch.sbb.matsim.umlego.Umlego;
-import ch.sbb.matsim.umlego.UmlegoWorkflowFactory;
 import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import ch.sbb.matsim.umlego.workflows.assignment.AssignmentWorkflowFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class UmlegoITTest {
         scenario.getTransitSchedule().getMinimalTransferTimes().set(geneveSP.getId(), geneve.getId(), 0 * 60);
         scenario.getTransitSchedule().getMinimalTransferTimes().set(morges.getId(), morges.getId(), 0 * 60);
 
-        var umlego = new Umlego(demand, new UmlegoWorkflowFactory(demand, scenario, stopsPerZone));
+        var umlego = new Umlego(demand, new AssignmentWorkflowFactory(demand, stopsPerZone, scenario));
         var params = createUmlegoParameters();
 
         var listener = new UmlegoITListener(LAUSANNE, GENEVE);
@@ -140,7 +140,7 @@ public class UmlegoITTest {
         scenario.getTransitSchedule().getMinimalTransferTimes().set(morges.getId(), morges.getId(), 0 * 60);
 
         // Run base case
-        var baseUmlego = new Umlego(baseDemand, new UmlegoWorkflowFactory(baseDemand, scenario, stopsPerZone));
+        var baseUmlego = new Umlego(baseDemand, new AssignmentWorkflowFactory(baseDemand, stopsPerZone, scenario));
         var params = createUmlegoParameters();
         var baseListener = new UmlegoITListener(LAUSANNE, GENEVE);
         baseUmlego.addListener(baseListener);
@@ -154,7 +154,7 @@ public class UmlegoITTest {
         final DemandMatrices halfDemand = new DemandMatrices(List.of(halfDemandMatrix), zones, zonesLookup);
 
         // Run with half demand
-        var halfUmlego = new Umlego(halfDemand, new UmlegoWorkflowFactory(halfDemand, scenario, stopsPerZone));
+        var halfUmlego = new Umlego(halfDemand, new AssignmentWorkflowFactory(halfDemand, stopsPerZone, scenario));
         var halfListener = new UmlegoITListener(LAUSANNE, GENEVE);
         halfUmlego.addListener(halfListener);
         halfUmlego.run(params, 1, "");

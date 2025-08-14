@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego.writers;
 
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -16,8 +17,7 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.UmlegoListener;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
-import ch.sbb.matsim.umlego.WorkResultHandler;
+import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import ch.sbb.matsim.umlego.config.CompressionType;
 import ch.sbb.matsim.umlego.config.UmlegoWriterType;
 import ch.sbb.matsim.umlego.config.WriterParameters;

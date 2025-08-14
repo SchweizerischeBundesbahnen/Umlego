@@ -1,13 +1,13 @@
-package ch.sbb.matsim.umlego;
+package ch.sbb.matsim.umlego.workflows.interfaces;
 
+import ch.sbb.matsim.umlego.AbstractWorker;
+import ch.sbb.matsim.umlego.UmlegoListener;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.io.IOException;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 
