@@ -1,5 +1,6 @@
 package ch.sbb.matsim.umlego.workflows.bewerto.config;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
 public final class ElasticitiesParameters {
 
     /**
@@ -19,8 +21,6 @@ public final class ElasticitiesParameters {
      * Segment identifier for elasticities.
      */
     private String segment;
-
-    private String sharesFile;
 
     /**
      * Offset for transfer elasticity calculations. Needs to be larger than 0.0.
