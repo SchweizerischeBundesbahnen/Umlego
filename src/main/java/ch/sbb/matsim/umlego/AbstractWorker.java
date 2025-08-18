@@ -310,8 +310,8 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
             } else {
                 for (TimeWindow timeWindow : this.demand.getTimeWindows()) {
                     double value = this.demand.getMatrixValue(originZone, destinationZone, timeWindow);
-                    double startTime = timeWindow.startTimeInclusiveMin();
-                    double endTime = timeWindow.endTimeExclusiveMin();
+                    double startTime = timeWindow.startTimeInclusiveMin() * 60.0;
+                    double endTime = timeWindow.endTimeExclusiveMin() * 60.0;
 
                     if (value > 0 && (startTime >= startInterval.toSecondOfDay() && endTime < endInterval.toSecondOfDay())) {
                         double factor = multiplier.getFactor(originZone, destinationZone, (int) (startTime / 60.0));

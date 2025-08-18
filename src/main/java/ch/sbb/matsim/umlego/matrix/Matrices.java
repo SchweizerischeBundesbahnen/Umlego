@@ -7,28 +7,74 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Represents a collection of DemandMatrix objects with associated operations. Allows retrieval, validation, and manipulation of DemandMatrix objects based on time indices.
  */
 public class Matrices {
 
+    private static final Logger LOG = LogManager.getLogger(Matrices.class);
+
     @Getter private ZonesLookup zonesLookup;
     @Getter private Zones zones;
     private final Map<TimeWindow, DemandMatrix> demandMatricesByTimewindow;
-    private final List<ShareMatrix> shareMatrices;
+    private final Map<String, ShareMatrix> shareMatricesBySegment;
 
     public Matrices(List<AbstractMatrix> matrices, Zones zones, ZonesLookup zonesLookup) {
         this.zones = zones;
         this.zonesLookup = zonesLookup;
         this.demandMatricesByTimewindow = matrices.stream().filter(m -> m instanceof DemandMatrix).map(m -> (DemandMatrix) m).collect(Collectors.toMap(DemandMatrix::getTimeWindow, m -> m));
-        this.shareMatrices = matrices.stream().filter(m -> m instanceof ShareMatrix).map(m -> (ShareMatrix) m).collect(Collectors.toList());
+        this.shareMatricesBySegment = matrices.stream().filter(m -> m instanceof ShareMatrix).map(m -> (ShareMatrix) m).collect(Collectors.toMap(ShareMatrix::getSegment, m -> m));
+
+        LOG.info("Loaded {} demand matrices and {} share matrices for {} zones.",
+            this.demandMatricesByTimewindow.size(), this.shareMatricesBySegment.size(), this.zones.getAllZoneNos().size());
+
+        this.validateShareMatrices();
+
+        LOG.info("- Demand Total: {}", this.getSum());
+        LOG.info("- Segment Shares: {}", this.getSegments());
+
+    }
+
+    private void validateShareMatrices() {
+        if (this.shareMatricesBySegment.isEmpty()) {
+            LOG.warn("No share matrices found. This may lead to incorrect results.");
+        } else {
+
+            var m = this.shareMatricesBySegment.values().stream().findFirst().orElseThrow(() -> new IllegalStateException("No share matrices found"));
+            double[][] data = m.getData();
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+
+                    if (i == j) {
+                        continue;
+                    }
+
+                    int finalI = i;
+                    int finalJ = j;
+                    var sum = this.shareMatricesBySegment.values().stream().map(x -> x.getData()[finalI][finalJ]).reduce(0.0, Double::sum);
+                    if (sum > 0.001 && (sum < 0.999 || sum > 1.001)) {
+                        LOG.error("Share matrix value at ({}, {}) is {}, expected to be close to 1.0", i, j, sum);
+                        throw new UnsupportedOperationException("Share matrix value not summing to 1.0");
+                    }
+
+                }
+
+            }
+
+        }
     }
 
     public List<DemandMatrix> getDemandMatrices() {
         return this.demandMatricesByTimewindow.values().stream()
             .sorted(Comparator.comparingInt(m -> m.getTimeWindow().startTimeInclusiveMin()))
             .toList();
+    }
+
+    public List<String> getSegments() {
+        return this.shareMatricesBySegment.keySet().stream().sorted().toList();
     }
 
     public List<TimeWindow> getTimeWindows() {
@@ -56,7 +102,13 @@ public class Matrices {
         int fromIndex = this.zonesLookup.getIndex(fromZoneNo);
         int toIndex = this.zonesLookup.getIndex(toZoneNo);
         return matrix.getValue(fromIndex, toIndex);
+    }
 
+    public double getShareMatrixValue(String segment, String fromZoneNo, String toZoneNo) throws ZoneNotFoundException {
+        Matrix matrix = this.shareMatricesBySegment.get(segment);
+        int fromIndex = this.zonesLookup.getIndex(fromZoneNo);
+        int toIndex = this.zonesLookup.getIndex(toZoneNo);
+        return matrix.getValue(fromIndex, toIndex);
     }
 
     /**

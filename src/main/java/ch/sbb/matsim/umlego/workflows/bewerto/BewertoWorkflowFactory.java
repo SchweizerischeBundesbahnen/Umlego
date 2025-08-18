@@ -55,7 +55,7 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
 
         this.demand = demand;
         this.zoneConnectionsFile = zoneConnectionsFile;
-        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getZones());
+        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand);
         this.scenarios = new ArrayList<>(variants);
         this.scenarios.addFirst(baseCase);
 

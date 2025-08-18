@@ -9,10 +9,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
 import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,8 +52,10 @@ class DemandFactorCalculatorTest {
         // Configure mocks
         when(mockLookup.getCluster(anyString())).thenReturn("CH"); // Default cluster
 
+        var matrices = new Matrices(List.of(), mockLookup, null);
+
         // Create the calculator
-        calculator = new DemandFactorCalculator(params, mockLookup);
+        calculator = new DemandFactorCalculator(params, matrices);
     }
 
     private void setupTestData() {
@@ -84,7 +88,8 @@ class DemandFactorCalculatorTest {
     @Test
     void constructor_shouldInitializeCorrectly() {
         // Test with segments that exist in the test file
-        assertThatCode(() -> new DemandFactorCalculator(params, mockLookup))
+        var matrices = new Matrices(List.of(), mockLookup, null);
+        assertThatCode(() -> new DemandFactorCalculator(params, matrices))
             .doesNotThrowAnyException();
 
         assertThatCode(() -> new DemandFactorCalculator(
@@ -92,7 +97,7 @@ class DemandFactorCalculatorTest {
                 .file(params.getFile())
                 .segment("FrK")
                 .build()
-            , mockLookup))
+            , matrices))
             .doesNotThrowAnyException();
 
         assertThatCode(() -> new DemandFactorCalculator(
@@ -101,7 +106,7 @@ class DemandFactorCalculatorTest {
                 .segment("Pe")
                 .build()
 
-            , mockLookup))
+            , matrices))
             .doesNotThrowAnyException();
 
         // Test with non-existent segment
@@ -110,7 +115,7 @@ class DemandFactorCalculatorTest {
                 .file(params.getFile())
                 .segment("NonExistentSegment")
                 .build()
-            , mockLookup))
+            , matrices))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("No elasticity entries found for segment");
     }
