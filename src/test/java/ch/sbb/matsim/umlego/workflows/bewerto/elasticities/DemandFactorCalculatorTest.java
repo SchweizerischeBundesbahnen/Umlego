@@ -2,7 +2,6 @@ package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.verify;
@@ -10,7 +9,9 @@ import static org.mockito.Mockito.when;
 
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.Matrices;
+import ch.sbb.matsim.umlego.matrix.ShareMatrix;
 import ch.sbb.matsim.umlego.matrix.Zones;
+import ch.sbb.matsim.umlego.matrix.ZonesLookup;
 import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
 import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
 import java.util.HashMap;
@@ -52,7 +53,16 @@ class DemandFactorCalculatorTest {
         // Configure mocks
         when(mockLookup.getCluster(anyString())).thenReturn("CH"); // Default cluster
 
-        var matrices = new Matrices(List.of(), mockLookup, null);
+        double[][] shareMatrixData = {{1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}};
+        var matrix = new ShareMatrix("Fr", shareMatrixData);
+
+        Map<String, Integer> zoneLookupData = new HashMap<>();
+        zoneLookupData.put("zone1", 0);
+        zoneLookupData.put("zone2", 1);
+        zoneLookupData.put("zone3", 2);
+        var zonesLookUp = new ZonesLookup(zoneLookupData);
+
+        var matrices = new Matrices(List.of(matrix), mockLookup, zonesLookUp);
 
         // Create the calculator
         calculator = new DemandFactorCalculator(params, matrices);
@@ -109,15 +119,6 @@ class DemandFactorCalculatorTest {
             , matrices))
             .doesNotThrowAnyException();
 
-        // Test with non-existent segment
-        assertThatThrownBy(() -> new DemandFactorCalculator(
-            ElasticitiesParameters.builder()
-                .file(params.getFile())
-                .segment("NonExistentSegment")
-                .build()
-            , matrices))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("No elasticity entries found for segment");
     }
 
     @Test

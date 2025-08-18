@@ -40,7 +40,7 @@ public class Matrices {
 
     private void validateShareMatrices() {
         if (this.shareMatricesBySegment.isEmpty()) {
-            LOG.warn("No share matrices found. This may lead to incorrect results.");
+            LOG.error("No share matrices found. This may lead to incorrect results.");
         } else {
 
             var m = this.shareMatricesBySegment.values().stream().findFirst().orElseThrow(() -> new IllegalStateException("No share matrices found"));
