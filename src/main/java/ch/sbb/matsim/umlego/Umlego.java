@@ -3,7 +3,7 @@ package ch.sbb.matsim.umlego;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.deltat.IntervalBoundaries;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
@@ -26,7 +26,7 @@ public class Umlego {
 
     private static final Logger LOG = LogManager.getLogger(Umlego.class);
 
-    private final DemandMatrices demand;
+    private final Matrices demand;
     private final WorkflowFactory workflowFactory;
 
     /**
@@ -41,7 +41,7 @@ public class Umlego {
      *
      * @param demand demand matrices
      */
-    public Umlego(DemandMatrices demand, WorkflowFactory workflowFactory) {
+    public Umlego(Matrices demand, WorkflowFactory workflowFactory) {
         this.demand = demand;
         this.workflowFactory = workflowFactory;
     }

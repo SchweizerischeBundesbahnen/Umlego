@@ -12,7 +12,7 @@ import ch.sbb.matsim.umlego.UmlegoUtils;
 import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.workflows.bewerto.config.BewertoParameters;
 import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
@@ -22,8 +22,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -39,7 +37,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
  */
 public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> {
 
-    private final DemandMatrices demand;
+    private final Matrices demand;
     private final DemandFactorCalculator demandFactorCalculator;
     private final String zoneConnectionsFile;
 
@@ -52,12 +50,12 @@ public class BewertoWorkflowFactory implements WorkflowFactory<BewertoWorkItem> 
     private final List<RoutingContext> ctxs = new ArrayList<>();
     private final List<SwissRailRaptorData> raptorData = new ArrayList<>();
 
-    public BewertoWorkflowFactory(BewertoParameters parameters, DemandMatrices demand, String zoneConnectionsFile,
+    public BewertoWorkflowFactory(BewertoParameters parameters, Matrices demand, String zoneConnectionsFile,
         Scenario baseCase, List<Scenario> variants) throws IOException {
 
         this.demand = demand;
         this.zoneConnectionsFile = zoneConnectionsFile;
-        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand.getZones());
+        this.demandFactorCalculator = new DemandFactorCalculator(parameters.getElasticities(), demand);
         this.scenarios = new ArrayList<>(variants);
         this.scenarios.addFirst(baseCase);
 

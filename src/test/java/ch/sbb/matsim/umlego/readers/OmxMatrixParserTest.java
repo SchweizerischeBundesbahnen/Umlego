@@ -6,7 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.config.MatricesParameters;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
@@ -52,10 +53,14 @@ class OmxMatrixParserTest {
         }
         legacyOmxFile.close();
 
+
+        MatricesParameters matricesParameters = new MatricesParameters("", "", "", List.of(), List.of());
+        MatrixFactory matrixFactory = new MatrixFactory(matricesParameters);
+
         // Parse using the new jhdf implementation
-        OmxMatrixParser parser = new OmxMatrixParser(TEST_OMX_FILE, zones);
-        DemandMatrices demandMatrices = parser.parse();
-        Map<Integer, DemandMatrix> newMatrices = demandMatrices.getMatrices();
+        OmxMatrixParser parser = new OmxMatrixParser(TEST_OMX_FILE, zones, matrixFactory);
+        Matrices matrices = parser.parse();
+        List<DemandMatrix> newMatrices = matrices.getDemandMatrices();
 
         // Verify that matrices exist
         assertNotNull(newMatrices);

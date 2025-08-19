@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.readers;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import org.apache.logging.log4j.LogManager;
@@ -12,13 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CsvDemandFolderMatrixParser extends AbstractCsvMatrixParser implements DemandMatricesParser  {
+public class CsvFolderMatrixParser extends AbstractCsvMatrixParser implements MatricesParser {
 
-    private static final Logger LOG = LogManager.getLogger(CsvDemandFolderMatrixParser.class);
+    private static final Logger LOG = LogManager.getLogger(CsvFolderMatrixParser.class);
 
     private final String separator;
 
-    public CsvDemandFolderMatrixParser(String path, Zones zones, double defaultValue, String separator) {
+    public CsvFolderMatrixParser(String path, Zones zones, double defaultValue, String separator) {
         super(path, zones, defaultValue);
         this.separator = separator;
     }
@@ -33,7 +33,7 @@ public class CsvDemandFolderMatrixParser extends AbstractCsvMatrixParser impleme
      * @throws ZoneNotFoundException if a zone is not found during parsing
      */
     @Override
-    public DemandMatrices parse() throws ZoneNotFoundException {
+    public Matrices parse() throws ZoneNotFoundException {
         try {
             File filePath = new File(getPath());
             Map<Integer, List<CSVEntry>> csvEntriesMap = new HashMap<>();

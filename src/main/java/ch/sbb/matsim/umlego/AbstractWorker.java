@@ -7,24 +7,28 @@ import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
 import ch.sbb.matsim.umlego.demand.UnroutableDemand;
 import ch.sbb.matsim.umlego.demand.UnroutableDemandPart;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
+import ch.sbb.matsim.umlego.matrix.Matrices;
+import ch.sbb.matsim.umlego.matrix.TimeWindow;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.time.LocalTime;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-
 /**
- * Base class for workers that process work items from a blocking queue.
- * The worker also provides commonly used methods used in the work flows.
+ * Base class for workers that process work items from a blocking queue. The worker also provides commonly used methods used in the work flows.
  */
 public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
 
@@ -34,18 +38,16 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
 
     protected final UmlegoParameters params;
     protected final List<String> destinationZoneIds;
-    protected final DemandMatrices demand;
-    protected final List<String> demandMatrixNames;
+    protected final Matrices demand;
     protected final RouteUtilityCalculator utilityCalculator;
     protected final DeltaTCalculator deltaTCalculator;
 
-
-    protected AbstractWorker(BlockingQueue<T> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, DemandMatrices demand, List<String> demandMatrixNames, RouteUtilityCalculator utilityCalculator, DeltaTCalculator deltaTCalculator) {
+    protected AbstractWorker(BlockingQueue<T> workerQueue, UmlegoParameters params, List<String> destinationZoneIds, Matrices demand, RouteUtilityCalculator utilityCalculator,
+        DeltaTCalculator deltaTCalculator) {
         this.workerQueue = workerQueue;
         this.params = params;
         this.destinationZoneIds = destinationZoneIds;
         this.demand = demand;
-        this.demandMatrixNames = demandMatrixNames;
         this.utilityCalculator = utilityCalculator;
         this.deltaTCalculator = deltaTCalculator;
     }
@@ -84,8 +86,8 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
         for (String destinationZone : this.destinationZoneIds) {
             // exclude intrazonal demand
             if (!destinationZone.equals(originZone)) {
-                for (String matrixName : this.demandMatrixNames) {
-                    double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
+                for (TimeWindow timeWindow : this.demand.getTimeWindows()) {
+                    double value = this.demand.getMatrixValue(originZone, destinationZone, timeWindow);
                     if (value > 0) {
                         List<TransitStopFacility> stops = ctx.stopsPerZone().getOrDefault(destinationZone, emptyList).stream().map(stop -> stop.stopFacility()).toList();
                         for (TransitStopFacility stop : stops) {
@@ -99,32 +101,33 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
         return destinationStopIndices;
     }
 
-    private void calcRoutesFromStop(RoutingContext ctx, TransitStopFacility originStop, IntSet destinationStopIndices, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes) {
+    private void calcRoutesFromStop(RoutingContext ctx, TransitStopFacility originStop, IntSet destinationStopIndices,
+        Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutes) {
         ctx.raptorParams().setMaxTransfers(this.params.maxTransfers());
         ctx.raptor().calcTreesObservable(
-                originStop,
-                0,
-                Double.POSITIVE_INFINITY,
-                ctx.raptorParams(),
-                null,
-                (departureTime, arrivalStop, arrivalTime, transferCount, route) -> {
-                    if (destinationStopIndices.contains(arrivalStop.getId().index())) {
-                        Stop2StopRoute stop2stopRoute = new Stop2StopRoute(route.get());
-                        if (stop2stopRoute.originStop != null) {
-                            foundRoutes
-                                    .computeIfAbsent(stop2stopRoute.originStop, stop -> new HashMap<>())
-                                    .computeIfAbsent(stop2stopRoute.destinationStop, stop -> new HashMap<>())
-                                    .put(stop2stopRoute, Boolean.TRUE);
-                        }
+            originStop,
+            0,
+            Double.POSITIVE_INFINITY,
+            ctx.raptorParams(),
+            null,
+            (departureTime, arrivalStop, arrivalTime, transferCount, route) -> {
+                if (destinationStopIndices.contains(arrivalStop.getId().index())) {
+                    Stop2StopRoute stop2stopRoute = new Stop2StopRoute(route.get());
+                    if (stop2stopRoute.originStop != null) {
+                        foundRoutes
+                            .computeIfAbsent(stop2stopRoute.originStop, stop -> new HashMap<>())
+                            .computeIfAbsent(stop2stopRoute.destinationStop, stop -> new HashMap<>())
+                            .put(stop2stopRoute, Boolean.TRUE);
                     }
-                });
+                }
+            });
     }
 
     /**
-     * Creates a Map containing for each destination zone id the List of found routes,
-     * leading from the originZoneId to the destination, over the whole day.
+     * Creates a Map containing for each destination zone id the List of found routes, leading from the originZoneId to the destination, over the whole day.
      */
-    private Map<String, List<FoundRoute>> aggregateOnZoneLevel(RoutingContext ctx, String originZoneId, Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutesPerStop) {
+    private Map<String, List<FoundRoute>> aggregateOnZoneLevel(RoutingContext ctx, String originZoneId,
+        Map<TransitStopFacility, Map<TransitStopFacility, Map<Stop2StopRoute, Boolean>>> foundRoutesPerStop) {
         List<Connectors.ConnectedStop> emptyList = Collections.emptyList();
         Map<String, List<FoundRoute>> foundRoutesPerZone = new HashMap<>();
 
@@ -148,8 +151,8 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                                 Connectors.ConnectedStop destinationConnectedStop = destinationStopLookup.get(route.destinationStop);
 
                                 boolean invalidRoute =
-                                        UmlegoRouteUtils.routeStartsWithTransferWithinSameZone(route, originStopLookup.keySet())
-                                                || UmlegoRouteUtils.routeEndsWithTransferWithinSameZone(route, destinationStopLookup.keySet());
+                                    UmlegoRouteUtils.routeStartsWithTransferWithinSameZone(route, originStopLookup.keySet())
+                                        || UmlegoRouteUtils.routeEndsWithTransferWithinSameZone(route, destinationStopLookup.keySet());
 
                                 if (originConnectedStop != null && destinationConnectedStop != null && !invalidRoute) {
                                     // otherwise the route would not be valid, e.g. due to an additional transfer at the start or end
@@ -203,7 +206,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
         while (it.hasNext()) {
             FoundRoute route = it.next();
             if ((route.searchImpedance > (this.params.preselection().betaMinImpedance() * minSearchImpedance + this.params.preselection().constImpedance()))
-                    || (route.stop2stopRoute.transfers > (minTransfers + 3) && (route.travelTimeWithAccess > minTraveltime))
+                || (route.stop2stopRoute.transfers > (minTransfers + 3) && (route.travelTimeWithAccess > minTraveltime))
             ) {
                 it.remove();
             }
@@ -267,25 +270,25 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
 
         PerceivedJourneyTimeParameters pjtParams = this.params.pjt();
         route.perceivedJourneyTimeMin = pjtParams.betaInVehicleTime() * (inVehicleTime / 60.0)
-                + pjtParams.betaAccessTime() * (accessTime / 60.0)
-                + pjtParams.betaEgressTime() * (egressTime / 60.0)
-                + pjtParams.betaWalkTime() * (walkTime / 60.0)
-                + pjtParams.betaTransferWaitTime() * (transferWaitTime / 60.0)
-                + transferCount * (pjtParams.transferFix() + pjtParams.transferTraveltimeFactor() * (totalTravelTime / 60.0))
-                + (pjtParams.secondsPerAdditionalStop() / 60.0) * additionalStopCount;
+            + pjtParams.betaAccessTime() * (accessTime / 60.0)
+            + pjtParams.betaEgressTime() * (egressTime / 60.0)
+            + pjtParams.betaWalkTime() * (walkTime / 60.0)
+            + pjtParams.betaTransferWaitTime() * (transferWaitTime / 60.0)
+            + transferCount * (pjtParams.transferFix() + pjtParams.transferTraveltimeFactor() * (totalTravelTime / 60.0))
+            + (pjtParams.secondsPerAdditionalStop() / 60.0) * additionalStopCount;
 
         SearchImpedanceParameters searchParams = this.params.search();
         route.searchImpedance =
-                searchParams.betaInVehicleTime() * (inVehicleTime / 60.0)
-                        + searchParams.betaAccessTime() * (accessTime / 60.0)
-                        + searchParams.betaEgressTime() * (egressTime / 60.0)
-                        + searchParams.betaWalkTime() * (walkTime / 60.0)
-                        + searchParams.betaTransferWaitTime() * (transferWaitTime / 60.0)
-                        + searchParams.betaTransferCount() * transferCount;
+            searchParams.betaInVehicleTime() * (inVehicleTime / 60.0)
+                + searchParams.betaAccessTime() * (accessTime / 60.0)
+                + searchParams.betaEgressTime() * (egressTime / 60.0)
+                + searchParams.betaWalkTime() * (walkTime / 60.0)
+                + searchParams.betaTransferWaitTime() * (transferWaitTime / 60.0)
+                + searchParams.betaTransferCount() * transferCount;
     }
 
     protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes,
-                                                  LocalTime startInterval, LocalTime endInterval, DemandMatrixMultiplier multiplier) throws ZoneNotFoundException {
+        int startIntervalMinutes, int endIntervalMinutes, DemandMatrixMultiplier multiplier) throws ZoneNotFoundException {
 
         UmlegoRouteUtils.sortRoutesByDepartureTime(foundRoutes);
         UnroutableDemand unroutableDemand = new UnroutableDemand();
@@ -294,22 +297,22 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
             var routes = foundRoutes.get(destinationZone);
             if (routes == null || routes.isEmpty()) {
                 double sum = 0;
-                for (String matrixName : this.demandMatrixNames) {
-                    double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
-                    if (value > 0)
+                for (TimeWindow timeWindow : this.demand.getTimeWindows()) {
+                    double value = this.demand.getMatrixValue(originZone, destinationZone, timeWindow);
+                    if (value > 0) {
                         sum += value * multiplier.getFactor(originZone, destinationZone, -1);
+                    }
                 }
                 if (sum > 0) {
                     unroutableDemand.addPart(new UnroutableDemandPart(originZone, destinationZone, sum));
                 }
             } else {
-                for (String matrixName : this.demandMatrixNames) {
-                    double value = this.demand.getMatrixValue(originZone, destinationZone, matrixName);
-                    int matrixNumber = Integer.parseInt(matrixName);
-                    double startTime = (matrixNumber - 1) * 10 * 60; // 10-minute time slots, in seconds TODO: make configurable
-                    double endTime = (matrixNumber) * 10 * 60;
+                for (TimeWindow timeWindow : this.demand.getTimeWindows()) {
+                    double value = this.demand.getMatrixValue(originZone, destinationZone, timeWindow);
+                    double startTime = timeWindow.startTimeInclusiveMin() * 60.0;
+                    double endTime = timeWindow.endTimeExclusiveMin() * 60.0;
 
-                    if (value > 0 && (startTime >= startInterval.toSecondOfDay() && endTime < endInterval.toSecondOfDay())) {
+                    if (value > 0 && (startTime >= startIntervalMinutes * 60.0 && endTime < endIntervalMinutes * 60.0)) {
                         double factor = multiplier.getFactor(originZone, destinationZone, (int) (startTime / 60.0));
                         assignDemand(originZone, destinationZone, startTime, endTime, value * factor, routes, unroutableDemand);
                     }
@@ -320,7 +323,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
     }
 
     protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
-        return assignDemand(originZone, foundRoutes, LocalTime.MIN, LocalTime.MAX, DemandMatrixMultiplier.IDENTITY);
+        return assignDemand(originZone, foundRoutes, Integer.MIN_VALUE, Integer.MAX_VALUE, DemandMatrixMultiplier.IDENTITY);
     }
 
     private void assignDemand(String originZone, String destinationZone, double startTime, double endTime, double odDemand, List<FoundRoute> routes, UnroutableDemand unroutableDemand) {
@@ -330,7 +333,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
             double earliestDeparture = startTime - this.params.routeSelection().beforeTimewindow();
             double latestDeparture = endTime + this.params.routeSelection().afterTimewindow();
             potentialRoutes = routes.stream().filter(route -> ((route.stop2stopRoute.depTime - route.originConnectedStop.walkTime()) >= earliestDeparture)
-                    && ((route.stop2stopRoute.depTime - route.originConnectedStop.walkTime() <= latestDeparture))).toList().toArray(new FoundRoute[0]);
+                && ((route.stop2stopRoute.depTime - route.originConnectedStop.walkTime() <= latestDeparture))).toList().toArray(new FoundRoute[0]);
         } else {
             potentialRoutes = routes.toArray(new FoundRoute[0]);
         }
@@ -363,7 +366,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                 // one of both must be zero, so we can sum them up
                 deltas[i] = Math.abs(deltaTEarly + deltaTLate);
                 double impedance = betaPJT * route.perceivedJourneyTimeMin
-                        + betaDeltaTEarly * (deltaTEarly / 60.0) + betaDeltaTLate * (deltaTLate / 60.0);
+                    + betaDeltaTEarly * (deltaTEarly / 60.0) + betaDeltaTLate * (deltaTLate / 60.0);
                 impedances[i] = impedance;
                 if (impedance < minImpedance) {
                     minImpedance = impedance;

@@ -2,7 +2,8 @@ package ch.sbb.matsim.umlego.readers;
 
 import static ch.sbb.matsim.umlego.matrix.MatrixUtil.createData;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.AbstractMatrix;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.MatrixUtil;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
@@ -12,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,11 +118,11 @@ public abstract class AbstractCsvMatrixParser {
         return data;
     }
 
-    protected DemandMatrices csvEntriesToDemandMatrices(Map<Integer, List<CSVEntry>> csvEntries) throws ZoneNotFoundException {
+    protected Matrices csvEntriesToDemandMatrices(Map<Integer, List<CSVEntry>> csvEntries) throws ZoneNotFoundException {
 
         var defaultIndexByNo = this.zones.createDefaultZonesLookup();
 
-        List<DemandMatrix> matrices = new ArrayList<>();
+        List<AbstractMatrix> matrices = new ArrayList<>();
         for (Entry<Integer, List<CSVEntry>> entry : csvEntries.entrySet()) {
             double[][] data = convertToDataArray(entry.getValue(), true, defaultIndexByNo);
             int index = entry.getKey();
@@ -130,7 +130,7 @@ public abstract class AbstractCsvMatrixParser {
             matrices.add(new DemandMatrix(startTimeMin, startTimeMin + MatrixUtil.TIME_SLICE_MIN, data));
         }
 
-        return new DemandMatrices(matrices, getZones(), defaultIndexByNo);
+        return new Matrices(matrices, getZones(), defaultIndexByNo);
     }
 
 

@@ -1,6 +1,6 @@
 package ch.sbb.matsim.umlego.readers;
 
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.FactorMatrix;
 import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.matrix.Zones;
@@ -13,18 +13,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CsvMultiMatrixDemandParser extends AbstractCsvMatrixParser implements DemandMatricesParser {
+public class CsvMultiMatrixParser extends AbstractCsvMatrixParser implements MatricesParser {
 
     private final String separator;
     private final FactorMatrix baseDemand;
 
-    public CsvMultiMatrixDemandParser(String path, Zones zones, double defaultValue, String separator, FactorMatrix baseDemand) {
+    public CsvMultiMatrixParser(String path, Zones zones, double defaultValue, String separator, FactorMatrix baseDemand) {
         super(path, zones, defaultValue);
         this.separator = separator;
         this.baseDemand = baseDemand;
     }
 
-    public CsvMultiMatrixDemandParser(String path, Zones zones, double defaultValue, String separator) {
+    public CsvMultiMatrixParser(String path, Zones zones, double defaultValue, String separator) {
         this(path, zones, defaultValue, separator, null);
     }
 
@@ -37,14 +37,14 @@ public class CsvMultiMatrixDemandParser extends AbstractCsvMatrixParser implemen
      * @throws ZoneNotFoundException if a zone is not found during the parsing process
      */
     @Override
-    public DemandMatrices parse() throws ZoneNotFoundException {
+    public Matrices parse() throws ZoneNotFoundException {
         try {
             Map<Integer, List<CSVEntry>> csvEntries = parseCsvMultiMatrix(getPath(), this.separator);
-            DemandMatrices demandMatrices = csvEntriesToDemandMatrices(csvEntries);
+            Matrices matrices = csvEntriesToDemandMatrices(csvEntries);
             if (baseDemand != null) {
-                demandMatrices.multiplyWith(baseDemand);
+                matrices.multiplyWith(baseDemand);
             }
-            return demandMatrices;
+            return matrices;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

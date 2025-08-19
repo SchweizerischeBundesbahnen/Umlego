@@ -1,7 +1,9 @@
 package ch.sbb.matsim.umlego.workflows.bewerto.config;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -10,6 +12,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public final class ElasticitiesParameters {
 
     /**

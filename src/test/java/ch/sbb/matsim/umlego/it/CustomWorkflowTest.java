@@ -13,7 +13,7 @@ import ch.sbb.matsim.umlego.workflows.interfaces.WorkResultHandler;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkflowFactory;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrix;
 import ch.sbb.matsim.umlego.matrix.Zone;
 import ch.sbb.matsim.umlego.matrix.Zones;
@@ -37,7 +37,7 @@ public class CustomWorkflowTest {
 
     private String LAUSANNE;
     private String GENEVE;
-    private DemandMatrices demand;
+    private Matrices demand;
 
     @BeforeEach
     void setUp() {
@@ -59,7 +59,7 @@ public class CustomWorkflowTest {
         var zones = new Zones(List.of(geneveZone, lausanneZone));
         var zonesLookup = zones.createDefaultZonesLookup();
 
-        demand = new DemandMatrices(List.of(matrix), zones, zonesLookup);
+        demand = new Matrices(List.of(matrix), zones, zonesLookup);
 
         Map<String, List<ConnectedStop>> stopsPerZone = new HashMap<>();
         stopsPerZone.put(GENEVE, List.of(new ConnectedStop(GENEVE, 0, geneve)));
@@ -122,7 +122,7 @@ public class CustomWorkflowTest {
         public AbstractWorker<MockWorkItem> createWorker(BlockingQueue<MockWorkItem> workerQueue, UmlegoParameters params,
             List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
             createWorkerCalled = true;
-            return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(DemandMatrices.class), null, null, deltaTCalculator) {
+            return new AbstractWorker<>(workerQueue, params, destinationZoneIds, Mockito.mock(Matrices.class),  null, deltaTCalculator) {
                 @Override
                 protected void processOriginZone(MockWorkItem workItem) {
                     workItemProcessed = true;

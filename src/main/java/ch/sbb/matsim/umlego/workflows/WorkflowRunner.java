@@ -1,6 +1,7 @@
 package ch.sbb.matsim.umlego.workflows;
 
 import ch.sbb.matsim.umlego.UmlegoUtils;
+import ch.sbb.matsim.umlego.config.MatricesParameters;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.workflows.assignment.Assignment;
 import ch.sbb.matsim.umlego.workflows.assignment.AssignmentParameters;
@@ -37,14 +38,15 @@ public final class WorkflowRunner implements Callable<Integer> {
         Gestalt config = UmlegoUtils.loadConfig(configPath);
 
         UmlegoParameters umlegoParameters = config.getConfig("umlego", UmlegoParameters.class);
+        MatricesParameters matricesParameters = config.getConfig("matrices", MatricesParameters.class);
 
         if (umlegoParameters.workflow().equals(WorkflowEnum.assignment)) {
             AssignmentParameters assignmentParameters = config.getConfig(umlegoParameters.workflow().name(), AssignmentParameters.class);
-            Assignment assignment = new Assignment(assignmentParameters, umlegoParameters);
+            Assignment assignment = new Assignment(assignmentParameters, umlegoParameters, matricesParameters);
             assignment.run();
         } else if (umlegoParameters.workflow().equals(WorkflowEnum.bewerto)) {
             BewertoParameters bewertoParameters = config.getConfig(umlegoParameters.workflow().name(), BewertoParameters.class);
-            Bewerto bewerto = new Bewerto(bewertoParameters, umlegoParameters);
+            Bewerto bewerto = new Bewerto(bewertoParameters, umlegoParameters, matricesParameters);
             bewerto.run();
         } else {
             throw new IllegalArgumentException("Unknown workflow: " + umlegoParameters.workflow());

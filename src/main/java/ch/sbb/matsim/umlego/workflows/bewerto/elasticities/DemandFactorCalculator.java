@@ -1,11 +1,13 @@
 package ch.sbb.matsim.umlego.workflows.bewerto.elasticities;
 
-import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
-import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
+import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.matrix.Zones;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
+import ch.sbb.matsim.umlego.workflows.bewerto.BewertoWorkResult;
+import ch.sbb.matsim.umlego.workflows.bewerto.config.ElasticitiesParameters;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -23,31 +25,30 @@ public final class DemandFactorCalculator {
     private final static double[] EMPTY = new double[0];
 
     private final ElasticitiesParameters params;
-    private final Zones zones;
+    private final Matrices matrices;
 
     /**
      * Contains the entries for elasticity calculation. Mapped by {@link ElasticityEntry#cluster()} and {@link ElasticityEntry#skimType()}.
      */
-    private final Map<String, Map<SkimType, ElasticityEntry>> entries = new LinkedHashMap<>();
+    private final Map<String, Map<String, Map<SkimType, ElasticityEntry>>> entriesBySegmentAndCluster = new LinkedHashMap<>();
 
     /**
      * Constructs a {@code DemandFactorCalculator} used to calculate demand factors by comparing base and variant skim matrices for given origin-destination zones.
      *
      * @param params elasticities parameters object containing elasticity parameters for the given segment
-     * @param zones zone lookup object
      */
-    public DemandFactorCalculator(ElasticitiesParameters params, Zones zones) {
+    public DemandFactorCalculator(ElasticitiesParameters params, Matrices matrices) {
         this.params = params;
-        this.zones = zones;
+        this.matrices = matrices;
 
-        ElasticityEntry.readAllEntries(params.getFile()).stream()
-            .filter(e -> Objects.equals(e.segment(), params.getSegment()))
+        ElasticityEntry.readAllEntries(params.getFile())
             .forEach(entry -> {
-                entries.computeIfAbsent(entry.cluster(), k -> new EnumMap<>(SkimType.class))
+                entriesBySegmentAndCluster.computeIfAbsent(entry.segment(), k -> new HashMap<>());
+                entriesBySegmentAndCluster.get(entry.segment()).computeIfAbsent(entry.cluster(), k -> new EnumMap<>(SkimType.class))
                     .put(entry.skimType(), entry);
             });
 
-        if (entries.isEmpty()) {
+        if (entriesBySegmentAndCluster.isEmpty()) {
             throw new IllegalArgumentException("No elasticity entries found for segment " + params.getSegment());
         }
     }
@@ -68,8 +69,8 @@ public final class DemandFactorCalculator {
      */
     private String computeCluster(String fromZoneNo, String toZoneNo) {
 
-        String a = zones.getCluster(fromZoneNo);
-        String b = zones.getCluster(toZoneNo);
+        String a = matrices.getZones().getCluster(fromZoneNo);
+        String b = matrices.getZones().getCluster(toZoneNo);
 
         // Only CH and CH are considered as domestic traffic
         // Others are international
@@ -97,9 +98,6 @@ public final class DemandFactorCalculator {
         return Math.pow(variantValues[idx] / baseValues[idx], e);
     }
 
-    /**
-     * Implement the {@link DemandMatrixMultiplier} interface and stores all calculated factors.
-     */
     public final class Multiplier implements DemandMatrixMultiplier {
 
         private final Map<String, double[]> base;
@@ -120,7 +118,7 @@ public final class DemandFactorCalculator {
             double[] baseValues = base.getOrDefault(toZoneNo, EMPTY);
             double[] variantValues = variant.getOrDefault(toZoneNo, EMPTY);
 
-            if (baseValues == EMPTY || variantValues == EMPTY) {
+            if (baseValues == EMPTY || variantValues == EMPTY ) {
                 return 1.0; // No data available, return neutral factor
             }
 
@@ -129,14 +127,23 @@ public final class DemandFactorCalculator {
             double ax = Math.min(baseValues[UmlegoSkimCalculator.ADT_IDX], params.getAdtUB()) / 15;
             double bx = baseValues[UmlegoSkimCalculator.JRT_IDX] / 45;
 
-            double eJRT = computeElasticity(entries.get(cluster).get(SkimType.JRT), ax, bx);
-            double FJRT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.JRT_IDX, eJRT);
+            double FJRT = 0;
+            double FADT = 0;
+            double FNTR = 0;
 
-            double eADT = computeElasticity(entries.get(cluster).get(SkimType.ADT), ax, bx);
-            double FADT = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.ADT_IDX, eADT);
+            for (var segment : matrices.getSegments()) {
+                var share = matrices.getShareMatrixValue(segment, fromZoneNo, toZoneNo);
 
-            double eNTR = computeElasticity(entries.get(cluster).get(SkimType.NTR), ax, bx);
-            double FNTR = computeFactor(variantValues, baseValues, UmlegoSkimCalculator.NTR_IDX, eNTR);
+                double eJRT = computeElasticity(entriesBySegmentAndCluster.get(segment).get(cluster).get(SkimType.JRT), ax, bx);
+                FJRT += computeFactor(variantValues, baseValues, UmlegoSkimCalculator.JRT_IDX, eJRT) * share;
+
+                double eADT = computeElasticity(entriesBySegmentAndCluster.get(segment).get(cluster).get(SkimType.ADT), ax, bx);
+                FADT += computeFactor(variantValues, baseValues, UmlegoSkimCalculator.ADT_IDX, eADT) * share;
+
+                double eNTR = computeElasticity(entriesBySegmentAndCluster.get(segment).get(cluster).get(SkimType.NTR), ax, bx);
+                FNTR += computeFactor(variantValues, baseValues, UmlegoSkimCalculator.NTR_IDX, eNTR) * share;
+
+            }
 
             factors.put(toZoneNo, new double[]{FJRT, FADT, FNTR});
 
@@ -147,4 +154,5 @@ public final class DemandFactorCalculator {
             return new BewertoWorkResult(fromZoneNo, factors, this.base, this.variant);
         }
     }
+
 }

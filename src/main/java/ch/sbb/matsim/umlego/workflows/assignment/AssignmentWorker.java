@@ -4,13 +4,13 @@ import ch.sbb.matsim.umlego.AbstractWorker;
 import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.RoutingContext;
 import ch.sbb.matsim.umlego.UmlegoRouteUtils;
-import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
+import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import ch.sbb.matsim.umlego.config.UmlegoParameters;
 import ch.sbb.matsim.umlego.deltat.DeltaTCalculator;
-import ch.sbb.matsim.umlego.matrix.DemandMatrices;
 import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
+import ch.sbb.matsim.umlego.matrix.Matrices;
+import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
-import ch.sbb.matsim.umlego.UmlegoWorkResult;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -25,14 +25,12 @@ public class AssignmentWorker extends AbstractWorker<AssignmentWorkItem> {
      */
     private final RoutingContext ctx;
 
-    public AssignmentWorker(BlockingQueue<AssignmentWorkItem> workerQueue, UmlegoParameters params, DemandMatrices demand,
+    public AssignmentWorker(BlockingQueue<AssignmentWorkItem> workerQueue, UmlegoParameters params, Matrices demand,
         RoutingContext scenario, List<String> destinationZoneIds, DeltaTCalculator deltaTCalculator) {
-        super(workerQueue, params, destinationZoneIds, demand, demand.getMatrixNames(),
+        super(workerQueue, params, destinationZoneIds, demand,
             params.routeSelection().utilityCalculator().createUtilityCalculator(), deltaTCalculator);
         this.ctx = scenario;
     }
-
-
 
     @Override
     protected void processOriginZone(AssignmentWorkItem workItem) throws ZoneNotFoundException {
@@ -45,7 +43,7 @@ public class AssignmentWorker extends AbstractWorker<AssignmentWorkItem> {
 
         // Reassign the demand for the filtered interval
         UmlegoWorkResult filteredDemand = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-            params.skims().startTime(), params.skims().endTime(),
+            params.skims().startTimeMinute(), params.skims().endTimeMinute(),
             DemandMatrixMultiplier.IDENTITY);
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, result.skims());

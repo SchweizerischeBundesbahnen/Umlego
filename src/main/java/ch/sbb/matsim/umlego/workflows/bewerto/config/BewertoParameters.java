@@ -13,20 +13,6 @@ import lombok.Setter;
 public final class BewertoParameters {
 
     /**
-     * Path to demand matrices.
-     */
-    private String demandFile;
-
-    /**
-     * Path to zone names csv.
-     */
-    private String zoneNamesFile;
-
-    /**
-     * Path to zone connections csv.
-     */
-    private String zoneConnectionsFile;
-    /**
      * The directory path for the output files.
      */
     private String outputDir;
@@ -46,9 +32,6 @@ public final class BewertoParameters {
     @Override
     public String toString() {
         return "BewertoParameters{" +
-            "demandFile='" + demandFile + '\'' +
-            ", zoneNamesFile='" + zoneNamesFile + '\'' +
-            ", zoneConnectionsFile='" + zoneConnectionsFile + '\'' +
             ", outputDir='" + outputDir + '\'' +
             ", elasticities=" + elasticities +
             ", ref=" + ref +
