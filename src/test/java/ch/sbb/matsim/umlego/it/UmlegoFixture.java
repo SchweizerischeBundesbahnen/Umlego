@@ -1,6 +1,20 @@
 package ch.sbb.matsim.umlego.it;
 
-import ch.sbb.matsim.umlego.config.*;
+import ch.sbb.matsim.umlego.config.CompressionType;
+import ch.sbb.matsim.umlego.config.PerceivedJourneyTimeParameters;
+import ch.sbb.matsim.umlego.config.PreselectionParameters;
+import ch.sbb.matsim.umlego.config.RouteImpedanceParameters;
+import ch.sbb.matsim.umlego.config.RouteSelectionParameters;
+import ch.sbb.matsim.umlego.config.SearchImpedanceParameters;
+import ch.sbb.matsim.umlego.config.SkimsParameters;
+import ch.sbb.matsim.umlego.config.UmlegoParameters;
+import ch.sbb.matsim.umlego.config.UtilityFunctionParams;
+import ch.sbb.matsim.umlego.config.WriterParameters;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.builder.GestaltBuilder;
 import org.github.gestalt.config.exceptions.GestaltException;
@@ -17,11 +31,14 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils.ScenarioBuilder;
-import org.matsim.pt.transitSchedule.api.*;
+import org.matsim.pt.transitSchedule.api.Departure;
+import org.matsim.pt.transitSchedule.api.TransitLine;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
+import org.matsim.pt.transitSchedule.api.TransitRouteStop;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicles;
-
-import java.time.LocalTime;
-import java.util.*;
 
 /*package*/  public class UmlegoFixture {
 
@@ -51,7 +68,7 @@ import java.util.*;
         PerceivedJourneyTimeParameters pjt = new PerceivedJourneyTimeParameters(1.0, 2.94, 2.94, 2.25, 1.13, 17.24, 0.03, 58.0);
         RouteImpedanceParameters impedance = new RouteImpedanceParameters(1.0, 1.85, 1.85);
         RouteSelectionParameters routeSelection = new RouteSelectionParameters(false, 3600.0, 3600.0, new UtilityFunctionParams(UtilityFunctionParams.Type.boxcox, Map.of("beta", 1.536, "tau", 0.5)));
-        SkimsParameters skims = new SkimsParameters(LocalTime.of(3, 0), LocalTime.of(22, 0));
+        SkimsParameters skims = new SkimsParameters(3 * 60, 22 * 60);
         WriterParameters writer = new WriterParameters(1e-5, CompressionType.NONE, Set.of());
         return new UmlegoParameters(5, 1, search, preselection, pjt, impedance, routeSelection, skims, writer, List.of(), null);
 
@@ -59,10 +76,10 @@ import java.util.*;
 
     public static UmlegoParameters loadTestConfig() throws GestaltException {
         Gestalt config = new GestaltBuilder()
-                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build())
-                .addSource(ClassPathConfigSourceBuilder.builder().setResource("/test.yaml").build())
-                .addModuleConfig(YamlModuleConfigBuilder.builder().build())
-                .build();
+            .addSource(ClassPathConfigSourceBuilder.builder().setResource("/umlego.yaml").build())
+            .addSource(ClassPathConfigSourceBuilder.builder().setResource("/test.yaml").build())
+            .addModuleConfig(YamlModuleConfigBuilder.builder().build())
+            .build();
 
         config.loadConfigs();
 
