@@ -53,8 +53,8 @@ umlego:
 
   # Parameters for the computation of skim matrices
   skims:
-    startTime: "5:00"
-    endTime: "22:00"
+    startTimeMinute: 300 # "5:00"
+    endTimeMinute: 1320 # "22:00"
 
   # Writer parameters for output configuration
   writer:

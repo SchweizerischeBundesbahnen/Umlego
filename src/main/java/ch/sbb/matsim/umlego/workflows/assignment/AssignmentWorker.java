@@ -43,7 +43,7 @@ public class AssignmentWorker extends AbstractWorker<AssignmentWorkItem> {
 
         // Reassign the demand for the filtered interval
         UmlegoWorkResult filteredDemand = assignDemand(workItem.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-            params.skims().startTime(), params.skims().endTime(),
+            params.skims().startTimeMinute(), params.skims().endTimeMinute(),
             DemandMatrixMultiplier.IDENTITY);
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, result.skims());

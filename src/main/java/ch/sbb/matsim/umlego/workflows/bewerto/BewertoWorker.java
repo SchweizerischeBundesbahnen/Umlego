@@ -11,7 +11,6 @@ import ch.sbb.matsim.umlego.matrix.DemandMatrixMultiplier;
 import ch.sbb.matsim.umlego.matrix.Matrices;
 import ch.sbb.matsim.umlego.skims.UmlegoSkimCalculator;
 import ch.sbb.matsim.umlego.workflows.bewerto.elasticities.DemandFactorCalculator;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -50,7 +49,7 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
         // Reassign the demand for the filtered interval
         UmlegoWorkResult filteredDemand = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(baseRoutes),
-            params.skims().startTime(), params.skims().endTime(),
+            params.skims().startTimeMinute(), params.skims().endTimeMinute(),
             DemandMatrixMultiplier.IDENTITY);
 
         UmlegoSkimCalculator.INSTANCE.calculateSkims(filteredDemand, baseResult.skims());
@@ -67,7 +66,7 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
 
             // Reassign the demand for the filtered interval
             UmlegoWorkResult filtered = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-                params.skims().startTime(), params.skims().endTime(),
+                params.skims().startTimeMinute(), params.skims().endTimeMinute(),
                 DemandMatrixMultiplier.IDENTITY);
 
             UmlegoSkimCalculator.INSTANCE.calculateSkims(filtered, result.skims());
@@ -77,8 +76,7 @@ public class BewertoWorker extends AbstractWorker<BewertoWorkItem> {
             DemandFactorCalculator.Multiplier f = factorCalculator.createMultiplier(baseResult.skims(), result.skims());
 
             // Induced demand calculation
-            UmlegoWorkResult induced = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes),
-                LocalTime.MIN, LocalTime.MAX, f);
+            UmlegoWorkResult induced = assignDemand(item.originZone(), UmlegoRouteUtils.cloneRoutes(foundRoutes), Integer.MIN_VALUE, Integer.MAX_VALUE, f);
 
             item.induced().get(i - 1).complete(induced);
             item.factors().get(i - 1).complete(f.createResult(item.originZone()));

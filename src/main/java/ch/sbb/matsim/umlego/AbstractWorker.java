@@ -14,7 +14,6 @@ import ch.sbb.matsim.umlego.matrix.ZoneNotFoundException;
 import ch.sbb.matsim.umlego.workflows.interfaces.WorkItem;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -289,7 +288,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
     }
 
     protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes,
-        LocalTime startInterval, LocalTime endInterval, DemandMatrixMultiplier multiplier) throws ZoneNotFoundException {
+        int startIntervalMinutes, int endIntervalMinutes, DemandMatrixMultiplier multiplier) throws ZoneNotFoundException {
 
         UmlegoRouteUtils.sortRoutesByDepartureTime(foundRoutes);
         UnroutableDemand unroutableDemand = new UnroutableDemand();
@@ -313,7 +312,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                     double startTime = timeWindow.startTimeInclusiveMin() * 60.0;
                     double endTime = timeWindow.endTimeExclusiveMin() * 60.0;
 
-                    if (value > 0 && (startTime >= startInterval.toSecondOfDay() && endTime < endInterval.toSecondOfDay())) {
+                    if (value > 0 && (startTime >= startIntervalMinutes * 60.0 && endTime < endIntervalMinutes * 60.0)) {
                         double factor = multiplier.getFactor(originZone, destinationZone, (int) (startTime / 60.0));
                         assignDemand(originZone, destinationZone, startTime, endTime, value * factor, routes, unroutableDemand);
                     }
@@ -324,7 +323,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
     }
 
     protected final UmlegoWorkResult assignDemand(String originZone, Map<String, List<FoundRoute>> foundRoutes) throws ZoneNotFoundException {
-        return assignDemand(originZone, foundRoutes, LocalTime.MIN, LocalTime.MAX, DemandMatrixMultiplier.IDENTITY);
+        return assignDemand(originZone, foundRoutes, Integer.MIN_VALUE, Integer.MAX_VALUE, DemandMatrixMultiplier.IDENTITY);
     }
 
     private void assignDemand(String originZone, String destinationZone, double startTime, double endTime, double odDemand, List<FoundRoute> routes, UnroutableDemand unroutableDemand) {
