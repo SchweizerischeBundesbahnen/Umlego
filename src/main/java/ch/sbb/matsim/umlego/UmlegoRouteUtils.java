@@ -1,5 +1,7 @@
 package ch.sbb.matsim.umlego;
 
+import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
+import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import java.util.*;
@@ -190,5 +192,39 @@ public class UmlegoRouteUtils {
             }
             route1.originality = 1.0 / countEqualRoutes;
         }
+    }
+
+    /**
+     * Counts the number of times a trains a train will stop along a given route part (without access and egress).
+     * This method considers all chained parts as well.
+     */
+    public static int countNumberOfAdditionalStops(RaptorRoute.RoutePart part) {
+
+        int n = 0;
+        int startIndex = -1;
+        int endIndex = -1;
+
+        List<TransitRouteStop> stops = part.route.getStops();
+        for (int i = 0; i < stops.size(); i++) {
+            TransitRouteStop routeStop = stops.get(i);
+            if (routeStop.getStopFacility().getId().equals(part.toStop.getId()) && startIndex >= 0) {
+                endIndex = i;
+                break;
+            }
+            if (routeStop.getStopFacility().getId().equals(part.fromStop.getId())) {
+                startIndex = i;
+            }
+        }
+        if (startIndex >= 0 && endIndex >= 0) {
+            n += (endIndex - startIndex - 1);
+        }
+
+        if (part.chainedPart != null) {
+            // recursively count stops in the chained part
+            // we add 1 for the chained part itself
+            n += countNumberOfAdditionalStops(part.chainedPart) + 1;
+        }
+
+        return n;
     }
 }
