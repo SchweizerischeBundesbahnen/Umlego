@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.2.1...v2.3.0) (2025-08-22)
+
+
+### Features
+
+* improve matrix handling for better clarity and reduced errors ([3d9a48d](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/3d9a48dcd3c8d1c7651558d5acbc2b5ffa433c75))
+* improve matrix handling for better clarity and reduced errors ([2965639](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/2965639bb0365bef92018c97313ae7bc11f34d04))
+* improve matrix handling for better clarity and reduced errors ([5980c41](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/5980c410cb656cc075735d0c3d253f8ff6d3f6d9))
+* improve matrix handling for better clarity and reduced errors ([58c32e8](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/58c32e8f7a6625c9abb5c2bde4094dbf2df22986))
+* improve matrix handling for better clarity and reduced errors ([c5e8be3](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/c5e8be3434eeb34afb3abdad57e09a692f534eb8))
+* improve matrix handling for better clarity and reduced errors ([ce497a1](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/ce497a1ff764502369a85ff5f4632f5727270cac))
+
 ## [2.2.1](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.2.0...v2.2.1) (2025-07-18)
 
 
