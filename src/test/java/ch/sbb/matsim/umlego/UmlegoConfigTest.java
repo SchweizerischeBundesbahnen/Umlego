@@ -47,6 +47,6 @@ public class UmlegoConfigTest {
         assertEquals(58.0, params.pjt().secondsPerAdditionalStop());
 
         assertEquals(5 * 60, params.skims().startTimeMinute());
-        assertEquals(22 * 60, params.skims().endTimeMinute());
+        assertEquals(23 * 60, params.skims().endTimeMinute());
     }
 }
