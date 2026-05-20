@@ -242,22 +242,7 @@ public abstract class AbstractWorker<T extends WorkItem> implements Runnable {
                 }
                 inVehicleTime += (part.getChainedArrivalTime() - part.vehicleDepTime);
                 hadTransferBefore = false;
-                int startIndex = -1;
-                int endIndex = -1;
-                List<TransitRouteStop> stops = part.route.getStops();
-                for (int i = 0; i < stops.size(); i++) {
-                    TransitRouteStop routeStop = stops.get(i);
-                    if (routeStop.getStopFacility().getId().equals(part.toStop.getId()) && startIndex >= 0) {
-                        endIndex = i;
-                        break;
-                    }
-                    if (routeStop.getStopFacility().getId().equals(part.fromStop.getId())) {
-                        startIndex = i;
-                    }
-                }
-                if (startIndex >= 0 && endIndex >= 0) {
-                    additionalStopCount += (endIndex - startIndex - 1);
-                }
+                additionalStopCount += UmlegoRouteUtils.countNumberOfAdditionalStops(part);
             }
         }
 
