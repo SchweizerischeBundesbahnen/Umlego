@@ -33,7 +33,12 @@ public final class DemandManager {
      */
     public static Matrices prepareDemand(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, demandMatricesPath, matrixFactory, factorMatriceFilenames);
+        return demandManager.execute(zonesFile, demandMatricesPath, matrixFactory,  new MatricesParserFactoryDefault(), factorMatriceFilenames );
+    }
+
+    public static Matrices prepareDemand(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, MatricesParserFactory parserFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+        DemandManager demandManager = new DemandManager();
+        return demandManager.execute(zonesFile, demandMatricesPath, matrixFactory, parserFactory, factorMatriceFilenames );
     }
 
     /**
@@ -46,9 +51,9 @@ public final class DemandManager {
      * @throws IOException if an I/O error occurs during loading or applying correction factors
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
-    private Matrices execute(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
+    private Matrices execute(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, MatricesParserFactory parserFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
         Zones zones = loadZoneLookupFile(zonesFile);
-        Matrices matrices = loadDemandMatrices(demandMatricesPath, zones, matrixFactory);
+        Matrices matrices = loadDemandMatrices(demandMatricesPath, zones, matrixFactory, parserFactory);
         loadAndApplyCorrectionFactors(matrices, factorMatriceFilenames);
         return matrices;
     }
@@ -62,8 +67,8 @@ public final class DemandManager {
         }
     }
 
-    private Matrices loadDemandMatrices(String baseMatricesPath, Zones zones, MatrixFactory matrixFactory) throws IOException, ZoneNotFoundException {
-        MatricesParser parser = DemandMatricesParserFactory.createParser(baseMatricesPath, zones, matrixFactory);
+    private Matrices loadDemandMatrices(String baseMatricesPath, Zones zones, MatrixFactory matrixFactory, MatricesParserFactory parserFactory) throws IOException, ZoneNotFoundException {
+        MatricesParser parser =  parserFactory.createParser(baseMatricesPath, zones, matrixFactory);
         return parser.parse();
     }
 
