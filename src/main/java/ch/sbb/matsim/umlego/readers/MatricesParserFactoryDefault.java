@@ -9,14 +9,14 @@ import org.apache.logging.log4j.Logger;
 /**
  * Factory creating CVS or Database parser for reading and parsing the demand matrices.
  */
-public class DemandMatricesParserFactory {
+public class MatricesParserFactoryDefault implements MatricesParserFactory {
 
-    private static final Logger LOG = LogManager.getLogger(DemandMatricesParserFactory.class);
+    private static final Logger LOG = LogManager.getLogger(MatricesParserFactoryDefault.class);
 
-    private DemandMatricesParserFactory() {
+    public MatricesParserFactoryDefault() {
     }
 
-    public static MatricesParser createParser(String filePath, Zones zones, MatrixFactory matrixFactory) throws IOException {
+    public MatricesParser createParser(String filePath, Zones zones, MatrixFactory matrixFactory) throws IOException {
         LOG.info("Reading demand matrices from files in {}", filePath);
         return createParserForFile(filePath, zones, matrixFactory);
     }
