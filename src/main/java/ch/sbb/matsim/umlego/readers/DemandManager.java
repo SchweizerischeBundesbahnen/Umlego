@@ -32,8 +32,7 @@ public final class DemandManager {
      * @throws ZoneNotFoundException if a zone is not found in the lookup
      */
     public static Matrices prepareDemand(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {
-        DemandManager demandManager = new DemandManager();
-        return demandManager.execute(zonesFile, demandMatricesPath, matrixFactory,  new MatricesParserFactoryDefault(), factorMatriceFilenames );
+        return prepareDemand(zonesFile, demandMatricesPath, matrixFactory, new MatricesParserFactoryDefault(), factorMatriceFilenames);
     }
 
     public static Matrices prepareDemand(String zonesFile, String demandMatricesPath, MatrixFactory matrixFactory, MatricesParserFactory parserFactory, String... factorMatriceFilenames) throws IOException, ZoneNotFoundException {

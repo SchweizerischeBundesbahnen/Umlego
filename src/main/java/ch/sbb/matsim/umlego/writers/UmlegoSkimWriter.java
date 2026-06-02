@@ -20,10 +20,10 @@ import static ch.sbb.matsim.umlego.writers.ResultWriter.newBufferedWriter;
 /**
  * Writes skim matrices to a CSV file.
  */
-public final class UmlegoSkimWriter implements UmlegoListener {
+public class UmlegoSkimWriter implements UmlegoListener {
 
     private final CSVWriter writer;
-    private final String[] row = new String[UmlegoSkimCalculator.INSTANCE.getCalculators().size() + 2];
+    protected final String[] row = new String[UmlegoSkimCalculator.INSTANCE.getCalculators().size() + 2];
 
     public UmlegoSkimWriter(String filename, WriterParameters params) {
         try {
