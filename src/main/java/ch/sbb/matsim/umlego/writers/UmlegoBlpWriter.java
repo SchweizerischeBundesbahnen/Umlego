@@ -68,8 +68,8 @@ public class UmlegoBlpWriter implements UmlegoListener {
 
     private final String filename;
     private final WriterParameters params;
-    private final Map<Id<TransitLine>, Map<Id<TransitRoute>, Map<Id<TransitStopFacility>, Map<Double, TrainNo>>>> trainNos;
-    private final Map<TrainNo, Journey> journeyByTrainNo = new HashMap<>();
+    protected final Map<Id<TransitLine>, Map<Id<TransitRoute>, Map<Id<TransitStopFacility>, Map<Double, TrainNo>>>> trainNos;
+    protected final Map<TrainNo, Journey> journeyByTrainNo = new HashMap<>();
 
     /**
      * Writes the aggregated volumes for every train section into a csv file.
