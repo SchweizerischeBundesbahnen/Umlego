@@ -35,6 +35,10 @@ public class UmlegoSkimWriter implements UmlegoListener {
         writer.writeNext(createHeaderRow());
     }
 
+    public UmlegoSkimWriter() {
+        this.writer = null;
+    }
+
     private String[] createHeaderRow() {
         List<String> headers = new ArrayList<>();
         headers.add("ORIGIN");
