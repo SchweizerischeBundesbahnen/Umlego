@@ -31,12 +31,12 @@ import static ch.sbb.matsim.umlego.util.PathUtil.ensureDir;
  */
 public class ResultWriter implements WorkResultHandler<UmlegoWorkResult> {
 
-    private final String outputFolder;
+    protected final String outputFolder;
     private final TransitSchedule schedule;
     private final List<UmlegoListener> listeners;
     private final WriterParameters params;
     private final List<String> destinationZoneIds;
-    private final UnroutableDemand unroutableDemand = new UnroutableDemand();
+    protected final UnroutableDemand unroutableDemand = new UnroutableDemand();
 
     /**
      * Get the file name for the desired compression type.
