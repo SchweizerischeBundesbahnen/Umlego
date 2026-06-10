@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.4.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.3.0...v2.4.0) (2026-06-10)
+
+
+### Features
+
+* Added empty constructor to UmlegoSkimWriter to simplify integration into tagesprognose. ([2b5217e](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/2b5217e6bb5382f4f43662b06c8ff81ef38717b0))
+* Small changes (private -&gt; protected) to simplify integration into tagesprognose. ([2949159](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/2949159fbfe49969dcddd0b47654c5dd236c8b2e))
+* Small changes to simplify integration into tagesprognose. ([d915893](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/d915893251dbff2f465721ce2dc5e3e6054dc9e7))
+* Small changes to simplify integration into tagesprognose. ([58330c9](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/58330c96fe99c9987e60a2741f90364ef283a186))
+
 ## [2.3.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.2.1...v2.3.0) (2026-05-20)
 
 
