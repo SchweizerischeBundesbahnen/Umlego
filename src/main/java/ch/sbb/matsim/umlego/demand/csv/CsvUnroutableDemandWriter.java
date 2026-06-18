@@ -24,22 +24,22 @@ public class CsvUnroutableDemandWriter implements UnroutableDemandWriter {
 
     @Override
     public void write(UnroutableDemand unroutableDemand) {
-        LOG.warn("Unroutable demand");
-        LOG.warn("=================");
-        LOG.warn("From,To,Demand");
+        LOG.debug("Unroutable demand");
+        LOG.debug("=================");
+        LOG.debug("From,To,Demand");
 
         try (BufferedWriter unroutableWriter = new BufferedWriter(new FileWriter(Paths.get(path, FILENAME).toFile()))) {
             unroutableWriter.write("from,to,demand" + System.lineSeparator());
             for (UnroutableDemandPart part : unroutableDemand.getParts()) {
-                LOG.warn("{},{},{}", part.fromZone(), part.toZone(), part.demand());
+                LOG.debug("{},{},{}", part.fromZone(), part.toZone(), part.demand());
                 unroutableWriter.write(part.fromZone() + "," + part.toZone() + "," + part.demand() + System.lineSeparator());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        LOG.warn("-----------------");
-        LOG.warn("Total {}", unroutableDemand.sum());
-        LOG.warn("=================");
+        LOG.debug("-----------------");
+        LOG.debug("Total {}", unroutableDemand.sum());
+        LOG.debug("=================");
 
     }
 }

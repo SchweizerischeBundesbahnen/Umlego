@@ -34,7 +34,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
  */
 public class AssignmentWorkflowFactory implements WorkflowFactory<AssignmentWorkItem> {
 
-    private final Matrices demand;
+    protected final Matrices demand;
     protected final Scenario scenario;
     private final RaptorParameters raptorParams;
     private final SwissRailRaptorData raptorData;
