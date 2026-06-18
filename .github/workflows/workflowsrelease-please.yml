@@ -22,7 +22,7 @@ jobs:
           private-key: ${{ secrets.SIMBA_GITHUB_PRIVATEKEY }}
 
       
-      - uses: googleapis/release-please-action@f25a1da58cd32e934a0accd4e16fe21d21c472ee # v4.2.2
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
 
 
         with:
