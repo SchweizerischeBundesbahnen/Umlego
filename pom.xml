@@ -145,12 +145,12 @@
         <dependency>
             <groupId>com.github.gestalt-config</groupId>
             <artifactId>gestalt-core</artifactId>
-            <version>0.35.7</version>
+            <version>0.37.2</version>
         </dependency>
         <dependency>
             <groupId>com.github.gestalt-config</groupId>
             <artifactId>gestalt-yaml</artifactId>
-            <version>0.35.7</version>
+            <version>0.37.2</version>
         </dependency>
 
         <!-- JSch library to handle SFTP connections -->
