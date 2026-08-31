@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.5.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.4.0...v2.5.0) (2026-08-31)
+
+
+### Features
+
+* Added hash to workflowrelease-please to make dependabot happy. ([eae65e4](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/eae65e4d6a3a1ca9187652a991589e575ce08521))
+* Changes warn -&gt; debug in csv unroutable demand parser. ([ead42e9](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/ead42e98b13ab0416729aa62919cc9f988525157))
+* Fixed hash of workflow release-please-action. ([5d99e01](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/5d99e011dd97240eb236d0ada477402efd12645d))
+* Fixed hash of workflow release-please-action. ([5a198f7](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/5a198f72cd19fcda012f72856a1b792d73bbae2a))
+* private -&gt; protected for tagesprognose. ([dc9a893](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/dc9a893d610f7cc2f1ef2702e408dd0c089b90fe))
+* Updated dependencies in pom.xml to fix vulnerabilities. ([9fca1c9](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/9fca1c9fb13ca94556de3a0b2b52cfba32b174cb))
+* Updated Gestalt dependency to 0.37.2 ([00c9932](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/00c9932599809d0caebda328d2ff6e63068e89ff))
+
 ## [2.4.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.3.0...v2.4.0) (2026-06-10)
 
 
