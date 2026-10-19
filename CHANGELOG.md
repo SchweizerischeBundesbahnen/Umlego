@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.5.0...v2.6.0) (2026-10-19)
+
+
+### Features
+
+* update MATSIM to 2027.0-2026w42 ([94d13b7](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/94d13b7c03361d5ea2e8663eb302ab6f2f055aea))
+
 ## [2.5.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.4.0...v2.5.0) (2026-10-09)
 
 
