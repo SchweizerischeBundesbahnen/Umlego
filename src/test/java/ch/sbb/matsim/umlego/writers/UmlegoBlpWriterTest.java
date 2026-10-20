@@ -51,7 +51,42 @@ class UmlegoBlpWriterTest {
         verifyOccupation(3, 3600, false, 8);
     }
 
+    @Test
+    void requiresMatchingDepartureForPartsWithAChainedSuccessor() throws Exception {
+        verifyOccupation(3, 3600, false, 0, true);
+    }
+
+    @Test
+    void requiresMatchingDepartureForASingleLeg() throws Exception {
+        verifyOccupation(1, 3600, false, 0, true);
+    }
+
+    @Test
+    void requiresMatchingDepartureAfterATransfer() throws Exception {
+        verifyOccupation(3, 3600, true, 0, true);
+    }
+
+    @Test
+    void excludesPreviouslyRecordedAlightingDemandFromChainedTerminalVolume() throws Exception {
+        verifyOccupation(2, 3600, false, 0, false, 1);
+    }
+
+    @Test
+    void excludesSubsequentlyRecordedAlightingDemandFromChainedTerminalVolume() throws Exception {
+        verifyOccupation(2, 3600, false, 0, false, 2);
+    }
+
     private static void verifyOccupation(int legCount, double startTime, boolean lastIsTransfer, double minimumDemand) throws Exception {
+        verifyOccupation(legCount, startTime, lastIsTransfer, minimumDemand, false);
+    }
+
+    private static void verifyOccupation(int legCount, double startTime, boolean lastIsTransfer, double minimumDemand,
+        boolean repeatedFromStop) throws Exception {
+        verifyOccupation(legCount, startTime, lastIsTransfer, minimumDemand, repeatedFromStop, 0);
+    }
+
+    private static void verifyOccupation(int legCount, double startTime, boolean lastIsTransfer, double minimumDemand,
+        boolean repeatedFromStop, int boundaryAlightingOrder) throws Exception {
         var factory = new TransitScheduleFactoryImpl();
         TransitSchedule schedule = factory.createTransitSchedule();
         List<TransitStopFacility> stops = new ArrayList<>();
@@ -68,8 +103,13 @@ class UmlegoBlpWriterTest {
         for (int index = 0; index < legCount; index++) {
             var fromStop = stops.get(index);
             var toStop = stops.get(index + 1);
+            var routeStops = new ArrayList<>(List.of(factory.createTransitRouteStop(fromStop, 0, 0),
+                factory.createTransitRouteStop(toStop, 600, 600)));
+            if (repeatedFromStop) {
+                routeStops.addFirst(factory.createTransitRouteStop(fromStop, -300, -300));
+            }
             var route = factory.createTransitRoute(Id.create(index, TransitRoute.class), null,
-                List.of(factory.createTransitRouteStop(fromStop, 0, 0), factory.createTransitRouteStop(toStop, 600, 600)), "pt");
+                routeStops, "pt");
             line.addRoute(route);
             var departureId = Id.create(index, Departure.class);
             double departureTime = startTime + index * 900;
@@ -91,18 +131,51 @@ class UmlegoBlpWriterTest {
         found.demand = 7;
 
         UmlegoBlpWriter writer = new UmlegoBlpWriter(null, new WriterParameters(minimumDemand, CompressionType.NONE, Set.of()), schedule);
+        if (boundaryAlightingOrder == 1) {
+            processBoundaryAlighting(writer, found);
+        }
         writer.processRoute("origin", "destination", found);
+        if (boundaryAlightingOrder == 2) {
+            processBoundaryAlighting(writer, found);
+        }
 
         double expectedDemand = minimumDemand > found.demand ? 0 : found.demand;
         assertEquals(legCount, writer.journeyByTrainNo.size());
         for (int index = 0; index < legCount; index++) {
             var journey = writer.journeyByTrainNo.get(trains.get(index));
-            assertEquals(expectedDemand, journey.items().getFirst().getVolume());
-            assertEquals(expectedDemand, journey.items().getFirst().getBoarding());
-            assertEquals(expectedDemand, journey.items().getLast().getAlighting());
-            assertEquals(index == 0 ? expectedDemand : 0, journey.items().getFirst().getOriginBoarding());
-            assertEquals(index == legCount - 1 ? expectedDemand : 0, journey.items().getLast().getDestinationAlighting());
-            assertEquals(startTime + index * 900, journey.items().getFirst().getDeparture());
+            boolean firstInChain = index == 0 || (lastIsTransfer && index == legCount - 1);
+            boolean lastInChain = index == legCount - 1 || (lastIsTransfer && index == legCount - 2);
+            double boundaryDemand = index == 0 && boundaryAlightingOrder != 0 ? 2 : 0;
+            double legDemand = expectedDemand + boundaryDemand;
+            var matchingDepartureItem = journey.items().get(repeatedFromStop ? 1 : 0);
+            var boardingItem = matchingDepartureItem;
+            assertEquals(repeatedFromStop ? 0 : legDemand, journey.items().getFirst().getVolume());
+            assertEquals(legDemand, matchingDepartureItem.getVolume());
+            assertEquals(lastInChain ? 0 : expectedDemand, journey.items().getLast().getVolume());
+            assertEquals(firstInChain ? legDemand : 0, boardingItem.getBoarding());
+            if (repeatedFromStop) {
+                var otherItem = journey.items().getFirst();
+                assertEquals(0, otherItem.getBoarding());
+                assertEquals(0, otherItem.getOriginBoarding());
+            }
+            assertEquals(lastInChain ? expectedDemand : boundaryDemand, journey.items().getLast().getAlighting());
+            assertEquals(index == 0 ? legDemand : 0, boardingItem.getOriginBoarding());
+            assertEquals(index == legCount - 1 ? expectedDemand : boundaryDemand, journey.items().getLast().getDestinationAlighting());
+            assertEquals(startTime + index * 900, matchingDepartureItem.getDeparture());
+        }
+    }
+
+    private static void processBoundaryAlighting(UmlegoBlpWriter writer, FoundRoute found) {
+        var firstPart = found.stop2stopRoute.routeParts.getFirst();
+        var successor = firstPart.chainedPart;
+        double demand = found.demand;
+        try {
+            firstPart.chainedPart = null;
+            found.demand = 2;
+            writer.processRoute("origin", "destination", found);
+        } finally {
+            firstPart.chainedPart = successor;
+            found.demand = demand;
         }
     }
 

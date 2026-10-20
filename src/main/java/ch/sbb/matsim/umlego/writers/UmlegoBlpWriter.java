@@ -167,16 +167,22 @@ public class UmlegoBlpWriter implements UmlegoListener {
                     if (item.getFromStopFacilityId().equals(routePart.fromStop.getId())
                         && item.getDeparture() == routePart.vehicleDepTime) {
                         record = true;
-                        item.addBoarding(demand);
-                        if (i == 0 && firstInChain) {
-                            item.addOriginBoarding(demand);
+                        if (firstInChain) {
+                            item.addBoarding(demand);
+                            if (i == 0) {
+                                item.addOriginBoarding(demand);
+                            }
                         }
                     }
 
                     if (record && item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
-                        item.addAlighting(demand);
-                        if (i == route.stop2stopRoute.routeParts.size() - 1 && routePart.chainedPart == null) {
-                            item.addDestinationAlighting(demand);
+                        if (routePart.chainedPart == null) {
+                            item.addAlighting(demand);
+                            if (i == route.stop2stopRoute.routeParts.size() - 1) {
+                                item.addDestinationAlighting(demand);
+                            }
+                        } else {
+                            item.addDemand(demand);
                         }
                         break;
                     }
