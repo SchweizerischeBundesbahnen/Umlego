@@ -150,8 +150,12 @@ public class UmlegoBlpWriter implements UmlegoListener {
 
         for (int i = 0; i<route.stop2stopRoute.routeParts.size(); i++) {
             RoutePart routePart = route.stop2stopRoute.routeParts.get(i);
-            if (routePart.line != null && routePart.mode.equals("pt")) {
-                routePart.route.getAttributes();
+            boolean firstInChain = true;
+            for (; routePart != null; routePart = routePart.chainedPart) {
+                if (routePart.line == null || !"pt".equals(routePart.mode)) {
+                    firstInChain = false;
+                    continue;
+                }
 
                 Map<Id<TransitStopFacility>, Map<Double, TrainNo>> trainNoByStopId = trainNos.get(routePart.line.getId()).get(routePart.route.getId());
                 Map<Double, TrainNo> trainNoByDeparture = trainNoByStopId.get(routePart.fromStop.getId());
@@ -164,14 +168,14 @@ public class UmlegoBlpWriter implements UmlegoListener {
                         && item.getDeparture() == routePart.vehicleDepTime) {
                         record = true;
                         item.addBoarding(demand);
-                        if (i == 0) {
+                        if (i == 0 && firstInChain) {
                             item.addOriginBoarding(demand);
                         }
                     }
 
-                    if (item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
+                    if (record && item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
                         item.addAlighting(demand);
-                        if (i == route.stop2stopRoute.routeParts.size() - 1) {
+                        if (i == route.stop2stopRoute.routeParts.size() - 1 && routePart.chainedPart == null) {
                             item.addDestinationAlighting(demand);
                         }
                         break;
@@ -181,6 +185,7 @@ public class UmlegoBlpWriter implements UmlegoListener {
                         item.addDemand(demand);
                     }
                 }
+                firstInChain = false;
             }
         }
 
