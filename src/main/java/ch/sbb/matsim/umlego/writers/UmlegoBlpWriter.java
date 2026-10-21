@@ -150,8 +150,12 @@ public class UmlegoBlpWriter implements UmlegoListener {
 
         for (int i = 0; i<route.stop2stopRoute.routeParts.size(); i++) {
             RoutePart routePart = route.stop2stopRoute.routeParts.get(i);
-            if (routePart.line != null && routePart.mode.equals("pt")) {
-                routePart.route.getAttributes();
+            boolean firstInChain = true;
+            for (; routePart != null; routePart = routePart.chainedPart) {
+                if (routePart.line == null || !"pt".equals(routePart.mode)) {
+                    firstInChain = false;
+                    continue;
+                }
 
                 Map<Id<TransitStopFacility>, Map<Double, TrainNo>> trainNoByStopId = trainNos.get(routePart.line.getId()).get(routePart.route.getId());
                 Map<Double, TrainNo> trainNoByDeparture = trainNoByStopId.get(routePart.fromStop.getId());
@@ -163,16 +167,22 @@ public class UmlegoBlpWriter implements UmlegoListener {
                     if (item.getFromStopFacilityId().equals(routePart.fromStop.getId())
                         && item.getDeparture() == routePart.vehicleDepTime) {
                         record = true;
-                        item.addBoarding(demand);
-                        if (i == 0) {
-                            item.addOriginBoarding(demand);
+                        if (firstInChain) {
+                            item.addBoarding(demand);
+                            if (i == 0) {
+                                item.addOriginBoarding(demand);
+                            }
                         }
                     }
 
-                    if (item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
-                        item.addAlighting(demand);
-                        if (i == route.stop2stopRoute.routeParts.size() - 1) {
-                            item.addDestinationAlighting(demand);
+                    if (record && item.getFromStopFacilityId().equals(routePart.toStop.getId())) {
+                        if (routePart.chainedPart == null) {
+                            item.addAlighting(demand);
+                            if (i == route.stop2stopRoute.routeParts.size() - 1) {
+                                item.addDestinationAlighting(demand);
+                            }
+                        } else {
+                            item.addDemand(demand);
                         }
                         break;
                     }
@@ -181,6 +191,7 @@ public class UmlegoBlpWriter implements UmlegoListener {
                         item.addDemand(demand);
                     }
                 }
+                firstInChain = false;
             }
         }
 
