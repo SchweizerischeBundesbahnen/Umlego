@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.7.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.6.0...v2.7.0) (2026-10-22)
+
+
+### Features
+
+* Added a new column in the BLP writer to track the chained departures. ([40f58d5](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/40f58d550243d7a9e1f9bd05d8a1d01604d5dbfa))
+* Fixed a few chained trains bug in the UmlegoBlpWriter. ([60a3a70](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/60a3a70bafaff94d5760a210a6f6c92f62d494fa))
+* New column in the BLP writer to track the chained departures. ([af7a804](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/af7a804dea5e98ab44dce1d2864e6a538f222a60))
+* Updated the BLP writer to handle chained departures ([020b995](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/020b99520eedb13719677d236ad24ad664b409aa))
+* Updated the BLP writer to handle chained departures (Durchbindung). ([23f6882](https://github.com/SchweizerischeBundesbahnen/Umlego/commit/23f6882efa57c00cbcf6dac7b2e4699467bd65eb))
+
 ## [2.6.0](https://github.com/SchweizerischeBundesbahnen/Umlego/compare/v2.5.0...v2.6.0) (2026-10-19)
 
 
