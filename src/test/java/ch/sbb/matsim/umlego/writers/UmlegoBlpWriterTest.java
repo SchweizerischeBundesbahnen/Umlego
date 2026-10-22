@@ -1,6 +1,7 @@
 package ch.sbb.matsim.umlego.writers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
@@ -9,11 +10,19 @@ import ch.sbb.matsim.umlego.FoundRoute;
 import ch.sbb.matsim.umlego.Stop2StopRoute;
 import ch.sbb.matsim.umlego.config.CompressionType;
 import ch.sbb.matsim.umlego.config.WriterParameters;
+import ch.sbb.matsim.umlego.writers.types.volume.Journey;
+import ch.sbb.matsim.umlego.writers.types.volume.JourneyItem;
 import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReaderBuilder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.facilities.Facility;
@@ -25,6 +34,39 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 class UmlegoBlpWriterTest {
+
+    @TempDir
+    Path tempDirectory;
+
+    @Test
+    void writesDistinctChainedTrainsOrNull() throws Exception {
+        var stopId = Id.create("stop", TransitStopFacility.class);
+        var firstItem = new JourneyItem(stopId, stopId, "stop", "stop", 0, 0, 1);
+        var item = new JourneyItem(stopId, null, "stop", null, 600, 600, 2);
+        assertNull(item.getChainedTrains());
+
+        item.addChainedTrain(new TrainNo("SBB", Id.create("B", Departure.class)));
+        item.addChainedTrain(new TrainNo("SBB", Id.create("A", Departure.class)));
+        item.addChainedTrain(new TrainNo("SBB", Id.create("B", Departure.class)));
+
+        assertEquals(List.of("A", "B"), item.getChainedTrains());
+        var output = tempDirectory.resolve("volumes.csv");
+        var writer = new UmlegoBlpWriter(output.toString(), new WriterParameters(0, CompressionType.NONE, Set.of()),
+            new TransitScheduleFactoryImpl().createTransitSchedule());
+        var trainNo = new TrainNo("SBB", Id.create("train", Departure.class));
+        writer.journeyByTrainNo.put(trainNo, new Journey(trainNo, new ArrayList<>(List.of(firstItem, item))));
+        writer.finish();
+
+        try (var reader = new CSVReaderBuilder(Files.newBufferedReader(output))
+            .withCSVParser(new CSVParserBuilder().withEscapeChar('\\').build()).build()) {
+            assertEquals("CHAINED_TRAINS", reader.readNext()[16]);
+            assertEquals("null", reader.readNext()[16]);
+            var row = reader.readNext();
+            assertEquals(17, row.length);
+            assertEquals(new ObjectMapper().valueToTree(List.of("A", "B")), new ObjectMapper().readTree(row[16]));
+            assertNull(reader.readNext());
+        }
+    }
 
     @Test
     void recordsAllLegsOfAChain() throws Exception {
@@ -130,7 +172,8 @@ class UmlegoBlpWriterTest {
             new ConnectedStop("origin", 0, stops.getFirst()), new ConnectedStop("destination", 0, stops.getLast()));
         found.demand = 7;
 
-        UmlegoBlpWriter writer = new UmlegoBlpWriter(null, new WriterParameters(minimumDemand, CompressionType.NONE, Set.of()), schedule);
+        UmlegoBlpWriter writer = new UmlegoBlpWriter(null,
+            new WriterParameters(minimumDemand, CompressionType.NONE, Set.of()), schedule);
         if (boundaryAlightingOrder == 1) {
             processBoundaryAlighting(writer, found);
         }
@@ -162,6 +205,13 @@ class UmlegoBlpWriterTest {
             assertEquals(index == 0 ? legDemand : 0, boardingItem.getOriginBoarding());
             assertEquals(index == legCount - 1 ? expectedDemand : boundaryDemand, journey.items().getLast().getDestinationAlighting());
             assertEquals(startTime + index * 900, matchingDepartureItem.getDeparture());
+            for (var item : journey.items()) {
+                if (item == journey.items().getLast() && !lastInChain && expectedDemand > 0) {
+                    assertEquals(List.of(trains.get(index + 1).departureId().toString()), item.getChainedTrains());
+                } else {
+                    assertNull(item.getChainedTrains());
+                }
+            }
         }
     }
 

@@ -26,6 +26,7 @@ import ch.sbb.matsim.umlego.config.WriterParameters;
 import ch.sbb.matsim.umlego.writers.types.volume.Journey;
 import ch.sbb.matsim.umlego.writers.types.volume.JourneyItem;
 import ch.sbb.matsim.umlego.writers.types.volume.TrainNo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.CSVWriter;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -64,6 +65,7 @@ public class UmlegoBlpWriter implements UmlegoListener {
             "ALIGHTING",
             "ORIGIN_BOARDING",
             "DESTINATION_ALIGHTING",
+            "CHAINED_TRAINS",
     };
 
     private final String filename;
@@ -88,6 +90,7 @@ public class UmlegoBlpWriter implements UmlegoListener {
      * - alighting
      * - originBoarding
      * - destinationAlighting
+     * - chainedTrains (JSON array of direct successor train numbers at the last stop, or null)
      *
      * @param filename the filename of the outputfile
      * @param params
@@ -157,9 +160,7 @@ public class UmlegoBlpWriter implements UmlegoListener {
                     continue;
                 }
 
-                Map<Id<TransitStopFacility>, Map<Double, TrainNo>> trainNoByStopId = trainNos.get(routePart.line.getId()).get(routePart.route.getId());
-                Map<Double, TrainNo> trainNoByDeparture = trainNoByStopId.get(routePart.fromStop.getId());
-                TrainNo trainNo = trainNoByDeparture.get(routePart.vehicleDepTime);
+                TrainNo trainNo = getTrainNo(routePart);
 
                 Journey journey = this.journeyByTrainNo.get(trainNo);
                 boolean record = false;
@@ -183,6 +184,10 @@ public class UmlegoBlpWriter implements UmlegoListener {
                             }
                         } else {
                             item.addDemand(demand);
+                            RoutePart successor = routePart.chainedPart;
+                            if (item.getToStopFacilityId() == null && successor.line != null && "pt".equals(successor.mode)) {
+                                item.addChainedTrain(getTrainNo(successor));
+                            }
                         }
                         break;
                     }
@@ -197,12 +202,20 @@ public class UmlegoBlpWriter implements UmlegoListener {
 
     }
 
+    private TrainNo getTrainNo(RoutePart routePart) {
+        Map<Id<TransitStopFacility>, Map<Double, TrainNo>> trainNoByStopId =
+            this.trainNos.get(routePart.line.getId()).get(routePart.route.getId());
+        Map<Double, TrainNo> trainNoByDeparture = trainNoByStopId.get(routePart.fromStop.getId());
+        return trainNoByDeparture.get(routePart.vehicleDepTime);
+    }
+
     @Override
     public void finish() throws Exception {
         LOG.info("Writing BLP matrices...");
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(filename));
         CSVWriter writer = new CSVWriter(bufferedWriter, ',', '"', '\\', "\n");
         writer.writeNext(HEADER_ROW);
+        ObjectMapper mapper = new ObjectMapper();
 
         for (TrainNo trainNo : this.journeyByTrainNo.keySet()) {
             Journey journey = this.journeyByTrainNo.get(trainNo);
@@ -226,7 +239,8 @@ public class UmlegoBlpWriter implements UmlegoListener {
                         Double.toString(item.getBoarding()),
                         Double.toString(item.getAlighting()),
                         Double.toString(item.getOriginBoarding()),
-                        Double.toString(item.getDestinationAlighting())
+                        Double.toString(item.getDestinationAlighting()),
+                        mapper.writeValueAsString(item.getChainedTrains())
                 });
             }
         }

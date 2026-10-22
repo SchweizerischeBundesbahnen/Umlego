@@ -1,5 +1,8 @@
 package ch.sbb.matsim.umlego.writers.types.volume;
 
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.matsim.api.core.v01.Id;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
@@ -19,6 +22,7 @@ public class JourneyItem {
     private double alighting;
     private double originBoarding;
     private double destinationAlighting;
+    private Set<String> chainedTrains;
 
     public JourneyItem(Id<TransitStopFacility> fromStopFacilityId, Id<TransitStopFacility> toStopFacilityId,
         String fromStopName, String toStopName, double arrival, double departure, int index) {
@@ -66,6 +70,17 @@ public class JourneyItem {
 
     public void addDestinationAlighting(double demand) {
         this.destinationAlighting += demand;
+    }
+
+    public void addChainedTrain(TrainNo trainNo) {
+        if (this.chainedTrains == null) {
+            this.chainedTrains = new TreeSet<>();
+        }
+        this.chainedTrains.add(trainNo.departureId().toString());
+    }
+
+    public List<String> getChainedTrains() {
+        return this.chainedTrains == null ? null : List.copyOf(this.chainedTrains);
     }
 
     public Id<TransitStopFacility> getFromStopFacilityId() {
