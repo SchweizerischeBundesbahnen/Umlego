@@ -216,7 +216,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20250107</version>
+            <version>20260719</version>
         </dependency>
 
         <!-- Test if our implementation gives the same result as OMX -->
